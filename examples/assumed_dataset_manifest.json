@@ -1,0 +1,23 @@
+{
+  "sample_unit": "video_clip",
+  "video_extensions": [".mp4", ".mov"],
+  "annotation_format": "json",
+  "includes_train_split": true,
+  "includes_validation_split": false,
+  "includes_test_split": true,
+  "targets": [
+    "vehicle",
+    "plate",
+    "speed",
+    "in_cabin_object",
+    "driver_behavior"
+  ],
+  "has_frame_level_annotations": true,
+  "has_clip_level_annotations": true,
+  "has_plate_text": false,
+  "has_speed_ground_truth": true,
+  "has_in_cabin_annotations": true,
+  "has_driver_behavior_annotations": true,
+  "speed_unit": "km/h",
+  "notes": "Spec-aligned placeholder manifest until the real dataset is released."
+}
