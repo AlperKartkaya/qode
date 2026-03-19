@@ -7,6 +7,17 @@ from .data import (
     IngestionPlan,
     build_adapter_from_manifest,
 )
+from .evaluation import (
+    ExpectedWorkflowOutcome,
+    ScenarioDefinition,
+    ScenarioGatewaySetup,
+    ScenarioMetricSummary,
+    ScenarioReportEntry,
+    ScenarioSuiteReport,
+    ScenarioSuiteSummary,
+    ScenarioTraceBundle,
+    run_scenario_suite,
+)
 from .integration import (
     MobileSessionBootstrapRequest,
     MobileSessionBootstrapResult,
@@ -40,6 +51,7 @@ __all__ = [
     "DatasetAdapter",
     "DatasetManifest",
     "DetectionRecord",
+    "ExpectedWorkflowOutcome",
     "FrameAnalysis",
     "IngestionPlan",
     "MobileSessionBootstrapRequest",
@@ -57,6 +69,13 @@ __all__ = [
     "QodActivationResult",
     "QodDecision",
     "QodPolicy",
+    "ScenarioDefinition",
+    "ScenarioGatewaySetup",
+    "ScenarioMetricSummary",
+    "ScenarioReportEntry",
+    "ScenarioSuiteReport",
+    "ScenarioSuiteSummary",
+    "ScenarioTraceBundle",
     "SceneAnalysisSummary",
     "SceneSignal",
     "build_adapter_from_manifest",
@@ -64,4 +83,5 @@ __all__ = [
     "compare_manifest_to_assumptions",
     "evaluate_qod_need",
     "load_default_qod_policy",
+    "run_scenario_suite",
 ]

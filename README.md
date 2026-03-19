@@ -6,6 +6,7 @@ Current milestone:
 - explicit project assumptions in `assumptions.md`
 - a small Python core for domain contracts, dataset-manifest checks, adapter-slot planning, integration contracts, and QoD decision simulation
 - a mock orchestration flow for session bootstrap, verification, QoD decision, and mobile-facing output
+- a deterministic scenario-to-score harness for traceable pre-dataset evaluation
 - placeholder workspace boundaries for mobile, API, vision, and simulation work
 
 This repository intentionally avoids locking into real dataset parsing before the dataset is released.
@@ -31,6 +32,7 @@ PYTHONPATH=src python3 -m smart_road_safety.cli print-default-qod-policy
 PYTHONPATH=src python3 -m smart_road_safety.cli simulate-qod examples/qod_scenario.json
 PYTHONPATH=src python3 -m smart_road_safety.cli simulate-qod examples/qod_scenario.json --policy-path examples/custom_qod_policy.json
 PYTHONPATH=src python3 -m smart_road_safety.cli run-mock-orchestration examples/mock_orchestration_request.json
+PYTHONPATH=src python3 -m smart_road_safety.cli run-scenarios examples/scenarios --output-path out/scenario_report.json
 PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
@@ -48,3 +50,4 @@ The current extension points are:
 - integration contracts reserve the Number Verification and QoD boundaries without assuming final endpoint payloads
 - QoD thresholds live in policy JSON rather than in code constants, so the future dataset or API release can tune behavior without redesigning the module
 - the orchestration layer composes the mock gateways and typed results so future real clients can replace the mocks without changing the workflow shape
+- the evaluation layer runs deterministic scenarios, emits trace bundles, and computes placeholder metrics that can later swap to real dataset-backed scoring

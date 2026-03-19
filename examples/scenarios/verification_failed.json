@@ -1,0 +1,38 @@
+{
+  "scenario_id": "verification-failed",
+  "description": "Verification failure stops the workflow before QoD.",
+  "orchestration_request": {
+    "session_id": "scenario-verification-failed",
+    "phone_number": "+905559998877",
+    "device_session_id": "device-verification-failed",
+    "requested_profile": "standard",
+    "scene_signal": {
+      "togg_candidate_confidence": 0.93,
+      "plate_visibility_score": 0.5,
+      "driver_risk_score": 0.11,
+      "distance_meters": 16.0,
+      "current_profile": "standard"
+    },
+    "analysis_summary": {
+      "source_ref": "placeholder://scenario/verification-failed",
+      "target_vehicle_detected": true,
+      "plate_candidate_detected": true,
+      "driver_risk_label": "placeholder_none"
+    }
+  },
+  "gateway_setup": {
+    "verified_numbers": []
+  },
+  "expected": {
+    "status": "FAILED",
+    "qod_requested": false,
+    "qod_accepted": false,
+    "active_profile": "standard",
+    "target_vehicle_detected": true,
+    "plate_candidate_detected": true,
+    "driver_risk_label": "placeholder_none"
+  },
+  "notes": [
+    "This scenario validates the deterministic fail-fast path before any QoD request."
+  ]
+}

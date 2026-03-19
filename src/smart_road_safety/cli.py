@@ -3,9 +3,11 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import asdict
+from pathlib import Path
 
 from .assumptions import ASSUMPTIONS
 from .data import build_adapter_from_manifest_path
+from .evaluation import run_scenario_suite
 from .integration import (
     MockNumberVerificationGateway,
     MockQualityOnDemandGateway,
@@ -71,6 +73,25 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Path to a mock orchestration request JSON file.",
     )
     run_orchestration.add_argument(
+        "--policy-path",
+        default=None,
+        help="Optional QoD policy JSON file. If omitted, the packaged default is used.",
+    )
+
+    run_scenarios = subparsers.add_parser(
+        "run-scenarios",
+        help="Run one or more deterministic scenarios and emit a score report.",
+    )
+    run_scenarios.add_argument(
+        "scenario_path",
+        help="Path to a scenario JSON file or a directory of scenario JSON files.",
+    )
+    run_scenarios.add_argument(
+        "--output-path",
+        default="out/scenario_report.json",
+        help="Path where the scenario report JSON will be written.",
+    )
+    run_scenarios.add_argument(
         "--policy-path",
         default=None,
         help="Optional QoD policy JSON file. If omitted, the packaged default is used.",
@@ -167,6 +188,24 @@ def _run_mock_orchestration(request_path: str, policy_path: str | None) -> int:
     return 0
 
 
+def _run_scenarios(
+    scenario_path: str, output_path: str, policy_path: str | None
+) -> int:
+    policy = (
+        load_default_qod_policy()
+        if policy_path is None
+        else QodPolicy.from_path(policy_path)
+    )
+    report = run_scenario_suite(
+        scenario_path=scenario_path,
+        output_path=output_path,
+        policy=policy,
+    )
+    print(f"report_path={Path(output_path)}")
+    print(json.dumps(asdict(report.summary), indent=2))
+    return 0
+
+
 def main() -> int:
     parser = _build_parser()
     args = parser.parse_args()
@@ -183,6 +222,8 @@ def main() -> int:
         return _simulate_qod(args.scenario_path, args.policy_path)
     if args.command == "run-mock-orchestration":
         return _run_mock_orchestration(args.request_path, args.policy_path)
+    if args.command == "run-scenarios":
+        return _run_scenarios(args.scenario_path, args.output_path, args.policy_path)
 
     parser.error(f"Unknown command: {args.command}")
     return 2

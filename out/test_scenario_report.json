@@ -1,0 +1,308 @@
+{
+  "report_version": "scenario-to-score-v1",
+  "scenarios": [
+    {
+      "scenario_id": "qod-denied",
+      "description": "Verification passes but QoD is denied, resulting in a partial outcome.",
+      "expected": {
+        "status": "PARTIAL",
+        "qod_requested": true,
+        "qod_accepted": false,
+        "active_profile": "standard",
+        "target_vehicle_detected": true,
+        "plate_candidate_detected": true,
+        "driver_risk_label": "placeholder_none"
+      },
+      "actual": {
+        "status": "PARTIAL",
+        "bootstrap_result": {
+          "session_id": "scenario-qod-denied",
+          "verified": true,
+          "active_profile": "standard",
+          "verification_reference": "mock-nv-905550001122",
+          "message": "VERIFICATION.SUCCESS"
+        },
+        "qod_decision": {
+          "should_activate": true,
+          "requested_profile": "boosted",
+          "reasons": [
+            "candidate target vehicle is close enough to justify boosted quality",
+            "plate is visible but not yet clear enough for reliable reading"
+          ],
+          "expected_benefit": "better detail for plate, in-cabin, or target-vehicle analysis"
+        },
+        "qod_request": {
+          "session_id": "scenario-qod-denied",
+          "target_profile": "boosted",
+          "reason": "candidate target vehicle is close enough to justify boosted quality; plate is visible but not yet clear enough for reliable reading",
+          "duration_seconds": 30
+        },
+        "qod_result": {
+          "accepted": false,
+          "applied_profile": "standard",
+          "request_reference": "mock-qod-scenario-qod-denied",
+          "expires_in_seconds": null,
+          "denial_reason": "QOD.PROFILE_NOT_AVAILABLE"
+        },
+        "mobile_view": {
+          "session_id": "scenario-qod-denied",
+          "status": "PARTIAL",
+          "verification_passed": true,
+          "active_profile": "standard",
+          "qod_requested": true,
+          "qod_accepted": false,
+          "source_ref": "placeholder://scenario/qod-denied",
+          "target_vehicle_detected": true,
+          "plate_candidate_detected": true,
+          "driver_risk_label": "placeholder_none",
+          "summary_message": "Workflow completed, but QoD escalation was denied."
+        },
+        "events": [
+          {
+            "phase": "BOOTSTRAP_REQUESTED",
+            "context_code": "SESSION.BOOTSTRAP_REQUESTED",
+            "message": "Session bootstrap started for device-qod-denied"
+          },
+          {
+            "phase": "NUMBER_VERIFIED",
+            "context_code": "NUMBER_VERIFICATION.SUCCESS",
+            "message": "Silent number verification passed."
+          },
+          {
+            "phase": "QOD_EVALUATED",
+            "context_code": "QOD.REQUEST_REQUIRED",
+            "message": "better detail for plate, in-cabin, or target-vehicle analysis"
+          },
+          {
+            "phase": "QOD_DENIED",
+            "context_code": "QOD.PROFILE_NOT_AVAILABLE",
+            "message": "QoD request was denied by the mock gateway."
+          }
+        ]
+      },
+      "trace": {
+        "scenario_id": "qod-denied",
+        "phases": [
+          "BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFIED",
+          "QOD_EVALUATED",
+          "QOD_DENIED"
+        ],
+        "context_codes": [
+          "SESSION.BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFICATION.SUCCESS",
+          "QOD.REQUEST_REQUIRED",
+          "QOD.PROFILE_NOT_AVAILABLE"
+        ],
+        "qod_reasons": [
+          "candidate target vehicle is close enough to justify boosted quality",
+          "plate is visible but not yet clear enough for reliable reading"
+        ],
+        "verification_reference": "mock-nv-905550001122",
+        "qod_request_reference": "mock-qod-scenario-qod-denied"
+      },
+      "metrics": {
+        "qod_selectivity_score": 1.0,
+        "policy_consistency_score": 1.0,
+        "placeholder_label_agreement_score": 1.0,
+        "all_expectations_met": true
+      }
+    },
+    {
+      "scenario_id": "success",
+      "description": "Verified phone number and accepted boosted QoD request.",
+      "expected": {
+        "status": "SUCCESS",
+        "qod_requested": true,
+        "qod_accepted": true,
+        "active_profile": "boosted",
+        "target_vehicle_detected": true,
+        "plate_candidate_detected": true,
+        "driver_risk_label": "placeholder_none"
+      },
+      "actual": {
+        "status": "SUCCESS",
+        "bootstrap_result": {
+          "session_id": "scenario-success",
+          "verified": true,
+          "active_profile": "standard",
+          "verification_reference": "mock-nv-905551112233",
+          "message": "VERIFICATION.SUCCESS"
+        },
+        "qod_decision": {
+          "should_activate": true,
+          "requested_profile": "boosted",
+          "reasons": [
+            "candidate target vehicle is close enough to justify boosted quality",
+            "plate is visible but not yet clear enough for reliable reading"
+          ],
+          "expected_benefit": "better detail for plate, in-cabin, or target-vehicle analysis"
+        },
+        "qod_request": {
+          "session_id": "scenario-success",
+          "target_profile": "boosted",
+          "reason": "candidate target vehicle is close enough to justify boosted quality; plate is visible but not yet clear enough for reliable reading",
+          "duration_seconds": 30
+        },
+        "qod_result": {
+          "accepted": true,
+          "applied_profile": "boosted",
+          "request_reference": "mock-qod-scenario-success",
+          "expires_in_seconds": 30,
+          "denial_reason": null
+        },
+        "mobile_view": {
+          "session_id": "scenario-success",
+          "status": "SUCCESS",
+          "verification_passed": true,
+          "active_profile": "boosted",
+          "qod_requested": true,
+          "qod_accepted": true,
+          "source_ref": "placeholder://scenario/success",
+          "target_vehicle_detected": true,
+          "plate_candidate_detected": true,
+          "driver_risk_label": "placeholder_none",
+          "summary_message": "Workflow completed with boosted network quality."
+        },
+        "events": [
+          {
+            "phase": "BOOTSTRAP_REQUESTED",
+            "context_code": "SESSION.BOOTSTRAP_REQUESTED",
+            "message": "Session bootstrap started for device-success"
+          },
+          {
+            "phase": "NUMBER_VERIFIED",
+            "context_code": "NUMBER_VERIFICATION.SUCCESS",
+            "message": "Silent number verification passed."
+          },
+          {
+            "phase": "QOD_EVALUATED",
+            "context_code": "QOD.REQUEST_REQUIRED",
+            "message": "better detail for plate, in-cabin, or target-vehicle analysis"
+          },
+          {
+            "phase": "QOD_ACTIVATED",
+            "context_code": "QOD.ACTIVATED",
+            "message": "QoD request accepted by the mock gateway."
+          }
+        ]
+      },
+      "trace": {
+        "scenario_id": "success",
+        "phases": [
+          "BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFIED",
+          "QOD_EVALUATED",
+          "QOD_ACTIVATED"
+        ],
+        "context_codes": [
+          "SESSION.BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFICATION.SUCCESS",
+          "QOD.REQUEST_REQUIRED",
+          "QOD.ACTIVATED"
+        ],
+        "qod_reasons": [
+          "candidate target vehicle is close enough to justify boosted quality",
+          "plate is visible but not yet clear enough for reliable reading"
+        ],
+        "verification_reference": "mock-nv-905551112233",
+        "qod_request_reference": "mock-qod-scenario-success"
+      },
+      "metrics": {
+        "qod_selectivity_score": 1.0,
+        "policy_consistency_score": 1.0,
+        "placeholder_label_agreement_score": 1.0,
+        "all_expectations_met": true
+      }
+    },
+    {
+      "scenario_id": "verification-failed",
+      "description": "Verification failure stops the workflow before QoD.",
+      "expected": {
+        "status": "FAILED",
+        "qod_requested": false,
+        "qod_accepted": false,
+        "active_profile": "standard",
+        "target_vehicle_detected": true,
+        "plate_candidate_detected": true,
+        "driver_risk_label": "placeholder_none"
+      },
+      "actual": {
+        "status": "FAILED",
+        "bootstrap_result": {
+          "session_id": "scenario-verification-failed",
+          "verified": false,
+          "active_profile": "standard",
+          "verification_reference": "mock-nv-905559998877",
+          "message": "NUMBER_VERIFICATION.VERIFICATION_FAILED"
+        },
+        "qod_decision": {
+          "should_activate": false,
+          "requested_profile": "standard",
+          "reasons": [
+            "verification failed"
+          ],
+          "expected_benefit": "No QoD request is attempted when verification fails."
+        },
+        "qod_request": null,
+        "qod_result": null,
+        "mobile_view": {
+          "session_id": "scenario-verification-failed",
+          "status": "FAILED",
+          "verification_passed": false,
+          "active_profile": "standard",
+          "qod_requested": false,
+          "qod_accepted": false,
+          "source_ref": "placeholder://scenario/verification-failed",
+          "target_vehicle_detected": true,
+          "plate_candidate_detected": true,
+          "driver_risk_label": "placeholder_none",
+          "summary_message": "Verification failed, so the workflow stopped before QoD."
+        },
+        "events": [
+          {
+            "phase": "BOOTSTRAP_REQUESTED",
+            "context_code": "SESSION.BOOTSTRAP_REQUESTED",
+            "message": "Session bootstrap started for device-verification-failed"
+          },
+          {
+            "phase": "VERIFICATION_FAILED",
+            "context_code": "NUMBER_VERIFICATION.VERIFICATION_FAILED",
+            "message": "Silent number verification failed before QoD evaluation."
+          }
+        ]
+      },
+      "trace": {
+        "scenario_id": "verification-failed",
+        "phases": [
+          "BOOTSTRAP_REQUESTED",
+          "VERIFICATION_FAILED"
+        ],
+        "context_codes": [
+          "SESSION.BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFICATION.VERIFICATION_FAILED"
+        ],
+        "qod_reasons": [
+          "verification failed"
+        ],
+        "verification_reference": "mock-nv-905559998877",
+        "qod_request_reference": null
+      },
+      "metrics": {
+        "qod_selectivity_score": 1.0,
+        "policy_consistency_score": 1.0,
+        "placeholder_label_agreement_score": 1.0,
+        "all_expectations_met": true
+      }
+    }
+  ],
+  "summary": {
+    "scenario_count": 3,
+    "expectation_pass_count": 3,
+    "qod_request_rate": 0.6666666666666666,
+    "qod_acceptance_rate": 0.3333333333333333,
+    "average_qod_selectivity_score": 1.0,
+    "average_policy_consistency_score": 1.0,
+    "average_placeholder_label_agreement_score": 1.0
+  }
+}

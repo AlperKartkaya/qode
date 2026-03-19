@@ -1,0 +1,39 @@
+{
+  "scenario_id": "success",
+  "description": "Verified phone number and accepted boosted QoD request.",
+  "orchestration_request": {
+    "session_id": "scenario-success",
+    "phone_number": "+905551112233",
+    "device_session_id": "device-success",
+    "requested_profile": "standard",
+    "scene_signal": {
+      "togg_candidate_confidence": 0.91,
+      "plate_visibility_score": 0.52,
+      "driver_risk_score": 0.12,
+      "distance_meters": 18.0,
+      "current_profile": "standard"
+    },
+    "analysis_summary": {
+      "source_ref": "placeholder://scenario/success",
+      "target_vehicle_detected": true,
+      "plate_candidate_detected": true,
+      "driver_risk_label": "placeholder_none"
+    }
+  },
+  "gateway_setup": {
+    "verified_numbers": ["+905551112233"],
+    "available_profiles": ["standard", "boosted"]
+  },
+  "expected": {
+    "status": "SUCCESS",
+    "qod_requested": true,
+    "qod_accepted": true,
+    "active_profile": "boosted",
+    "target_vehicle_detected": true,
+    "plate_candidate_detected": true,
+    "driver_risk_label": "placeholder_none"
+  },
+  "notes": [
+    "Placeholder source and labels are governed by EV-001 and OR-002 in assumptions.md."
+  ]
+}
