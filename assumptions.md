@@ -22,6 +22,7 @@ Implemented now:
 - QoD decision simulation based on configurable policy files
 - mock orchestration flow for session bootstrap, verification, analysis handoff, and QoD activation
 - deterministic scenario playback and placeholder scoring harness
+- markdown export and thin local HTTP wrapper for demo-oriented integration
 
 Deferred until real data or real API release:
 - concrete dataset loader
@@ -56,6 +57,9 @@ Deferred until real data or real API release:
 | EV-001 | scenario fixtures | Pre-dataset scenario fixtures use placeholder `source_ref`, labels, and expected outcomes to exercise the architecture before real data is available. | high | inspect real dataset identifiers and labels, then replace placeholder scenario content | evaluation, traceability |
 | EV-002 | placeholder scoring | Current label agreement metrics measure agreement against synthetic expected outputs, not real AI accuracy. | high | replace synthetic expectations with dataset-backed ground truth when available | evaluation, reporting |
 | EV-003 | scenario coverage | The current scenario set covers success, verification failure, and QoD denial paths only; additional dataset-driven edge cases are deferred. | medium | expand scenarios after real data and API constraints are known | evaluation, robustness |
+| EX-001 | markdown exports | Judge-friendly markdown is generated from the current scenario report JSON contract, so any future report schema change must update the export renderer too. | medium | compare markdown needs against final report and presentation expectations | reporting, presentation |
+| API-001 | local http wrapper | The current HTTP server is a local stdlib wrapper for demos and mobile prototyping only, not a production deployment surface. | high | replace with final client/server integration strategy if the competition setup requires it | demo integration, mobile client |
+| API-002 | local endpoint payloads | The local API reuses repository JSON contracts directly; final mobile-facing payloads may require reshaping once the real app and backend boundaries are known. | medium | inspect final mobile UX and telecom environment constraints | mobile integration, local API |
 
 ## Unknowns That Must Be Resolved Before Real Model Work
 

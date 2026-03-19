@@ -7,6 +7,7 @@ Current milestone:
 - a small Python core for domain contracts, dataset-manifest checks, adapter-slot planning, integration contracts, and QoD decision simulation
 - a mock orchestration flow for session bootstrap, verification, QoD decision, and mobile-facing output
 - a deterministic scenario-to-score harness for traceable pre-dataset evaluation
+- a markdown export layer and tiny local HTTP API for future demo clients
 - placeholder workspace boundaries for mobile, API, vision, and simulation work
 
 This repository intentionally avoids locking into real dataset parsing before the dataset is released.
@@ -33,6 +34,8 @@ PYTHONPATH=src python3 -m smart_road_safety.cli simulate-qod examples/qod_scenar
 PYTHONPATH=src python3 -m smart_road_safety.cli simulate-qod examples/qod_scenario.json --policy-path examples/custom_qod_policy.json
 PYTHONPATH=src python3 -m smart_road_safety.cli run-mock-orchestration examples/mock_orchestration_request.json
 PYTHONPATH=src python3 -m smart_road_safety.cli run-scenarios examples/scenarios --output-path out/scenario_report.json
+PYTHONPATH=src python3 -m smart_road_safety.cli export-scenario-report out/scenario_report.json --output-path out/scenario_report.md
+PYTHONPATH=src python3 -m smart_road_safety.cli serve-local-api --host 127.0.0.1 --port 8000
 PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
@@ -51,3 +54,5 @@ The current extension points are:
 - QoD thresholds live in policy JSON rather than in code constants, so the future dataset or API release can tune behavior without redesigning the module
 - the orchestration layer composes the mock gateways and typed results so future real clients can replace the mocks without changing the workflow shape
 - the evaluation layer runs deterministic scenarios, emits trace bundles, and computes placeholder metrics that can later swap to real dataset-backed scoring
+- the export layer turns scenario reports into judge-friendly markdown without changing the underlying JSON contract
+- the local HTTP API exposes orchestration, evaluation, and export flows through a thin stdlib wrapper for future mobile or demo integration

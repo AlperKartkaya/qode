@@ -18,6 +18,7 @@ from .evaluation import (
     ScenarioTraceBundle,
     run_scenario_suite,
 )
+from .export import export_scenario_report_markdown, render_scenario_report_markdown
 from .integration import (
     MobileSessionBootstrapRequest,
     MobileSessionBootstrapResult,
@@ -37,6 +38,7 @@ from .orchestration import (
     OrchestrationEvent,
     SceneAnalysisSummary,
 )
+from .local_api import create_local_api_server, run_local_api_server
 from .manifest import AdaptationGap, DatasetManifest, compare_manifest_to_assumptions
 from .policy import QodPolicy, load_default_qod_policy
 from .qod import QodDecision, SceneSignal, evaluate_qod_need
@@ -78,10 +80,14 @@ __all__ = [
     "ScenarioTraceBundle",
     "SceneAnalysisSummary",
     "SceneSignal",
+    "create_local_api_server",
     "build_adapter_from_manifest",
     "build_qod_activation_request",
     "compare_manifest_to_assumptions",
     "evaluate_qod_need",
+    "export_scenario_report_markdown",
     "load_default_qod_policy",
+    "render_scenario_report_markdown",
     "run_scenario_suite",
+    "run_local_api_server",
 ]

@@ -8,11 +8,13 @@ from pathlib import Path
 from .assumptions import ASSUMPTIONS
 from .data import build_adapter_from_manifest_path
 from .evaluation import run_scenario_suite
+from .export import export_scenario_report_markdown
 from .integration import (
     MockNumberVerificationGateway,
     MockQualityOnDemandGateway,
     build_qod_activation_request,
 )
+from .local_api import run_local_api_server
 from .manifest import DatasetManifest, compare_manifest_to_assumptions
 from .orchestration import MockSessionRequest, MockTelecomOrchestrator
 from .policy import QodPolicy, load_default_qod_policy
@@ -95,6 +97,36 @@ def _build_parser() -> argparse.ArgumentParser:
         "--policy-path",
         default=None,
         help="Optional QoD policy JSON file. If omitted, the packaged default is used.",
+    )
+
+    export_report = subparsers.add_parser(
+        "export-scenario-report",
+        help="Render judge-friendly markdown from a scenario report JSON file.",
+    )
+    export_report.add_argument(
+        "report_path",
+        help="Path to a scenario report JSON file.",
+    )
+    export_report.add_argument(
+        "--output-path",
+        default="out/scenario_report.md",
+        help="Path where the markdown export will be written.",
+    )
+
+    serve_local_api = subparsers.add_parser(
+        "serve-local-api",
+        help="Start a tiny local HTTP API for orchestration and evaluation.",
+    )
+    serve_local_api.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Host interface to bind.",
+    )
+    serve_local_api.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Port to bind.",
     )
 
     return parser
@@ -206,6 +238,20 @@ def _run_scenarios(
     return 0
 
 
+def _export_scenario_report(report_path: str, output_path: str) -> int:
+    target = export_scenario_report_markdown(
+        report_path=report_path,
+        output_path=output_path,
+    )
+    print(f"markdown_path={target}")
+    return 0
+
+
+def _serve_local_api(host: str, port: int) -> int:
+    run_local_api_server(host=host, port=port)
+    return 0
+
+
 def main() -> int:
     parser = _build_parser()
     args = parser.parse_args()
@@ -224,6 +270,10 @@ def main() -> int:
         return _run_mock_orchestration(args.request_path, args.policy_path)
     if args.command == "run-scenarios":
         return _run_scenarios(args.scenario_path, args.output_path, args.policy_path)
+    if args.command == "export-scenario-report":
+        return _export_scenario_report(args.report_path, args.output_path)
+    if args.command == "serve-local-api":
+        return _serve_local_api(args.host, args.port)
 
     parser.error(f"Unknown command: {args.command}")
     return 2
