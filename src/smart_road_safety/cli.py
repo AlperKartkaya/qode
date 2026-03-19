@@ -6,8 +6,13 @@ from dataclasses import asdict
 
 from .assumptions import ASSUMPTIONS
 from .data import build_adapter_from_manifest_path
-from .integration import build_qod_activation_request
+from .integration import (
+    MockNumberVerificationGateway,
+    MockQualityOnDemandGateway,
+    build_qod_activation_request,
+)
 from .manifest import DatasetManifest, compare_manifest_to_assumptions
+from .orchestration import MockSessionRequest, MockTelecomOrchestrator
 from .policy import QodPolicy, load_default_qod_policy
 from .qod import SceneSignal, evaluate_qod_need
 
@@ -52,6 +57,20 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     simulate_qod.add_argument("scenario_path", help="Path to a QoD scenario JSON file.")
     simulate_qod.add_argument(
+        "--policy-path",
+        default=None,
+        help="Optional QoD policy JSON file. If omitted, the packaged default is used.",
+    )
+
+    run_orchestration = subparsers.add_parser(
+        "run-mock-orchestration",
+        help="Run a mock end-to-end session bootstrap and QoD orchestration flow.",
+    )
+    run_orchestration.add_argument(
+        "request_path",
+        help="Path to a mock orchestration request JSON file.",
+    )
+    run_orchestration.add_argument(
         "--policy-path",
         default=None,
         help="Optional QoD policy JSON file. If omitted, the packaged default is used.",
@@ -129,6 +148,25 @@ def _simulate_qod(scenario_path: str, policy_path: str | None) -> int:
     return 0
 
 
+def _run_mock_orchestration(request_path: str, policy_path: str | None) -> int:
+    policy = (
+        load_default_qod_policy()
+        if policy_path is None
+        else QodPolicy.from_path(policy_path)
+    )
+    request = MockSessionRequest.from_path(request_path)
+    orchestrator = MockTelecomOrchestrator(
+        number_verification_gateway=MockNumberVerificationGateway(
+            verified_numbers=(request.phone_number,)
+        ),
+        quality_on_demand_gateway=MockQualityOnDemandGateway(),
+        policy=policy,
+    )
+    result = orchestrator.run(request)
+    print(json.dumps(asdict(result), indent=2))
+    return 0
+
+
 def main() -> int:
     parser = _build_parser()
     args = parser.parse_args()
@@ -143,6 +181,8 @@ def main() -> int:
         return _print_default_qod_policy()
     if args.command == "simulate-qod":
         return _simulate_qod(args.scenario_path, args.policy_path)
+    if args.command == "run-mock-orchestration":
+        return _run_mock_orchestration(args.request_path, args.policy_path)
 
     parser.error(f"Unknown command: {args.command}")
     return 2

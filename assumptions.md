@@ -20,6 +20,7 @@ Implemented now:
 - shared domain contracts
 - Number Verification and QoD integration contracts
 - QoD decision simulation based on configurable policy files
+- mock orchestration flow for session bootstrap, verification, analysis handoff, and QoD activation
 
 Deferred until real data or real API release:
 - concrete dataset loader
@@ -48,6 +49,9 @@ Deferred until real data or real API release:
 | DS-014 | QoD API integration | Real QoD request and response shapes are unknown for now, so current work should model intent and state transitions rather than final HTTP payloads. | high | inspect official endpoint docs, auth, and request contracts | API client, orchestration |
 | DS-015 | evaluation focus | Final evaluation will favor a balance of AI accuracy, selective QoD usage, and overall architecture quality rather than raw model complexity alone. | high | compare against final judging and report guidance | roadmap prioritization |
 | DS-016 | privacy and sharing | Dataset and network details provided during the competition should be treated as non-public unless clearly stated otherwise. | high | inspect NDA, sharing rules, or package notices | repo hygiene, deployment |
+| OR-001 | orchestration source reference | The orchestration input will carry a stable `source_ref` string for each analyzed item, but the final identifier format is unknown until the dataset or live stream contracts are released. | medium | inspect dataset sample identifiers and live stream metadata | orchestration inputs, mobile display |
+| OR-002 | orchestration risk labels | The mobile-facing analysis summary will expose a normalized `driver_risk_label`, but the final taxonomy remains a placeholder until the real dataset ontology is released. | medium | inspect label taxonomy and judging terminology | mobile output, reporting |
+| OR-003 | orchestration identifiers | Real session IDs and network request references will likely follow operator-specific formats, so current mock orchestration uses deterministic local placeholder strings only. | high | inspect Number Verification and QoD environment details | orchestration traces, logging |
 
 ## Unknowns That Must Be Resolved Before Real Model Work
 

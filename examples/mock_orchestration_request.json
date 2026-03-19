@@ -1,0 +1,22 @@
+{
+  "session_id": "demo-session-001",
+  "phone_number": "+905551112233",
+  "device_session_id": "device-001",
+  "requested_profile": "standard",
+  "scene_signal": {
+    "togg_candidate_confidence": 0.82,
+    "plate_visibility_score": 0.48,
+    "driver_risk_score": 0.21,
+    "distance_meters": 32.0,
+    "current_profile": "standard"
+  },
+  "analysis_summary": {
+    "source_ref": "placeholder://dataset/clip-001",
+    "target_vehicle_detected": true,
+    "plate_candidate_detected": true,
+    "driver_risk_label": "placeholder_none",
+    "notes": [
+      "Placeholder fields in this file are governed by assumptions OR-001, OR-002, and OR-003."
+    ]
+  }
+}
