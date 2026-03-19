@@ -59,6 +59,29 @@ class LocalApiTest(unittest.TestCase):
         self.assertEqual(response.status, 200)
         self.assertEqual(payload["status"], "SUCCESS")
 
+    def test_analysis_session_endpoint_returns_combined_result(self) -> None:
+        request_payload = {
+            "request": json.loads(
+                (ROOT / "examples" / "analysis_session_request.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+        }
+        connection = HTTPConnection(self.host, self.port)
+        connection.request(
+            "POST",
+            "/analysis-session/run",
+            body=json.dumps(request_payload),
+            headers={"Content-Type": "application/json"},
+        )
+        response = connection.getresponse()
+        payload = json.loads(response.read().decode("utf-8"))
+        connection.close()
+
+        self.assertEqual(response.status, 200)
+        self.assertTrue(payload["analysis_result"]["target_vehicle_detected"])
+        self.assertEqual(payload["workflow_result"]["status"], "SUCCESS")
+
     def test_scenario_endpoint_returns_report_summary(self) -> None:
         request_payload = {
             "scenario_path": str(ROOT / "examples" / "scenarios"),

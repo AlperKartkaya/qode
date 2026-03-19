@@ -1,3 +1,12 @@
+from .analysis import (
+    AnalysisResult,
+    AnalysisSessionRequest,
+    AnalysisSessionResult,
+    AnalyzerInput,
+    PlaceholderSceneAnalyzer,
+    SceneAnalyzer,
+    run_analysis_session,
+)
 from .assumptions import ASSUMPTIONS, AssumptionRecord
 from .contracts import BoundingBox, DetectionRecord, FrameAnalysis
 from .data import (
@@ -45,10 +54,14 @@ from .qod import QodDecision, SceneSignal, evaluate_qod_need
 
 __all__ = [
     "ASSUMPTIONS",
+    "AnalysisResult",
+    "AnalysisSessionRequest",
+    "AnalysisSessionResult",
     "AdaptationGap",
     "AssumedFrameDatasetAdapter",
     "AssumedVideoClipDatasetAdapter",
     "AssumptionRecord",
+    "AnalyzerInput",
     "BoundingBox",
     "DatasetAdapter",
     "DatasetManifest",
@@ -64,6 +77,7 @@ __all__ = [
     "MockSessionRequest",
     "MockSessionResult",
     "MockTelecomOrchestrator",
+    "PlaceholderSceneAnalyzer",
     "NumberVerificationRequest",
     "NumberVerificationResult",
     "OrchestrationEvent",
@@ -71,6 +85,7 @@ __all__ = [
     "QodActivationResult",
     "QodDecision",
     "QodPolicy",
+    "SceneAnalyzer",
     "ScenarioDefinition",
     "ScenarioGatewaySetup",
     "ScenarioMetricSummary",
@@ -88,6 +103,7 @@ __all__ = [
     "export_scenario_report_markdown",
     "load_default_qod_policy",
     "render_scenario_report_markdown",
+    "run_analysis_session",
     "run_scenario_suite",
     "run_local_api_server",
 ]

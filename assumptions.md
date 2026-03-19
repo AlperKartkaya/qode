@@ -23,6 +23,7 @@ Implemented now:
 - mock orchestration flow for session bootstrap, verification, analysis handoff, and QoD activation
 - deterministic scenario playback and placeholder scoring harness
 - markdown export and thin local HTTP wrapper for demo-oriented integration
+- placeholder analysis boundary for future model outputs
 
 Deferred until real data or real API release:
 - concrete dataset loader
@@ -60,6 +61,9 @@ Deferred until real data or real API release:
 | EX-001 | markdown exports | Judge-friendly markdown is generated from the current scenario report JSON contract, so any future report schema change must update the export renderer too. | medium | compare markdown needs against final report and presentation expectations | reporting, presentation |
 | API-001 | local http wrapper | The current HTTP server is a local stdlib wrapper for demos and mobile prototyping only, not a production deployment surface. | high | replace with final client/server integration strategy if the competition setup requires it | demo integration, mobile client |
 | API-002 | local endpoint payloads | The local API reuses repository JSON contracts directly; final mobile-facing payloads may require reshaping once the real app and backend boundaries are known. | medium | inspect final mobile UX and telecom environment constraints | mobile integration, local API |
+| AN-001 | analyzer inputs | The placeholder analyzer currently consumes structured heuristic cues instead of raw media tensors or frames, because the real dataset and model pipeline are not available yet. | high | replace heuristic inputs with real media ingestion once dataset structure is known | analysis boundary, model integration |
+| AN-002 | analyzer outputs | The analysis result schema is intended to remain stable even after real models arrive, with future adapters mapping model outputs into this contract. | medium | compare real model outputs and task taxonomy against the current schema | orchestration integration, local API |
+| AN-003 | analysis session controls | The analysis session request uses local boolean controls for verification and QoD availability to keep demo runs deterministic until real telecom environments exist. | high | replace local controls with real environment-driven behavior when Number Verification and QoD endpoints are available | demo flow, local API |
 
 ## Unknowns That Must Be Resolved Before Real Model Work
 

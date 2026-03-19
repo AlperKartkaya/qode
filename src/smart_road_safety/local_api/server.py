@@ -7,6 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+from ..analysis import AnalysisSessionRequest, run_analysis_session
 from ..evaluation import run_scenario_suite
 from ..export import export_scenario_report_markdown
 from ..integration import MockNumberVerificationGateway, MockQualityOnDemandGateway
@@ -50,6 +51,9 @@ def _build_handler() -> type[BaseHTTPRequestHandler]:
                 payload = _read_json(self)
                 if self.path == "/orchestration/run":
                     self._handle_orchestration(payload)
+                    return
+                if self.path == "/analysis-session/run":
+                    self._handle_analysis_session(payload)
                     return
                 if self.path == "/evaluation/run-scenarios":
                     self._handle_scenarios(payload)
@@ -98,6 +102,12 @@ def _build_handler() -> type[BaseHTTPRequestHandler]:
                 policy=policy,
             )
             result = orchestrator.run(request)
+            self._send_json(HTTPStatus.OK, asdict(result))
+
+        def _handle_analysis_session(self, payload: dict[str, Any]) -> None:
+            request = AnalysisSessionRequest.from_dict(payload["request"])
+            policy = _load_policy(payload.get("policy_path"))
+            result = run_analysis_session(request=request, policy=policy)
             self._send_json(HTTPStatus.OK, asdict(result))
 
         def _handle_scenarios(self, payload: dict[str, Any]) -> None:

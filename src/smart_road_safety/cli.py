@@ -5,6 +5,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+from .analysis import AnalysisSessionRequest, run_analysis_session
 from .assumptions import ASSUMPTIONS
 from .data import build_adapter_from_manifest_path
 from .evaluation import run_scenario_suite
@@ -75,6 +76,20 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Path to a mock orchestration request JSON file.",
     )
     run_orchestration.add_argument(
+        "--policy-path",
+        default=None,
+        help="Optional QoD policy JSON file. If omitted, the packaged default is used.",
+    )
+
+    run_analysis_session_parser = subparsers.add_parser(
+        "run-analysis-session",
+        help="Run a placeholder analyzer, then feed its output into the telecom workflow.",
+    )
+    run_analysis_session_parser.add_argument(
+        "request_path",
+        help="Path to an analysis session request JSON file.",
+    )
+    run_analysis_session_parser.add_argument(
         "--policy-path",
         default=None,
         help="Optional QoD policy JSON file. If omitted, the packaged default is used.",
@@ -220,6 +235,18 @@ def _run_mock_orchestration(request_path: str, policy_path: str | None) -> int:
     return 0
 
 
+def _run_analysis_session(request_path: str, policy_path: str | None) -> int:
+    policy = (
+        load_default_qod_policy()
+        if policy_path is None
+        else QodPolicy.from_path(policy_path)
+    )
+    request = AnalysisSessionRequest.from_path(request_path)
+    result = run_analysis_session(request=request, policy=policy)
+    print(json.dumps(asdict(result), indent=2))
+    return 0
+
+
 def _run_scenarios(
     scenario_path: str, output_path: str, policy_path: str | None
 ) -> int:
@@ -268,6 +295,8 @@ def main() -> int:
         return _simulate_qod(args.scenario_path, args.policy_path)
     if args.command == "run-mock-orchestration":
         return _run_mock_orchestration(args.request_path, args.policy_path)
+    if args.command == "run-analysis-session":
+        return _run_analysis_session(args.request_path, args.policy_path)
     if args.command == "run-scenarios":
         return _run_scenarios(args.scenario_path, args.output_path, args.policy_path)
     if args.command == "export-scenario-report":

@@ -1,0 +1,20 @@
+{
+  "session_id": "analysis-session-001",
+  "phone_number": "+905551112233",
+  "device_session_id": "analysis-device-001",
+  "requested_profile": "standard",
+  "verification_should_pass": true,
+  "qod_should_allow_boost": true,
+  "analyzer_input": {
+    "source_ref": "placeholder://analysis/session-001",
+    "quality_profile": "standard",
+    "target_vehicle_confidence": 0.88,
+    "plate_visibility_score": 0.51,
+    "driver_risk_score": 0.22,
+    "distance_meters": 24.0,
+    "driver_risk_label": "placeholder_none",
+    "notes": [
+      "Placeholder analyzer input fields are governed by AN-001 through AN-003 in assumptions.md."
+    ]
+  }
+}
