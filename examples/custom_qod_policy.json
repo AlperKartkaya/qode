@@ -1,0 +1,10 @@
+{
+  "standard_profile": "standard",
+  "boosted_profile": "boosted",
+  "approach_distance_meters": 15.0,
+  "togg_confidence_threshold": 0.95,
+  "plate_visibility_min": 0.4,
+  "plate_visibility_max": 0.55,
+  "driver_risk_threshold": 0.8,
+  "boosted_duration_seconds": 20
+}

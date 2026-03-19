@@ -14,6 +14,7 @@ from smart_road_safety.qod import (
     SceneSignal,
     evaluate_qod_need,
 )
+from smart_road_safety.policy import QodPolicy
 
 
 class QodPolicyTest(unittest.TestCase):
@@ -42,6 +43,30 @@ class QodPolicyTest(unittest.TestCase):
         )
 
         decision = evaluate_qod_need(signal)
+
+        self.assertFalse(decision.should_activate)
+        self.assertEqual(decision.requested_profile, STANDARD_PROFILE)
+
+    def test_custom_policy_can_block_a_default_boost(self) -> None:
+        strict_policy = QodPolicy(
+            standard_profile="standard",
+            boosted_profile="boosted",
+            approach_distance_meters=10.0,
+            togg_confidence_threshold=0.95,
+            plate_visibility_min=0.10,
+            plate_visibility_max=0.20,
+            driver_risk_threshold=0.80,
+            boosted_duration_seconds=15,
+        )
+        signal = SceneSignal(
+            togg_candidate_confidence=0.90,
+            plate_visibility_score=0.50,
+            driver_risk_score=0.10,
+            distance_meters=20.0,
+            current_profile=STANDARD_PROFILE,
+        )
+
+        decision = evaluate_qod_need(signal, policy=strict_policy)
 
         self.assertFalse(decision.should_activate)
         self.assertEqual(decision.requested_profile, STANDARD_PROFILE)

@@ -16,8 +16,10 @@ Treat every assumption below as provisional. When the real dataset arrives:
 Implemented now:
 - project assumptions registry
 - dataset-manifest checker
+- dataset-adapter slot and ingestion-plan bridge
 - shared domain contracts
-- QoD decision simulation based on spec-derived heuristics
+- Number Verification and QoD integration contracts
+- QoD decision simulation based on configurable policy files
 
 Deferred until real data or real API release:
 - concrete dataset loader
@@ -65,8 +67,9 @@ Deferred until real data or real API release:
 3. Run the manifest checker and list all failed assumptions.
 4. Update this file first, assumption by assumption.
 5. Update the Python contracts only where the real dataset contradicts current assumptions.
-6. Implement a concrete dataset adapter after the assumptions are updated.
-7. Keep the QoD policy thresholds configurable; do not bury dataset-specific constants inside model code.
+6. Use the adapter-slot flow to resolve the real manifest before implementing any concrete parser.
+7. Implement a concrete dataset adapter after the assumptions are updated.
+8. Keep the QoD policy thresholds configurable; do not bury dataset-specific constants inside model code.
 
 ## What Should Change Immediately If Reality Differs
 

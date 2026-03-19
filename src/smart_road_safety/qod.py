@@ -4,13 +4,12 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from .policy import QodPolicy, load_default_qod_policy
 
-STANDARD_PROFILE = "standard"
-BOOSTED_PROFILE = "boosted"
-APPROACH_DISTANCE_METERS = 40.0
-TOGG_CONFIDENCE_THRESHOLD = 0.70
-PLATE_VISIBILITY_WINDOW = (0.25, 0.80)
-DRIVER_RISK_THRESHOLD = 0.65
+
+DEFAULT_QOD_POLICY = load_default_qod_policy()
+STANDARD_PROFILE = DEFAULT_QOD_POLICY.standard_profile
+BOOSTED_PROFILE = DEFAULT_QOD_POLICY.boosted_profile
 
 
 @dataclass(frozen=True)
@@ -43,30 +42,37 @@ class QodDecision:
     expected_benefit: str
 
 
-def evaluate_qod_need(signal: SceneSignal) -> QodDecision:
+def evaluate_qod_need(
+    signal: SceneSignal, policy: QodPolicy | None = None
+) -> QodDecision:
+    active_policy = policy if policy is not None else DEFAULT_QOD_POLICY
     reasons: list[str] = []
 
     if (
         signal.distance_meters is not None
-        and signal.distance_meters <= APPROACH_DISTANCE_METERS
-        and signal.togg_candidate_confidence >= TOGG_CONFIDENCE_THRESHOLD
+        and signal.distance_meters <= active_policy.approach_distance_meters
+        and signal.togg_candidate_confidence >= active_policy.togg_confidence_threshold
     ):
         reasons.append(
             "candidate target vehicle is close enough to justify boosted quality"
         )
 
     if (
-        PLATE_VISIBILITY_WINDOW[0]
+        active_policy.plate_visibility_min
         <= signal.plate_visibility_score
-        <= PLATE_VISIBILITY_WINDOW[1]
+        <= active_policy.plate_visibility_max
     ):
         reasons.append("plate is visible but not yet clear enough for reliable reading")
 
-    if signal.driver_risk_score >= DRIVER_RISK_THRESHOLD:
+    if signal.driver_risk_score >= active_policy.driver_risk_threshold:
         reasons.append("driver risk score suggests a higher-detail inspection window")
 
-    should_activate = bool(reasons) and signal.current_profile != BOOSTED_PROFILE
-    requested_profile = BOOSTED_PROFILE if should_activate else signal.current_profile
+    should_activate = (
+        bool(reasons) and signal.current_profile != active_policy.boosted_profile
+    )
+    requested_profile = (
+        active_policy.boosted_profile if should_activate else signal.current_profile
+    )
     expected_benefit = (
         "better detail for plate, in-cabin, or target-vehicle analysis"
         if should_activate
