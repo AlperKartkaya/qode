@@ -79,8 +79,27 @@ class LocalApiTest(unittest.TestCase):
         connection.close()
 
         self.assertEqual(response.status, 200)
-        self.assertTrue(payload["analysis_result"]["target_vehicle_detected"])
+        self.assertFalse(payload["analysis_result"]["target_vehicle_detected"])
         self.assertEqual(payload["workflow_result"]["status"], "SUCCESS")
+
+    def test_dataset_inventory_endpoint_returns_real_inventory(self) -> None:
+        request_payload = {
+            "manifest_path": str(ROOT / "data" / "real_dataset_manifest.json"),
+            "dataset_root": str(ROOT / "data"),
+        }
+        connection = HTTPConnection(self.host, self.port)
+        connection.request(
+            "POST",
+            "/dataset/inventory",
+            body=json.dumps(request_payload),
+            headers={"Content-Type": "application/json"},
+        )
+        response = connection.getresponse()
+        payload = json.loads(response.read().decode("utf-8"))
+        connection.close()
+
+        self.assertEqual(response.status, 200)
+        self.assertEqual(payload["sample_count"], 3)
 
     def test_scenario_endpoint_returns_report_summary(self) -> None:
         request_payload = {

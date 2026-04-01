@@ -52,6 +52,19 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Optional dataset root path for the future concrete adapter.",
     )
 
+    inspect_dataset = subparsers.add_parser(
+        "inspect-dataset",
+        help="Load the current dataset inventory from a manifest and dataset root.",
+    )
+    inspect_dataset.add_argument(
+        "manifest_path", help="Path to a dataset manifest JSON file."
+    )
+    inspect_dataset.add_argument(
+        "--dataset-root",
+        required=True,
+        help="Path to the dataset root to inspect.",
+    )
+
     subparsers.add_parser(
         "print-default-qod-policy",
         help="Print the packaged default QoD policy JSON.",
@@ -186,6 +199,16 @@ def _plan_ingestion(manifest_path: str, dataset_root: str | None) -> int:
     return 0
 
 
+def _inspect_dataset(manifest_path: str, dataset_root: str) -> int:
+    adapter = build_adapter_from_manifest_path(
+        manifest_path=manifest_path,
+        dataset_root=dataset_root,
+    )
+    inventory = adapter.load_inventory()
+    print(json.dumps(asdict(inventory), indent=2))
+    return 0
+
+
 def _print_default_qod_policy() -> int:
     policy = load_default_qod_policy()
     print(json.dumps(policy.to_dict(), indent=2))
@@ -289,6 +312,8 @@ def main() -> int:
         return _check_manifest(args.manifest_path)
     if args.command == "plan-ingestion":
         return _plan_ingestion(args.manifest_path, args.dataset_root)
+    if args.command == "inspect-dataset":
+        return _inspect_dataset(args.manifest_path, args.dataset_root)
     if args.command == "print-default-qod-policy":
         return _print_default_qod_policy()
     if args.command == "simulate-qod":

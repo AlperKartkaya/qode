@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..data import build_adapter_from_manifest_path
 from ..integration import MockNumberVerificationGateway, MockQualityOnDemandGateway
 from ..orchestration import (
     MockSessionRequest,
@@ -15,6 +16,7 @@ from .models import (
     AnalysisSessionRequest,
     AnalysisSessionResult,
     AnalyzerInput,
+    DatasetSelection,
     SceneAnalyzer,
 )
 
@@ -83,7 +85,10 @@ def run_analysis_session(
         if analyzer is not None
         else PlaceholderSceneAnalyzer(policy=active_policy)
     )
-    analysis_result = active_analyzer.analyze(request.analyzer_input)
+    analysis_result = _build_analysis_result(
+        request=request,
+        analyzer=active_analyzer,
+    )
     workflow_request = MockSessionRequest(
         session_id=request.session_id,
         phone_number=request.phone_number,
@@ -121,4 +126,47 @@ def run_analysis_session(
     return AnalysisSessionResult(
         analysis_result=analysis_result,
         workflow_result=workflow_result,
+    )
+
+
+def _build_analysis_result(
+    request: AnalysisSessionRequest,
+    analyzer: SceneAnalyzer,
+) -> AnalysisResult:
+    if request.analyzer_input is not None:
+        return analyzer.analyze(request.analyzer_input)
+
+    if request.dataset_selection is None:
+        raise ValueError(
+            "AnalysisSessionRequest requires analyzer_input or dataset_selection."
+        )
+
+    return _build_dataset_backed_result(request.dataset_selection)
+
+
+def _build_dataset_backed_result(dataset_selection: DatasetSelection) -> AnalysisResult:
+    adapter = build_adapter_from_manifest_path(
+        manifest_path=dataset_selection.manifest_path,
+        dataset_root=dataset_selection.dataset_root,
+    )
+    inventory = adapter.load_inventory()
+    sample = inventory.get_sample(dataset_selection.sample_id)
+    return AnalysisResult(
+        source_ref=sample.primary_source_ref,
+        quality_profile="standard",
+        target_vehicle_detected=False,
+        target_vehicle_confidence=0.0,
+        plate_candidate_detected=False,
+        plate_visibility_score=0.0,
+        driver_risk_score=0.0,
+        driver_risk_label="unavailable_no_labels",
+        distance_meters=None,
+        summary_message=(
+            "Real media sample loaded from the delivered dataset, but no structured annotations or model outputs are available in the current bundle."
+        ),
+        notes=(
+            f"sample_id={sample.sample_id}",
+            f"video_path={sample.video_path}",
+            f"screenshot_count={len(sample.screenshot_paths)}",
+        ),
     )

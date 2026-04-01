@@ -8,7 +8,10 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
-from smart_road_safety.data import build_adapter_from_manifest
+from smart_road_safety.data import (
+    build_adapter_from_manifest,
+    build_adapter_from_manifest_path,
+)
 from smart_road_safety.manifest import DatasetManifest
 
 
@@ -77,6 +80,18 @@ class DatasetAdapterTest(unittest.TestCase):
 
         self.assertEqual(adapter.adapter_key, "assumed_frame_dataset")
         self.assertIn("frame images", plan.required_assets)
+
+    def test_real_media_manifest_loads_dataset_inventory(self) -> None:
+        adapter = build_adapter_from_manifest_path(
+            manifest_path=ROOT / "data" / "real_dataset_manifest.json",
+            dataset_root=ROOT / "data",
+        )
+        inventory = adapter.load_inventory()
+
+        self.assertEqual(adapter.adapter_key, "observed_media_bundle")
+        self.assertEqual(inventory.sample_count, 3)
+        self.assertEqual(inventory.get_sample("video_1").sample_id, "video_1")
+        self.assertEqual(len(inventory.get_sample("video_1").screenshot_paths), 4)
 
 
 if __name__ == "__main__":

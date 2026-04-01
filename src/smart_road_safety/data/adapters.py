@@ -19,6 +19,34 @@ class IngestionPlan:
     notes: tuple[str, ...] = field(default_factory=tuple)
 
 
+@dataclass(frozen=True)
+class DatasetMediaSample:
+    sample_id: str
+    video_path: str
+    screenshot_paths: tuple[str, ...]
+
+    @property
+    def primary_source_ref(self) -> str:
+        if self.screenshot_paths:
+            return self.screenshot_paths[0]
+        return self.video_path
+
+
+@dataclass(frozen=True)
+class DatasetInventory:
+    dataset_root: str
+    sample_unit: str
+    sample_count: int
+    samples: tuple[DatasetMediaSample, ...]
+    notes: tuple[str, ...] = field(default_factory=tuple)
+
+    def get_sample(self, sample_id: str) -> DatasetMediaSample:
+        for sample in self.samples:
+            if sample.sample_id == sample_id:
+                return sample
+        raise ValueError(f"Unknown dataset sample_id: {sample_id}")
+
+
 class DatasetAdapter(ABC):
     adapter_key = "base"
 
@@ -49,6 +77,11 @@ class DatasetAdapter(ABC):
 
     def _dataset_root_value(self) -> str | None:
         return None if self.dataset_root is None else str(self.dataset_root)
+
+    def load_inventory(self) -> DatasetInventory:
+        raise NotImplementedError(
+            f"Inventory loading is not implemented for adapter {self.adapter_key}."
+        )
 
 
 class AssumedVideoClipDatasetAdapter(DatasetAdapter):
@@ -105,6 +138,66 @@ class AssumedFrameDatasetAdapter(DatasetAdapter):
         )
 
 
+class ObservedMediaBundleDatasetAdapter(DatasetAdapter):
+    adapter_key = "observed_media_bundle"
+
+    @classmethod
+    def supports_manifest(cls, manifest: DatasetManifest) -> bool:
+        return (
+            manifest.sample_unit == "mixed"
+            and manifest.annotation_format == "none_observed"
+        )
+
+    def build_ingestion_plan(self) -> IngestionPlan:
+        return IngestionPlan(
+            adapter_key=self.adapter_key,
+            dataset_root=self._dataset_root_value(),
+            sample_unit=self.manifest.sample_unit,
+            annotation_format=self.manifest.annotation_format,
+            required_assets=("video files", "companion screenshot directories"),
+            expected_splits=self._split_names(),
+            target_families=self.manifest.targets,
+            notes=(
+                "Current delivery is a media-only bundle with no structured annotations observed.",
+                "Analysis may load real media paths while keeping unavailable labels explicit.",
+            ),
+        )
+
+    def load_inventory(self) -> DatasetInventory:
+        if self.dataset_root is None:
+            raise ValueError(
+                "dataset_root is required to load the observed media bundle."
+            )
+
+        dataset_root = self.dataset_root
+        video_paths = sorted(dataset_root.glob("video_*.mp4"))
+        samples: list[DatasetMediaSample] = []
+
+        for video_path in video_paths:
+            suffix = video_path.stem.split("_")[-1]
+            screenshot_dir = dataset_root / f"snap_from_video_{suffix}"
+            screenshot_paths = tuple(
+                str(path) for path in sorted(screenshot_dir.glob("*.png"))
+            )
+            samples.append(
+                DatasetMediaSample(
+                    sample_id=video_path.stem,
+                    video_path=str(video_path),
+                    screenshot_paths=screenshot_paths,
+                )
+            )
+
+        return DatasetInventory(
+            dataset_root=str(dataset_root),
+            sample_unit=self.manifest.sample_unit,
+            sample_count=len(samples),
+            samples=tuple(samples),
+            notes=(
+                "Inventory reflects the currently observed media bundle under the dataset root.",
+            ),
+        )
+
+
 class ManifestAdapterRegistry:
     def __init__(self) -> None:
         self._adapter_types: list[type[DatasetAdapter]] = []
@@ -131,6 +224,7 @@ class ManifestAdapterRegistry:
 
 def build_default_registry() -> ManifestAdapterRegistry:
     registry = ManifestAdapterRegistry()
+    registry.register(ObservedMediaBundleDatasetAdapter)
     registry.register(AssumedVideoClipDatasetAdapter)
     registry.register(AssumedFrameDatasetAdapter)
     return registry

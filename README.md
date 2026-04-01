@@ -9,6 +9,7 @@ Current milestone:
 - a deterministic scenario-to-score harness for traceable pre-dataset evaluation
 - a markdown export layer and tiny local HTTP API for future demo clients
 - a placeholder analysis boundary that feeds future model outputs into the telecom workflow
+- a real media-bundle adapter for the delivered dataset under `data/`
 - placeholder workspace boundaries for mobile, API, vision, and simulation work
 
 This repository intentionally avoids locking into real dataset parsing before the dataset is released.
@@ -30,6 +31,8 @@ This repository intentionally avoids locking into real dataset parsing before th
 PYTHONPATH=src python3 -m smart_road_safety.cli print-assumptions
 PYTHONPATH=src python3 -m smart_road_safety.cli check-manifest examples/assumed_dataset_manifest.json
 PYTHONPATH=src python3 -m smart_road_safety.cli plan-ingestion examples/assumed_dataset_manifest.json --dataset-root data/offline
+PYTHONPATH=src python3 -m smart_road_safety.cli check-manifest data/real_dataset_manifest.json
+PYTHONPATH=src python3 -m smart_road_safety.cli inspect-dataset data/real_dataset_manifest.json --dataset-root data
 PYTHONPATH=src python3 -m smart_road_safety.cli print-default-qod-policy
 PYTHONPATH=src python3 -m smart_road_safety.cli simulate-qod examples/qod_scenario.json
 PYTHONPATH=src python3 -m smart_road_safety.cli simulate-qod examples/qod_scenario.json --policy-path examples/custom_qod_policy.json
@@ -59,3 +62,4 @@ The current extension points are:
 - the export layer turns scenario reports into judge-friendly markdown without changing the underlying JSON contract
 - the local HTTP API exposes orchestration, evaluation, and export flows through a thin stdlib wrapper for future mobile or demo integration
 - the analysis boundary provides a stable pre-model contract so future dataset-backed analyzers can feed the existing workflow without redesigning orchestration
+- the delivered dataset is now ingested as a real mixed media bundle, even though structured labels are still absent from the provided folder

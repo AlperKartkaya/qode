@@ -17,6 +17,7 @@ Implemented now:
 - project assumptions registry
 - dataset-manifest checker
 - dataset-adapter slot and ingestion-plan bridge
+- inspected real media bundle under `data/`
 - shared domain contracts
 - Number Verification and QoD integration contracts
 - QoD decision simulation based on configurable policy files
@@ -24,6 +25,7 @@ Implemented now:
 - deterministic scenario playback and placeholder scoring harness
 - markdown export and thin local HTTP wrapper for demo-oriented integration
 - placeholder analysis boundary for future model outputs
+- real mixed-media dataset inventory for the delivered bundle under `data/`
 
 Deferred until real data or real API release:
 - concrete dataset loader
@@ -37,15 +39,15 @@ Deferred until real data or real API release:
 | ID | Domain | Current Assumption | Confidence | Verify When Data Arrives | Impact Surface |
 | --- | --- | --- | --- | --- | --- |
 | DS-001 | dataset packaging | The offline development dataset will contain video files, not only extracted images. | high | inspect directory tree and file extensions | dataset ingestion, preprocessing |
-| DS-002 | sample unit | The main unit of work will be a video clip or video stream segment, even if some labels are frame-level. | high | inspect annotation granularity and sample identifiers | adapters, evaluation, batching |
-| DS-003 | annotation source | Labels will likely be supplied in one or more structured sidecar files such as JSON or CSV rather than embedded in the video files. | medium | inspect annotation files and metadata format | parsers, schema validation |
-| DS-004 | targets | The dataset will support at least vehicle presence, plate-related information, speed-related information, in-cabin objects, and driver-behavior/risk signals because these are called out in the spec. | high | compare label ontology against these target groups | task routing, model heads |
-| DS-005 | plate labels | Plate information may be full text, partially masked text, or only plate regions. Do not assume OCR-ready text is guaranteed. | medium | inspect whether labels contain strings, boxes, masks, or only binary indicators | OCR pipeline, post-processing |
-| DS-006 | speed labels | Speed ground truth will likely use `km/h` or equivalent Turkish road-speed units. | medium | inspect metadata field names and units | normalization, reporting |
-| DS-007 | in-cabin labels | In-cabin signals may mix objects and behaviors, for example `phone`, `cigarette`, `fatigue`, `distracted`. Do not assume the final class taxonomy yet. | medium | inspect label names and their hierarchy | classification schema, UI labels |
-| DS-008 | annotation granularity | Some targets may be frame-level while others may be clip-level or event-level. The dataset may not use one uniform annotation granularity. | medium | inspect examples from every target family | adapters, metrics, temporal smoothing |
-| DS-009 | split strategy | The release may provide only a single offline dataset without a clean train/validation/test split, so internal splitting may be required. | medium | inspect dataset folders and documentation | experimentation workflow |
-| DS-010 | TOGG trigger | The competition logic requires detecting a critical situation around the TOGG vehicle, but the exact representation of `TOGG approaching` is unknown and must not be hardcoded until observed in data. | high | inspect whether TOGG is class-labeled, visually unique, or externally identified | trigger policy, detection logic |
+| DS-002 | sample unit | The currently delivered dataset is a mixed media bundle organized around three MP4 videos with companion screenshot folders, so the practical unit is `video clip + extracted stills` rather than a pure video-only or image-only sample. | high | inspect whether later releases add labels keyed per video, per frame, or per extracted image | adapters, evaluation, batching |
+| DS-003 | annotation source | No structured annotation files or dataset documentation were observed inside the delivered `data/` folder, so labels may be absent from this drop or delivered separately later. | high | inspect future sidecar files, docs, or external label packages | parsers, schema validation |
+| DS-004 | targets | The delivered media clearly contains a vehicle and visible front plate imagery, but there is no machine-readable evidence yet for speed, in-cabin object, or driver-behavior labels. | high | compare any future label ontology or docs against the visible media and competition target list | task routing, model heads |
+| DS-005 | plate labels | The front plate is visually readable in inspected screenshots, but no explicit plate text annotation file was observed. | high | inspect whether plate strings, boxes, masks, or OCR labels arrive separately | OCR pipeline, post-processing |
+| DS-006 | speed labels | No speed ground-truth metadata was observed in the delivered dataset bundle. | high | inspect future metadata/docs for speed labels and units | normalization, reporting |
+| DS-007 | in-cabin labels | A driver is visually visible in inspected screenshots, but no structured in-cabin object or behavior labels were observed. | medium | inspect whether future labels expose phone, cigarette, fatigue, distraction, or only raw imagery | classification schema, UI labels |
+| DS-008 | annotation granularity | Annotation granularity is still unknown because the current delivery contains media only and no structured labels. | high | inspect any future labels for frame-level, clip-level, or event-level structure | adapters, metrics, temporal smoothing |
+| DS-009 | split strategy | No train/validation/test split was observed in the delivered `data/` folder; the current bundle appears to be a single unsplit media set. | high | inspect whether future releases add official splits or split metadata | experimentation workflow |
+| DS-010 | TOGG trigger | The inspected screenshots visually center on a TOGG vehicle, but there is no explicit machine-readable TOGG identifier yet. | medium | inspect whether future labels or metadata explicitly identify the target vehicle | trigger policy, detection logic |
 | DS-011 | quality modes | There will be at least two meaningful video-quality states in practice: normal quality and boosted quality after QoD. | high | inspect stream setup or final API docs | simulation, mobile flow |
 | DS-012 | QoD policy | QoD should be requested only when there is an observable benefit such as approach detection, plate-read need, or driver-risk review. | high | confirm against final API docs and judging guidance | trigger policy |
 | DS-013 | Number Verification integration | Real Number Verification behavior will only be testable once Turkcell provides the final environment, so current work should use mocks or interface boundaries only. | high | inspect final environment and auth requirements | mobile/auth integration |
@@ -65,9 +67,19 @@ Deferred until real data or real API release:
 | AN-002 | analyzer outputs | The analysis result schema is intended to remain stable even after real models arrive, with future adapters mapping model outputs into this contract. | medium | compare real model outputs and task taxonomy against the current schema | orchestration integration, local API |
 | AN-003 | analysis session controls | The analysis session request uses local boolean controls for verification and QoD availability to keep demo runs deterministic until real telecom environments exist. | high | replace local controls with real environment-driven behavior when Number Verification and QoD endpoints are available | demo flow, local API |
 
+## Observed Dataset Reality In The Current Delivery
+
+- root folder contains exactly three MP4 files: `video_1.mp4`, `video_2.mp4`, `video_3.mp4`
+- each video has a companion screenshot folder: `snap_from_video_1/`, `snap_from_video_2/`, `snap_from_video_3/`
+- each screenshot folder currently contains four PNG still images
+- inspected screenshots show a TOGG vehicle in an indoor parking-garage style environment
+- the front plate is visually readable in inspected screenshots
+- a driver is visually visible in inspected screenshots
+- no JSON, CSV, TXT, YAML, README, or obvious label sidecar files were observed under `data/`
+
 ## Unknowns That Must Be Resolved Before Real Model Work
 
-- exact folder and file structure of the dataset
+- whether annotations/docs will arrive separately from the current media bundle
 - exact annotation format
 - exact target taxonomy
 - whether speed is frame-level, clip-level, or separately supplied metadata

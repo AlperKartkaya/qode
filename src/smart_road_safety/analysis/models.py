@@ -155,12 +155,46 @@ class SceneAnalyzer(ABC):
 
 
 @dataclass(frozen=True)
+class DatasetSelection:
+    dataset_root: str
+    manifest_path: str
+    sample_id: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "dataset_root", _require_text(self.dataset_root, "dataset_root")
+        )
+        object.__setattr__(
+            self, "manifest_path", _require_text(self.manifest_path, "manifest_path")
+        )
+        object.__setattr__(
+            self, "sample_id", _require_text(self.sample_id, "sample_id")
+        )
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "DatasetSelection":
+        required_keys = {"dataset_root", "manifest_path", "sample_id"}
+        missing = sorted(required_keys - payload.keys())
+        if missing:
+            raise ValueError(
+                f"Dataset selection is missing required keys: {', '.join(missing)}"
+            )
+
+        return cls(
+            dataset_root=str(payload["dataset_root"]),
+            manifest_path=str(payload["manifest_path"]),
+            sample_id=str(payload["sample_id"]),
+        )
+
+
+@dataclass(frozen=True)
 class AnalysisSessionRequest:
     session_id: str
     phone_number: str
     device_session_id: str
     requested_profile: str
-    analyzer_input: AnalyzerInput
+    analyzer_input: AnalyzerInput | None = None
+    dataset_selection: DatasetSelection | None = None
     verification_should_pass: bool = True
     qod_should_allow_boost: bool = True
 
@@ -181,6 +215,10 @@ class AnalysisSessionRequest:
             "requested_profile",
             _require_text(self.requested_profile, "requested_profile"),
         )
+        if self.analyzer_input is None and self.dataset_selection is None:
+            raise ValueError(
+                "AnalysisSessionRequest requires analyzer_input or dataset_selection."
+            )
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "AnalysisSessionRequest":
@@ -189,7 +227,6 @@ class AnalysisSessionRequest:
             "phone_number",
             "device_session_id",
             "requested_profile",
-            "analyzer_input",
         }
         missing = sorted(required_keys - payload.keys())
         if missing:
@@ -202,7 +239,12 @@ class AnalysisSessionRequest:
             phone_number=str(payload["phone_number"]),
             device_session_id=str(payload["device_session_id"]),
             requested_profile=str(payload["requested_profile"]),
-            analyzer_input=AnalyzerInput.from_dict(payload["analyzer_input"]),
+            analyzer_input=None
+            if payload.get("analyzer_input") is None
+            else AnalyzerInput.from_dict(payload["analyzer_input"]),
+            dataset_selection=None
+            if payload.get("dataset_selection") is None
+            else DatasetSelection.from_dict(payload["dataset_selection"]),
             verification_should_pass=bool(
                 payload.get("verification_should_pass", True)
             ),

@@ -3,6 +3,7 @@ from .models import (
     AnalysisSessionRequest,
     AnalysisSessionResult,
     AnalyzerInput,
+    DatasetSelection,
     SceneAnalyzer,
 )
 from .placeholder import PlaceholderSceneAnalyzer, run_analysis_session
@@ -12,6 +13,7 @@ __all__ = [
     "AnalysisSessionRequest",
     "AnalysisSessionResult",
     "AnalyzerInput",
+    "DatasetSelection",
     "PlaceholderSceneAnalyzer",
     "SceneAnalyzer",
     "run_analysis_session",

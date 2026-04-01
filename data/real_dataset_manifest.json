@@ -1,0 +1,20 @@
+{
+  "sample_unit": "mixed",
+  "video_extensions": [".mp4"],
+  "annotation_format": "none_observed",
+  "includes_train_split": false,
+  "includes_validation_split": false,
+  "includes_test_split": false,
+  "targets": [
+    "vehicle",
+    "plate"
+  ],
+  "has_frame_level_annotations": false,
+  "has_clip_level_annotations": false,
+  "has_plate_text": false,
+  "has_speed_ground_truth": false,
+  "has_in_cabin_annotations": false,
+  "has_driver_behavior_annotations": false,
+  "speed_unit": null,
+  "notes": "Observed delivery contains three MP4 videos and three screenshot folders with four PNG images each. No structured annotations or dataset docs were observed under data/."
+}

@@ -85,6 +85,32 @@ class AnalysisSessionTest(unittest.TestCase):
         self.assertEqual(result.workflow_result.status, "FAILED")
         self.assertFalse(result.workflow_result.mobile_view.verification_passed)
 
+    def test_run_analysis_session_can_load_real_dataset_sample(self) -> None:
+        request = AnalysisSessionRequest.from_dict(
+            {
+                "session_id": "dataset-session-1",
+                "phone_number": "+905551112233",
+                "device_session_id": "device-dataset-1",
+                "requested_profile": "standard",
+                "verification_should_pass": True,
+                "qod_should_allow_boost": True,
+                "dataset_selection": {
+                    "dataset_root": str(ROOT / "data"),
+                    "manifest_path": str(ROOT / "data" / "real_dataset_manifest.json"),
+                    "sample_id": "video_1",
+                },
+            }
+        )
+
+        result = run_analysis_session(request)
+
+        self.assertEqual(result.analysis_result.source_ref.endswith(".png"), True)
+        self.assertEqual(
+            result.analysis_result.driver_risk_label, "unavailable_no_labels"
+        )
+        self.assertEqual(result.workflow_result.status, "SUCCESS")
+        self.assertFalse(result.workflow_result.mobile_view.qod_requested)
+
 
 if __name__ == "__main__":
     unittest.main()
