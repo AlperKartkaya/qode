@@ -1,6 +1,6 @@
 # Smart Road Safety
 
-Pre-dataset foundation for the 2026 TEKNOFEST 5G and AI road safety competition.
+Dataset-backed foundation for the 2026 TEKNOFEST 5G and AI road safety competition.
 
 Current milestone:
 - explicit project assumptions in `assumptions.md`
@@ -11,19 +11,33 @@ Current milestone:
 - a deterministic scenario-to-score harness for the three real videos
 - a markdown export layer and tiny local HTTP API for future demo clients
 - a real media-bundle adapter for the delivered dataset under `data/`
-- placeholder workspace boundaries for mobile, API, vision, and simulation work
+- reserved workspace boundaries for mobile, API, vision, and simulation work
 
 This repository now treats the delivered media-only dataset plus the repository-local observation registry as the authoritative project input.
 
+## Dataset Reality
+
+The final delivered dataset consists of:
+- `data/video_1.mp4`, `data/video_2.mp4`, `data/video_3.mp4`
+- companion screenshot folders under `data/snap_from_video_*/`
+- a repository-local clip observation registry in `data/video_observations.json`
+
+There are no official structured annotations, split files, or telecom API details in the delivered bundle. The project therefore uses the observation registry as the authoritative source for clip-level behavior conclusions.
+
+Current authoritative behavior mapping:
+- `video_1` → `smoking_and_unsafe_scanning`
+- `video_2` → `phone_use_while_driving`
+- `video_3` → `drunk_like_erratic_driving`
+
 ## Workspace
 
-- `assumptions.md`: assumption registry for future adaptation work
-- `src/smart_road_safety/`: shared pre-dataset core
+- `assumptions.md`: current assumption and reality registry
+- `src/smart_road_safety/`: shared project core
 - `apps/mobile/`: reserved mobile app boundary
 - `services/api/`: reserved API boundary
 - `services/vision/`: reserved vision/model boundary
 - `simulation/`: reserved scenario and evaluation boundary
-- `examples/`: sample inputs that match current assumptions
+- `examples/`: runnable inputs for the current dataset-backed flow
 - `tests/`: unit tests for the current milestone
 
 ## Commands
@@ -41,22 +55,30 @@ PYTHONPATH=src python3 -m smart_road_safety.cli serve-local-api --host 127.0.0.1
 PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
-## Why this milestone
+## Current System Shape
 
 The competition spec already fixes the broad system shape:
 - offline video-based model development comes first
 - live/mobile/API integration comes later
 - QoD must be triggered only when needed
 
-The delivered dataset is now a fixed media-only bundle of three videos plus screenshots. Because no official structured labels, splits, or telecom API docs will arrive with this delivery, the repository uses `data/video_observations.json` as the authoritative clip-level behavior source instead of waiting for future annotation packages.
+The repository is currently designed around a fixed media-only dataset. Because no official structured labels, splits, or telecom API docs will arrive with this delivery, `data/video_observations.json` is the authoritative clip-level behavior source for the three videos.
 
 The current extension points are:
 - dataset manifests resolve into adapter slots and the observed media-bundle adapter loads the real inventory from `data/`
 - integration contracts reserve the Number Verification and QoD boundaries while keeping their absent real details explicit
-- QoD thresholds live in policy JSON rather than in code constants, so the future dataset or API release can tune behavior without redesigning the module
+- QoD thresholds live in policy JSON rather than in code constants
 - the orchestration layer composes the mock gateways and typed results so future real clients can replace the mocks without changing the workflow shape
 - the evaluation layer runs deterministic scenarios for the three real videos and computes behavior agreement against the authoritative observation registry
 - the export layer turns scenario reports into judge-friendly markdown without changing the underlying JSON contract
 - the local HTTP API exposes orchestration, evaluation, and export flows through a thin stdlib wrapper for future mobile or demo integration
 - the analysis boundary now joins real media inventory with authoritative clip observations instead of waiting for future structured labels
-- the delivered dataset is now ingested as a real mixed media bundle, even though structured labels are still absent from the provided folder
+
+## Current Limitation Boundary
+
+The following are explicitly unavailable and therefore remain mocked or optional:
+- real Number Verification API environment
+- real QoD API environment
+- official speed ground truth
+- official train/validation/test split metadata
+- official external annotation package beyond the repository-local observation registry
