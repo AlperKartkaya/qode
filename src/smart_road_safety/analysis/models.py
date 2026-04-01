@@ -159,6 +159,7 @@ class DatasetSelection:
     dataset_root: str
     manifest_path: str
     sample_id: str
+    observations_path: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -184,6 +185,9 @@ class DatasetSelection:
             dataset_root=str(payload["dataset_root"]),
             manifest_path=str(payload["manifest_path"]),
             sample_id=str(payload["sample_id"]),
+            observations_path=None
+            if payload.get("observations_path") is None
+            else str(payload["observations_path"]),
         )
 
 

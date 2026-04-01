@@ -12,7 +12,7 @@ from smart_road_safety.manifest import DatasetManifest, compare_manifest_to_assu
 
 
 class ManifestChecksTest(unittest.TestCase):
-    def test_manifest_placeholder_reports_expected_low_severity_gaps(self) -> None:
+    def test_manifest_with_required_targets_reports_no_gaps(self) -> None:
         manifest = DatasetManifest.from_dict(
             {
                 "sample_unit": "video_clip",
@@ -39,11 +39,7 @@ class ManifestChecksTest(unittest.TestCase):
         )
 
         gaps = compare_manifest_to_assumptions(manifest)
-        gap_ids = {gap.assumption_id for gap in gaps}
-
-        self.assertIn("DS-009", gap_ids)
-        self.assertIn("DS-005", gap_ids)
-        self.assertNotIn("DS-004", gap_ids)
+        self.assertEqual(gaps, [])
 
     def test_manifest_missing_targets_is_high_severity(self) -> None:
         manifest = DatasetManifest.from_dict(

@@ -9,8 +9,6 @@ from typing import Any
 REQUIRED_TARGETS = {
     "vehicle",
     "plate",
-    "speed",
-    "in_cabin_object",
     "driver_behavior",
 }
 
@@ -140,7 +138,7 @@ def compare_manifest_to_assumptions(manifest: DatasetManifest) -> list[Adaptatio
             )
         )
 
-    if not manifest.has_speed_ground_truth:
+    if "speed" in manifest.targets and not manifest.has_speed_ground_truth:
         gaps.append(
             AdaptationGap(
                 assumption_id="DS-006",
@@ -164,17 +162,7 @@ def compare_manifest_to_assumptions(manifest: DatasetManifest) -> list[Adaptatio
             )
         )
 
-    if not manifest.includes_validation_split:
-        gaps.append(
-            AdaptationGap(
-                assumption_id="DS-009",
-                severity="low",
-                message="Validation split is absent.",
-                action="Create an internal validation strategy once the dataset is available.",
-            )
-        )
-
-    if not manifest.has_plate_text:
+    if "plate_text" in manifest.targets and not manifest.has_plate_text:
         gaps.append(
             AdaptationGap(
                 assumption_id="DS-005",

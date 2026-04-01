@@ -79,7 +79,11 @@ class LocalApiTest(unittest.TestCase):
         connection.close()
 
         self.assertEqual(response.status, 200)
-        self.assertFalse(payload["analysis_result"]["target_vehicle_detected"])
+        self.assertTrue(payload["analysis_result"]["target_vehicle_detected"])
+        self.assertEqual(
+            payload["analysis_result"]["driver_risk_label"],
+            "smoking_and_unsafe_scanning",
+        )
         self.assertEqual(payload["workflow_result"]["status"], "SUCCESS")
 
     def test_dataset_inventory_endpoint_returns_real_inventory(self) -> None:
@@ -120,6 +124,21 @@ class LocalApiTest(unittest.TestCase):
         self.assertEqual(payload["report"]["summary"]["scenario_count"], 3)
 
     def test_export_endpoint_writes_markdown_file(self) -> None:
+        evaluation_payload = {
+            "scenario_path": str(ROOT / "examples" / "scenarios"),
+            "output_path": str(ROOT / "out" / "scenario_report.json"),
+        }
+        evaluation_connection = HTTPConnection(self.host, self.port)
+        evaluation_connection.request(
+            "POST",
+            "/evaluation/run-scenarios",
+            body=json.dumps(evaluation_payload),
+            headers={"Content-Type": "application/json"},
+        )
+        evaluation_response = evaluation_connection.getresponse()
+        evaluation_response.read()
+        evaluation_connection.close()
+
         output_path = ROOT / "out" / "scenario_report_api.md"
         request_payload = {
             "report_path": str(ROOT / "out" / "scenario_report.json"),

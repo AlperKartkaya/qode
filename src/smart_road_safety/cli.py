@@ -49,7 +49,7 @@ def _build_parser() -> argparse.ArgumentParser:
     plan_ingestion.add_argument(
         "--dataset-root",
         default=None,
-        help="Optional dataset root path for the future concrete adapter.",
+        help="Optional dataset root path for the adapter inventory and ingestion plan.",
     )
 
     inspect_dataset = subparsers.add_parser(
@@ -96,7 +96,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     run_analysis_session_parser = subparsers.add_parser(
         "run-analysis-session",
-        help="Run a placeholder analyzer, then feed its output into the telecom workflow.",
+        help="Run an analysis session from either direct analyzer input or a real dataset sample selection.",
     )
     run_analysis_session_parser.add_argument(
         "request_path",

@@ -106,10 +106,10 @@ class AnalysisSessionTest(unittest.TestCase):
 
         self.assertEqual(result.analysis_result.source_ref.endswith(".png"), True)
         self.assertEqual(
-            result.analysis_result.driver_risk_label, "unavailable_no_labels"
+            result.analysis_result.driver_risk_label, "smoking_and_unsafe_scanning"
         )
         self.assertEqual(result.workflow_result.status, "SUCCESS")
-        self.assertFalse(result.workflow_result.mobile_view.qod_requested)
+        self.assertTrue(result.workflow_result.mobile_view.qod_requested)
 
 
 if __name__ == "__main__":

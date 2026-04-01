@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from ..data import build_adapter_from_manifest_path
 from ..integration import MockNumberVerificationGateway, MockQualityOnDemandGateway
@@ -19,6 +20,7 @@ from .models import (
     DatasetSelection,
     SceneAnalyzer,
 )
+from .observations import ObservationRegistry
 
 
 @dataclass
@@ -151,22 +153,29 @@ def _build_dataset_backed_result(dataset_selection: DatasetSelection) -> Analysi
     )
     inventory = adapter.load_inventory()
     sample = inventory.get_sample(dataset_selection.sample_id)
+    observations_path = (
+        Path(dataset_selection.observations_path)
+        if dataset_selection.observations_path is not None
+        else Path(dataset_selection.dataset_root) / "video_observations.json"
+    )
+    observation = ObservationRegistry.from_path(observations_path).get_sample(
+        dataset_selection.sample_id
+    )
     return AnalysisResult(
         source_ref=sample.primary_source_ref,
         quality_profile="standard",
-        target_vehicle_detected=False,
-        target_vehicle_confidence=0.0,
-        plate_candidate_detected=False,
-        plate_visibility_score=0.0,
-        driver_risk_score=0.0,
-        driver_risk_label="unavailable_no_labels",
+        target_vehicle_detected=observation.target_vehicle_present,
+        target_vehicle_confidence=1.0 if observation.target_vehicle_present else 0.0,
+        plate_candidate_detected=observation.plate_visible,
+        plate_visibility_score=observation.plate_visibility_score,
+        driver_risk_score=observation.risk_score,
+        driver_risk_label=observation.risk_label,
         distance_meters=None,
-        summary_message=(
-            "Real media sample loaded from the delivered dataset, but no structured annotations or model outputs are available in the current bundle."
-        ),
+        summary_message=observation.summary,
         notes=(
             f"sample_id={sample.sample_id}",
             f"video_path={sample.video_path}",
             f"screenshot_count={len(sample.screenshot_paths)}",
+            *(event.label for event in observation.driver_events),
         ),
     )

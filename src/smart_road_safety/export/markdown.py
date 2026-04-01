@@ -44,8 +44,8 @@ def render_scenario_report_markdown(report_path: str | Path) -> str:
         f"| Avg policy consistency | {_format_ratio(summary['average_policy_consistency_score'])} |"
     )
     lines.append(
-        "| Avg placeholder label agreement | "
-        f"{_format_ratio(summary['average_placeholder_label_agreement_score'])} |"
+        "| Avg behavior label agreement | "
+        f"{_format_ratio(summary['average_behavior_label_agreement_score'])} |"
     )
     lines.append("")
     lines.append("## Scenario Table")
@@ -113,7 +113,7 @@ def render_scenario_report_markdown(report_path: str | Path) -> str:
             "Metric snapshot: "
             f"selectivity={_format_ratio(metrics['qod_selectivity_score'])}, "
             f"policy={_format_ratio(metrics['policy_consistency_score'])}, "
-            f"labels={_format_ratio(metrics['placeholder_label_agreement_score'])}"
+            f"labels={_format_ratio(metrics['behavior_label_agreement_score'])}"
         )
 
     lines.append("")

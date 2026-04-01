@@ -16,7 +16,7 @@ def _mean(values: tuple[float, ...]) -> float:
 class ScenarioMetricSummary:
     qod_selectivity_score: float
     policy_consistency_score: float
-    placeholder_label_agreement_score: float
+    behavior_label_agreement_score: float
     all_expectations_met: bool
 
 
@@ -28,7 +28,7 @@ class ScenarioSuiteSummary:
     qod_acceptance_rate: float
     average_qod_selectivity_score: float
     average_policy_consistency_score: float
-    average_placeholder_label_agreement_score: float
+    average_behavior_label_agreement_score: float
 
 
 def score_scenario(
@@ -59,18 +59,18 @@ def score_scenario(
         if actual.mobile_view.driver_risk_label == expected.driver_risk_label
         else 0.0,
     )
-    placeholder_label_agreement_score = _mean(label_checks)
+    behavior_label_agreement_score = _mean(label_checks)
 
     all_expectations_met = (
         qod_selectivity_score == 1.0
         and policy_consistency_score == 1.0
-        and placeholder_label_agreement_score == 1.0
+        and behavior_label_agreement_score == 1.0
     )
 
     return ScenarioMetricSummary(
         qod_selectivity_score=qod_selectivity_score,
         policy_consistency_score=policy_consistency_score,
-        placeholder_label_agreement_score=placeholder_label_agreement_score,
+        behavior_label_agreement_score=behavior_label_agreement_score,
         all_expectations_met=all_expectations_met,
     )
 
@@ -96,8 +96,8 @@ def summarize_suite(entries: tuple["ScenarioReportEntry", ...]) -> ScenarioSuite
     average_policy_consistency_score = _mean(
         tuple(entry.metrics.policy_consistency_score for entry in entries)
     )
-    average_placeholder_label_agreement_score = _mean(
-        tuple(entry.metrics.placeholder_label_agreement_score for entry in entries)
+    average_behavior_label_agreement_score = _mean(
+        tuple(entry.metrics.behavior_label_agreement_score for entry in entries)
     )
 
     return ScenarioSuiteSummary(
@@ -107,7 +107,7 @@ def summarize_suite(entries: tuple["ScenarioReportEntry", ...]) -> ScenarioSuite
         qod_acceptance_rate=qod_acceptance_rate,
         average_qod_selectivity_score=average_qod_selectivity_score,
         average_policy_consistency_score=average_policy_consistency_score,
-        average_placeholder_label_agreement_score=average_placeholder_label_agreement_score,
+        average_behavior_label_agreement_score=average_behavior_label_agreement_score,
     )
 
 

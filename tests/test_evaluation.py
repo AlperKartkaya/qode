@@ -25,7 +25,7 @@ class EvaluationModelsTest(unittest.TestCase):
                 active_profile="boosted",
                 target_vehicle_detected=True,
                 plate_candidate_detected=True,
-                driver_risk_label="placeholder_none",
+                driver_risk_label="phone_use_while_driving",
             )
 
     def test_scenario_definition_from_dict_parses_nested_payloads(self) -> None:
@@ -49,7 +49,7 @@ class EvaluationModelsTest(unittest.TestCase):
                         "source_ref": "placeholder://scenario/1",
                         "target_vehicle_detected": True,
                         "plate_candidate_detected": True,
-                        "driver_risk_label": "placeholder_none",
+                        "driver_risk_label": "phone_use_while_driving",
                     },
                 },
                 "expected": {
@@ -59,12 +59,14 @@ class EvaluationModelsTest(unittest.TestCase):
                     "active_profile": "boosted",
                     "target_vehicle_detected": True,
                     "plate_candidate_detected": True,
-                    "driver_risk_label": "placeholder_none",
+                    "driver_risk_label": "phone_use_while_driving",
                 },
             }
         )
 
         self.assertEqual(scenario.scenario_id, "scenario-1")
+        self.assertIsNotNone(scenario.orchestration_request)
+        assert scenario.orchestration_request is not None
         self.assertEqual(scenario.orchestration_request.session_id, "session-1")
 
 
@@ -78,6 +80,7 @@ class EvaluationRunnerTest(unittest.TestCase):
 
         self.assertEqual(report.summary.scenario_count, 3)
         self.assertEqual(report.summary.expectation_pass_count, 3)
+        self.assertEqual(report.summary.average_behavior_label_agreement_score, 1.0)
         self.assertTrue(output_path.exists())
 
 

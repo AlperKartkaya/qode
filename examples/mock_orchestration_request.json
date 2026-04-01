@@ -11,12 +11,12 @@
     "current_profile": "standard"
   },
   "analysis_summary": {
-    "source_ref": "placeholder://dataset/clip-001",
+    "source_ref": "data/snap_from_video_1/Screenshot 2026-04-01 at 15.54.14.png",
     "target_vehicle_detected": true,
     "plate_candidate_detected": true,
-    "driver_risk_label": "placeholder_none",
+    "driver_risk_label": "smoking_and_unsafe_scanning",
     "notes": [
-      "Placeholder fields in this file are governed by assumptions OR-001, OR-002, and OR-003."
+      "This request mirrors the authoritative observation for video_1."
     ]
   }
 }

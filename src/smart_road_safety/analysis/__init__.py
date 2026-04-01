@@ -6,6 +6,7 @@ from .models import (
     DatasetSelection,
     SceneAnalyzer,
 )
+from .observations import ObservationRegistry, ObservedEvent, VideoObservation
 from .placeholder import PlaceholderSceneAnalyzer, run_analysis_session
 
 __all__ = [
@@ -15,6 +16,9 @@ __all__ = [
     "AnalyzerInput",
     "DatasetSelection",
     "PlaceholderSceneAnalyzer",
+    "ObservationRegistry",
+    "ObservedEvent",
     "SceneAnalyzer",
+    "VideoObservation",
     "run_analysis_session",
 ]

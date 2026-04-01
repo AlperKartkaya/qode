@@ -4,6 +4,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+from ..analysis import run_analysis_session
 from ..integration import MockNumberVerificationGateway, MockQualityOnDemandGateway
 from ..orchestration import MockTelecomOrchestrator
 from ..policy import QodPolicy, load_default_qod_policy
@@ -38,17 +39,27 @@ def run_scenario_suite(
     entries: list[ScenarioReportEntry] = []
 
     for scenario in scenarios:
-        orchestrator = MockTelecomOrchestrator(
-            number_verification_gateway=MockNumberVerificationGateway(
-                verified_numbers=scenario.gateway_setup.verified_numbers
-            ),
-            quality_on_demand_gateway=MockQualityOnDemandGateway(
-                available_profiles=scenario.gateway_setup.available_profiles,
-                denied_session_ids=scenario.gateway_setup.denied_session_ids,
-            ),
-            policy=active_policy,
-        )
-        actual = orchestrator.run(scenario.orchestration_request)
+        if scenario.analysis_session_request is not None:
+            actual = run_analysis_session(
+                request=scenario.analysis_session_request,
+                policy=active_policy,
+            ).workflow_result
+        else:
+            if scenario.orchestration_request is None:
+                raise ValueError(
+                    f"Scenario {scenario.scenario_id} has no executable request payload."
+                )
+            orchestrator = MockTelecomOrchestrator(
+                number_verification_gateway=MockNumberVerificationGateway(
+                    verified_numbers=scenario.gateway_setup.verified_numbers
+                ),
+                quality_on_demand_gateway=MockQualityOnDemandGateway(
+                    available_profiles=scenario.gateway_setup.available_profiles,
+                    denied_session_ids=scenario.gateway_setup.denied_session_ids,
+                ),
+                policy=active_policy,
+            )
+            actual = orchestrator.run(scenario.orchestration_request)
         metrics = score_scenario(actual=actual, expected=scenario.expected)
         trace = build_trace_bundle(scenario_id=scenario.scenario_id, result=actual)
         entries.append(

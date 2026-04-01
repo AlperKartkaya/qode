@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from ..analysis import AnalysisSessionRequest
 from ..orchestration import MockSessionRequest, MockSessionResult, OrchestrationEvent
 
 WORKFLOW_STATUSES = {"SUCCESS", "PARTIAL", "FAILED"}
@@ -101,7 +102,8 @@ class ExpectedWorkflowOutcome:
 class ScenarioDefinition:
     scenario_id: str
     description: str
-    orchestration_request: MockSessionRequest
+    orchestration_request: MockSessionRequest | None
+    analysis_session_request: AnalysisSessionRequest | None
     gateway_setup: ScenarioGatewaySetup
     expected: ExpectedWorkflowOutcome
     notes: tuple[str, ...] = ()
@@ -115,13 +117,16 @@ class ScenarioDefinition:
             "description",
             _require_text(self.description, "description"),
         )
+        if self.orchestration_request is None and self.analysis_session_request is None:
+            raise ValueError(
+                "ScenarioDefinition requires orchestration_request or analysis_session_request."
+            )
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "ScenarioDefinition":
         required_keys = {
             "scenario_id",
             "description",
-            "orchestration_request",
             "expected",
         }
         missing = sorted(required_keys - payload.keys())
@@ -133,9 +138,12 @@ class ScenarioDefinition:
         return cls(
             scenario_id=str(payload["scenario_id"]),
             description=str(payload["description"]),
-            orchestration_request=MockSessionRequest.from_dict(
-                payload["orchestration_request"]
-            ),
+            orchestration_request=None
+            if payload.get("orchestration_request") is None
+            else MockSessionRequest.from_dict(payload["orchestration_request"]),
+            analysis_session_request=None
+            if payload.get("analysis_session_request") is None
+            else AnalysisSessionRequest.from_dict(payload["analysis_session_request"]),
             gateway_setup=ScenarioGatewaySetup.from_dict(
                 payload.get("gateway_setup", {})
             ),

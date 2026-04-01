@@ -1,0 +1,29 @@
+{
+  "scenario_id": "video-2-phone",
+  "description": "Phone use is observed while the target vehicle approaches the camera.",
+  "analysis_session_request": {
+    "session_id": "scenario-video-2",
+    "phone_number": "+905551112232",
+    "device_session_id": "device-video-2",
+    "requested_profile": "standard",
+    "verification_should_pass": true,
+    "qod_should_allow_boost": true,
+    "dataset_selection": {
+      "dataset_root": "data",
+      "manifest_path": "data/real_dataset_manifest.json",
+      "sample_id": "video_2"
+    }
+  },
+  "expected": {
+    "status": "SUCCESS",
+    "qod_requested": true,
+    "qod_accepted": true,
+    "active_profile": "boosted",
+    "target_vehicle_detected": true,
+    "plate_candidate_detected": true,
+    "driver_risk_label": "phone_use_while_driving"
+  },
+  "notes": [
+    "Phone-use risk is encoded as a clip-level authoritative observation."
+  ]
+}

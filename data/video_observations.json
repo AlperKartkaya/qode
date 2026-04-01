@@ -1,0 +1,88 @@
+{
+  "samples": [
+    {
+      "sample_id": "video_1",
+      "vehicle_present": true,
+      "target_vehicle_present": true,
+      "plate_visible": true,
+      "plate_visibility_score": 0.65,
+      "in_cabin_objects": [
+        "cigarette"
+      ],
+      "driver_events": [
+        {
+          "label": "smoking",
+          "severity": "high",
+          "evidence": [
+            "driver is smoking while driving"
+          ],
+          "confidence": 1.0,
+          "source": "human_observation",
+          "summary": "Smoking is visible while the vehicle approaches the camera."
+        },
+        {
+          "label": "unsafe_scanning",
+          "severity": "high",
+          "evidence": [
+            "driver looks continuously right and left without demonstrating safe road focus"
+          ],
+          "confidence": 1.0,
+          "source": "human_observation",
+          "summary": "The driver repeatedly scans right and left without clear safe caution."
+        }
+      ],
+      "risk_label": "smoking_and_unsafe_scanning",
+      "risk_score": 0.92,
+      "summary": "Smoking and unsafe scanning behavior are both visible while the target vehicle approaches the camera."
+    },
+    {
+      "sample_id": "video_2",
+      "vehicle_present": true,
+      "target_vehicle_present": true,
+      "plate_visible": true,
+      "plate_visibility_score": 0.65,
+      "in_cabin_objects": [
+        "phone"
+      ],
+      "driver_events": [
+        {
+          "label": "phone_use",
+          "severity": "high",
+          "evidence": [
+            "driver is talking to the phone while driving"
+          ],
+          "confidence": 1.0,
+          "source": "human_observation",
+          "summary": "Phone use is visible while the vehicle approaches the camera."
+        }
+      ],
+      "risk_label": "phone_use_while_driving",
+      "risk_score": 0.95,
+      "summary": "The driver is using a phone while driving the target vehicle toward the camera."
+    },
+    {
+      "sample_id": "video_3",
+      "vehicle_present": true,
+      "target_vehicle_present": true,
+      "plate_visible": true,
+      "plate_visibility_score": 0.65,
+      "in_cabin_objects": [],
+      "driver_events": [
+        {
+          "label": "drunk_like_erratic_driving",
+          "severity": "high",
+          "evidence": [
+            "driver makes sharp movements to the right and left",
+            "driver does not demonstrate real caution while driving"
+          ],
+          "confidence": 1.0,
+          "source": "human_observation",
+          "summary": "Driving pattern appears erratic and unsafe."
+        }
+      ],
+      "risk_label": "drunk_like_erratic_driving",
+      "risk_score": 0.98,
+      "summary": "The target vehicle is driven with sharp lateral movements that resemble drunk or severely impaired driving."
+    }
+  ]
+}

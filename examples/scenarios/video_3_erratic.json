@@ -1,0 +1,29 @@
+{
+  "scenario_id": "video-3-erratic",
+  "description": "Erratic, drunk-like driving is observed while the target vehicle approaches the camera.",
+  "analysis_session_request": {
+    "session_id": "scenario-video-3",
+    "phone_number": "+905551112233",
+    "device_session_id": "device-video-3",
+    "requested_profile": "standard",
+    "verification_should_pass": true,
+    "qod_should_allow_boost": true,
+    "dataset_selection": {
+      "dataset_root": "data",
+      "manifest_path": "data/real_dataset_manifest.json",
+      "sample_id": "video_3"
+    }
+  },
+  "expected": {
+    "status": "SUCCESS",
+    "qod_requested": true,
+    "qod_accepted": true,
+    "active_profile": "boosted",
+    "target_vehicle_detected": true,
+    "plate_candidate_detected": true,
+    "driver_risk_label": "drunk_like_erratic_driving"
+  },
+  "notes": [
+    "Erratic driving risk is encoded as a clip-level authoritative observation."
+  ]
+}

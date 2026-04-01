@@ -8,51 +8,23 @@ Report version: `scenario-to-score-v1`
 | --- | --- |
 | Scenario count | 3 |
 | Expectations met | 3 |
-| QoD request rate | 0.67 |
-| QoD acceptance rate | 0.33 |
+| QoD request rate | 1.00 |
+| QoD acceptance rate | 1.00 |
 | Avg QoD selectivity | 1.00 |
 | Avg policy consistency | 1.00 |
-| Avg placeholder label agreement | 1.00 |
+| Avg behavior label agreement | 1.00 |
 
 ## Scenario Table
 
 | Scenario | Status | QoD requested | QoD accepted | Active profile | Expectations met |
 | --- | --- | --- | --- | --- | --- |
-| qod-denied | PARTIAL | yes | no | standard | yes |
-| success | SUCCESS | yes | yes | boosted | yes |
-| verification-failed | FAILED | no | no | standard | yes |
+| video-1-smoking | SUCCESS | yes | yes | boosted | yes |
+| video-2-phone | SUCCESS | yes | yes | boosted | yes |
+| video-3-erratic | SUCCESS | yes | yes | boosted | yes |
 
-## Scenario: `qod-denied`
+## Scenario: `video-1-smoking`
 
-Verification passes but QoD is denied, resulting in a partial outcome.
-
-| Field | Expected | Actual |
-| --- | --- | --- |
-| Status | PARTIAL | PARTIAL |
-| QoD requested | yes | yes |
-| QoD accepted | no | no |
-| Active profile | standard | standard |
-| Driver risk label | placeholder_none | placeholder_none |
-
-Trace phases: BOOTSTRAP_REQUESTED -> NUMBER_VERIFIED -> QOD_EVALUATED -> QOD_DENIED
-
-Trace context codes:
-
-- `SESSION.BOOTSTRAP_REQUESTED`
-- `NUMBER_VERIFICATION.SUCCESS`
-- `QOD.REQUEST_REQUIRED`
-- `QOD.PROFILE_NOT_AVAILABLE`
-
-QoD rationale:
-
-- candidate target vehicle is close enough to justify boosted quality
-- plate is visible but not yet clear enough for reliable reading
-
-Metric snapshot: selectivity=1.00, policy=1.00, labels=1.00
-
-## Scenario: `success`
-
-Verified phone number and accepted boosted QoD request.
+Smoking and unsafe scanning are observed while the target vehicle approaches the camera.
 
 | Field | Expected | Actual |
 | --- | --- | --- |
@@ -60,7 +32,7 @@ Verified phone number and accepted boosted QoD request.
 | QoD requested | yes | yes |
 | QoD accepted | yes | yes |
 | Active profile | boosted | boosted |
-| Driver risk label | placeholder_none | placeholder_none |
+| Driver risk label | smoking_and_unsafe_scanning | smoking_and_unsafe_scanning |
 
 Trace phases: BOOTSTRAP_REQUESTED -> NUMBER_VERIFIED -> QOD_EVALUATED -> QOD_ACTIVATED
 
@@ -73,32 +45,63 @@ Trace context codes:
 
 QoD rationale:
 
-- candidate target vehicle is close enough to justify boosted quality
 - plate is visible but not yet clear enough for reliable reading
+- driver risk score suggests a higher-detail inspection window
 
 Metric snapshot: selectivity=1.00, policy=1.00, labels=1.00
 
-## Scenario: `verification-failed`
+## Scenario: `video-2-phone`
 
-Verification failure stops the workflow before QoD.
+Phone use is observed while the target vehicle approaches the camera.
 
 | Field | Expected | Actual |
 | --- | --- | --- |
-| Status | FAILED | FAILED |
-| QoD requested | no | no |
-| QoD accepted | no | no |
-| Active profile | standard | standard |
-| Driver risk label | placeholder_none | placeholder_none |
+| Status | SUCCESS | SUCCESS |
+| QoD requested | yes | yes |
+| QoD accepted | yes | yes |
+| Active profile | boosted | boosted |
+| Driver risk label | phone_use_while_driving | phone_use_while_driving |
 
-Trace phases: BOOTSTRAP_REQUESTED -> VERIFICATION_FAILED
+Trace phases: BOOTSTRAP_REQUESTED -> NUMBER_VERIFIED -> QOD_EVALUATED -> QOD_ACTIVATED
 
 Trace context codes:
 
 - `SESSION.BOOTSTRAP_REQUESTED`
-- `NUMBER_VERIFICATION.VERIFICATION_FAILED`
+- `NUMBER_VERIFICATION.SUCCESS`
+- `QOD.REQUEST_REQUIRED`
+- `QOD.ACTIVATED`
 
 QoD rationale:
 
-- verification failed
+- plate is visible but not yet clear enough for reliable reading
+- driver risk score suggests a higher-detail inspection window
+
+Metric snapshot: selectivity=1.00, policy=1.00, labels=1.00
+
+## Scenario: `video-3-erratic`
+
+Erratic, drunk-like driving is observed while the target vehicle approaches the camera.
+
+| Field | Expected | Actual |
+| --- | --- | --- |
+| Status | SUCCESS | SUCCESS |
+| QoD requested | yes | yes |
+| QoD accepted | yes | yes |
+| Active profile | boosted | boosted |
+| Driver risk label | drunk_like_erratic_driving | drunk_like_erratic_driving |
+
+Trace phases: BOOTSTRAP_REQUESTED -> NUMBER_VERIFIED -> QOD_EVALUATED -> QOD_ACTIVATED
+
+Trace context codes:
+
+- `SESSION.BOOTSTRAP_REQUESTED`
+- `NUMBER_VERIFICATION.SUCCESS`
+- `QOD.REQUEST_REQUIRED`
+- `QOD.ACTIVATED`
+
+QoD rationale:
+
+- plate is visible but not yet clear enough for reliable reading
+- driver risk score suggests a higher-detail inspection window
 
 Metric snapshot: selectivity=1.00, policy=1.00, labels=1.00

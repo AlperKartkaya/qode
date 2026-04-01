@@ -145,7 +145,7 @@ class ObservedMediaBundleDatasetAdapter(DatasetAdapter):
     def supports_manifest(cls, manifest: DatasetManifest) -> bool:
         return (
             manifest.sample_unit == "mixed"
-            and manifest.annotation_format == "none_observed"
+            and manifest.annotation_format == "human_curated_clip_observations"
         )
 
     def build_ingestion_plan(self) -> IngestionPlan:
@@ -158,8 +158,8 @@ class ObservedMediaBundleDatasetAdapter(DatasetAdapter):
             expected_splits=self._split_names(),
             target_families=self.manifest.targets,
             notes=(
-                "Current delivery is a media-only bundle with no structured annotations observed.",
-                "Analysis may load real media paths while keeping unavailable labels explicit.",
+                "Current delivery is a media-only bundle paired with human-curated clip observations.",
+                "Analysis should join media inventory and video_observations.json by sample_id.",
             ),
         )
 

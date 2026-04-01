@@ -4,15 +4,16 @@ Pre-dataset foundation for the 2026 TEKNOFEST 5G and AI road safety competition.
 
 Current milestone:
 - explicit project assumptions in `assumptions.md`
-- a small Python core for domain contracts, dataset-manifest checks, adapter-slot planning, integration contracts, and QoD decision simulation
-- a mock orchestration flow for session bootstrap, verification, QoD decision, and mobile-facing output
-- a deterministic scenario-to-score harness for traceable pre-dataset evaluation
+- a real mixed-media dataset inventory under `data/`
+- a human-curated observation registry for the three delivered videos
+- a Python core for domain contracts, dataset manifest checks, integration contracts, and QoD decision simulation
+- a telecom workflow and analysis path that can run from the real media bundle plus authoritative clip observations
+- a deterministic scenario-to-score harness for the three real videos
 - a markdown export layer and tiny local HTTP API for future demo clients
-- a placeholder analysis boundary that feeds future model outputs into the telecom workflow
 - a real media-bundle adapter for the delivered dataset under `data/`
 - placeholder workspace boundaries for mobile, API, vision, and simulation work
 
-This repository intentionally avoids locking into real dataset parsing before the dataset is released.
+This repository now treats the delivered media-only dataset plus the repository-local observation registry as the authoritative project input.
 
 ## Workspace
 
@@ -29,14 +30,10 @@ This repository intentionally avoids locking into real dataset parsing before th
 
 ```bash
 PYTHONPATH=src python3 -m smart_road_safety.cli print-assumptions
-PYTHONPATH=src python3 -m smart_road_safety.cli check-manifest examples/assumed_dataset_manifest.json
-PYTHONPATH=src python3 -m smart_road_safety.cli plan-ingestion examples/assumed_dataset_manifest.json --dataset-root data/offline
 PYTHONPATH=src python3 -m smart_road_safety.cli check-manifest data/real_dataset_manifest.json
+PYTHONPATH=src python3 -m smart_road_safety.cli plan-ingestion data/real_dataset_manifest.json --dataset-root data
 PYTHONPATH=src python3 -m smart_road_safety.cli inspect-dataset data/real_dataset_manifest.json --dataset-root data
 PYTHONPATH=src python3 -m smart_road_safety.cli print-default-qod-policy
-PYTHONPATH=src python3 -m smart_road_safety.cli simulate-qod examples/qod_scenario.json
-PYTHONPATH=src python3 -m smart_road_safety.cli simulate-qod examples/qod_scenario.json --policy-path examples/custom_qod_policy.json
-PYTHONPATH=src python3 -m smart_road_safety.cli run-mock-orchestration examples/mock_orchestration_request.json
 PYTHONPATH=src python3 -m smart_road_safety.cli run-analysis-session examples/analysis_session_request.json
 PYTHONPATH=src python3 -m smart_road_safety.cli run-scenarios examples/scenarios --output-path out/scenario_report.json
 PYTHONPATH=src python3 -m smart_road_safety.cli export-scenario-report out/scenario_report.json --output-path out/scenario_report.md
@@ -51,15 +48,15 @@ The competition spec already fixes the broad system shape:
 - live/mobile/API integration comes later
 - QoD must be triggered only when needed
 
-What is still unknown is the concrete dataset structure, label taxonomy, annotation granularity, and final API details. This repo therefore codifies assumptions and pre-dataset interfaces first.
+The delivered dataset is now a fixed media-only bundle of three videos plus screenshots. Because no official structured labels, splits, or telecom API docs will arrive with this delivery, the repository uses `data/video_observations.json` as the authoritative clip-level behavior source instead of waiting for future annotation packages.
 
 The current extension points are:
-- dataset manifests resolve into adapter slots before any real parser is implemented
-- integration contracts reserve the Number Verification and QoD boundaries without assuming final endpoint payloads
+- dataset manifests resolve into adapter slots and the observed media-bundle adapter loads the real inventory from `data/`
+- integration contracts reserve the Number Verification and QoD boundaries while keeping their absent real details explicit
 - QoD thresholds live in policy JSON rather than in code constants, so the future dataset or API release can tune behavior without redesigning the module
 - the orchestration layer composes the mock gateways and typed results so future real clients can replace the mocks without changing the workflow shape
-- the evaluation layer runs deterministic scenarios, emits trace bundles, and computes placeholder metrics that can later swap to real dataset-backed scoring
+- the evaluation layer runs deterministic scenarios for the three real videos and computes behavior agreement against the authoritative observation registry
 - the export layer turns scenario reports into judge-friendly markdown without changing the underlying JSON contract
 - the local HTTP API exposes orchestration, evaluation, and export flows through a thin stdlib wrapper for future mobile or demo integration
-- the analysis boundary provides a stable pre-model contract so future dataset-backed analyzers can feed the existing workflow without redesigning orchestration
+- the analysis boundary now joins real media inventory with authoritative clip observations instead of waiting for future structured labels
 - the delivered dataset is now ingested as a real mixed media bundle, even though structured labels are still absent from the provided folder
