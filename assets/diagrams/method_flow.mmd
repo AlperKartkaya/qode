@@ -1,0 +1,21 @@
+flowchart LR
+    subgraph S1[1. Oturum ve Kimlik Doğrulama]
+        A[Mobil uygulama] --> B[Number Verification]
+    end
+    subgraph S2[2. Standart İzleme]
+        C[Canlı video uplink] --> D[Edge ön analiz]
+        D --> E[TOGG, plaka ve risk sinyalleri]
+    end
+    subgraph S3[3. Ağ Kararı]
+        F{QoD gerekli mi?}
+        G[Standart profilde devam]
+        H[Boosted profil talebi]
+    end
+    subgraph S4[4. Derin Analiz ve Geri Bildirim]
+        I[Cloud ayrıntılı analiz] --> J[Alarm ve karar kaydı]
+        J --> K[Mobil arayüz ve operator dashboard]
+    end
+    B --> C
+    E --> F
+    F -- Hayır --> G --> J
+    F -- Evet --> H --> I
