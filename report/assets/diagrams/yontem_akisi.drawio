@@ -1,0 +1,136 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" pages="1">
+  <diagram name="mAP Değerlendirme Akışı" id="map-evaluation-flow">
+    <mxGraphModel dx="1450" dy="760" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="520" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="group-1" value="1. Girdi Hazırlığı" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6d16a;fontSize=11;fontStyle=1;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="20" y="45" width="300" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="group-2" value="2. IoU ve Eşleştirme" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6d16a;fontSize=11;fontStyle=1;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="350" y="45" width="355" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="group-3" value="3. Precision - Recall Hesabı" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6d16a;fontSize=11;fontStyle=1;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="735" y="45" width="355" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="group-4" value="4. AP ve mAP Sonucu" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6d16a;fontSize=11;fontStyle=1;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="45" width="350" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="title" value="Object Detection Model Değerlendirme Akışı: IoU → Precision/Recall → AP → mAP" style="text;html=1;fontSize=18;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
+          <mxGeometry x="20" y="10" width="780" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="data" value="Test görselleri / video kareleri" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="45" y="82" width="115" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="gt" value="Ground truth kutuları&#10;ve sınıf etiketleri" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="185" y="75" width="110" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="pred" value="Model tahminleri:&#10;kutu + sınıf + güven" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="375" y="75" width="120" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="sort" value="Tahminleri güven skoruna&#10;göre sırala" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="530" y="75" width="130" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="iou" value="Her tahmin için&#10;IoU hesapla" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="390" y="162" width="115" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="threshold" value="IoU ≥ eşik mi?&#10;örn. 0.50" style="rhombus;whiteSpace=wrap;html=1;fontSize=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="545" y="147" width="95" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="tp" value="TP&#10;doğru tespit" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="760" y="75" width="95" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="fp" value="FP&#10;yanlış / fazla tespit" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="760" y="158" width="95" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="fn" value="FN&#10;kaçan hedef" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="880" y="158" width="95" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="pr" value="Precision ve recall&#10;değerlerini hesapla" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="905" y="75" width="135" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="curve" value="Sınıf bazında&#10;Precision-Recall eğrisi" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="1145" y="75" width="125" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="ap" value="AP hesapla&#10;eğri altı alan" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="75" width="120" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="map" value="mAP sonucu&#10;tüm sınıfların AP ortalaması" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fontStyle=1;fillColor=#fad7ac;strokeColor=#b46504;" vertex="1" parent="1">
+          <mxGeometry x="1225" y="158" width="145" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="QoDe için yorum: araç, plaka ve araç içi nesne tespit başlıklarında sınıf bazlı AP; tüm hedef ailelerinde ortalama mAP raporlanır." style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;align=left;spacingLeft=12;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="350" y="290" width="740" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="formula-1" value="IoU = kesişim alanı / birleşim alanı" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="390" y="370" width="255" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="formula-2" value="Precision = TP / (TP + FP)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="680" y="370" width="220" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="formula-3" value="Recall = TP / (TP + FN)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="930" y="370" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="formula-4" value="mAP = sınıf AP değerlerinin ortalaması" style="rounded=1;whiteSpace=wrap;html=1;fontSize=12;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1170" y="370" width="260" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" value="" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="data" target="gt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="gt" target="pred">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="pred" target="sort">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="sort" target="iou">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="595" y="135" />
+              <mxPoint x="448" y="135" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="iou" target="threshold">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="Evet" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="threshold" target="tp">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="690" y="106" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="Hayır" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="threshold" target="fp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="eşleşmeyen ground truth" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="gt" target="fn">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="240" y="250" />
+              <mxPoint x="928" y="250" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="tp" target="pr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" value="" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="fp" target="pr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="fn" target="pr">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" value="" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="pr" target="curve">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" value="" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="curve" target="ap">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" value="sınıf AP'leri" style="endArrow=block;html=1;rounded=1;fontSize=11;strokeColor=#6b7280;" edge="1" parent="1" source="ap" target="map">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
