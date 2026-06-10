@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from ..analysis import AnalysisSessionRequest
-from ..orchestration import MockSessionRequest, MockSessionResult, OrchestrationEvent
+from ..orchestration import SessionRequest, SessionResult, OrchestrationEvent
 
 WORKFLOW_STATUSES = {"SUCCESS", "PARTIAL", "FAILED"}
 
@@ -102,7 +102,7 @@ class ExpectedWorkflowOutcome:
 class ScenarioDefinition:
     scenario_id: str
     description: str
-    orchestration_request: MockSessionRequest | None
+    orchestration_request: SessionRequest | None
     analysis_session_request: AnalysisSessionRequest | None
     gateway_setup: ScenarioGatewaySetup
     expected: ExpectedWorkflowOutcome
@@ -140,7 +140,7 @@ class ScenarioDefinition:
             description=str(payload["description"]),
             orchestration_request=None
             if payload.get("orchestration_request") is None
-            else MockSessionRequest.from_dict(payload["orchestration_request"]),
+            else SessionRequest.from_dict(payload["orchestration_request"]),
             analysis_session_request=None
             if payload.get("analysis_session_request") is None
             else AnalysisSessionRequest.from_dict(payload["analysis_session_request"]),
@@ -172,7 +172,7 @@ class ScenarioReportEntry:
     scenario_id: str
     description: str
     expected: ExpectedWorkflowOutcome
-    actual: MockSessionResult
+    actual: SessionResult
     trace: ScenarioTraceBundle
     metrics: "ScenarioMetricSummary"
 
@@ -185,7 +185,7 @@ class ScenarioSuiteReport:
 
 
 def build_trace_bundle(
-    scenario_id: str, result: MockSessionResult
+    scenario_id: str, result: SessionResult
 ) -> ScenarioTraceBundle:
     phases = tuple(event.phase for event in result.events)
     context_codes = tuple(event.context_code for event in result.events)

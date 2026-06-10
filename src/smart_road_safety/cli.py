@@ -17,7 +17,7 @@ from .integration import (
 )
 from .local_api import run_local_api_server
 from .manifest import DatasetManifest, compare_manifest_to_assumptions
-from .orchestration import MockSessionRequest, MockTelecomOrchestrator
+from .orchestration import SessionRequest, TelecomOrchestrator
 from .policy import QodPolicy, load_default_qod_policy
 from .qod import SceneSignal, evaluate_qod_need
 
@@ -245,8 +245,8 @@ def _run_mock_orchestration(request_path: str, policy_path: str | None) -> int:
         if policy_path is None
         else QodPolicy.from_path(policy_path)
     )
-    request = MockSessionRequest.from_path(request_path)
-    orchestrator = MockTelecomOrchestrator(
+    request = SessionRequest.from_path(request_path)
+    orchestrator = TelecomOrchestrator(
         number_verification_gateway=MockNumberVerificationGateway(
             verified_numbers=(request.phone_number,)
         ),

@@ -6,9 +6,9 @@ from pathlib import Path
 from ..data import build_adapter_from_manifest_path
 from ..integration import MockNumberVerificationGateway, MockQualityOnDemandGateway
 from ..orchestration import (
-    MockSessionRequest,
-    MockTelecomOrchestrator,
     SceneAnalysisSummary,
+    SessionRequest,
+    TelecomOrchestrator,
 )
 from ..policy import QodPolicy, load_default_qod_policy
 from ..qod import SceneSignal
@@ -91,7 +91,7 @@ def run_analysis_session(
         request=request,
         analyzer=active_analyzer,
     )
-    workflow_request = MockSessionRequest(
+    workflow_request = SessionRequest(
         session_id=request.session_id,
         phone_number=request.phone_number,
         device_session_id=request.device_session_id,
@@ -111,7 +111,7 @@ def run_analysis_session(
             notes=(analysis_result.summary_message, *analysis_result.notes),
         ),
     )
-    orchestrator = MockTelecomOrchestrator(
+    orchestrator = TelecomOrchestrator(
         number_verification_gateway=MockNumberVerificationGateway(
             verified_numbers=(request.phone_number,)
             if request.verification_should_pass

@@ -13,16 +13,16 @@ from smart_road_safety.integration import (
     MockQualityOnDemandGateway,
 )
 from smart_road_safety.orchestration import (
-    MockSessionRequest,
-    MockTelecomOrchestrator,
+    SessionRequest,
+    TelecomOrchestrator,
     SceneAnalysisSummary,
 )
 from smart_road_safety.policy import load_default_qod_policy
 from smart_road_safety.qod import SceneSignal
 
 
-def build_request() -> MockSessionRequest:
-    return MockSessionRequest(
+def build_request() -> SessionRequest:
+    return SessionRequest(
         session_id="session-1",
         phone_number="+905551112233",
         device_session_id="device-1",
@@ -43,12 +43,12 @@ def build_request() -> MockSessionRequest:
     )
 
 
-class MockTelecomOrchestratorTest(unittest.TestCase):
+class TelecomOrchestratorTest(unittest.TestCase):
     def test_orchestrator_completes_successfully_when_verification_and_qod_pass(
         self,
     ) -> None:
         request = build_request()
-        orchestrator = MockTelecomOrchestrator(
+        orchestrator = TelecomOrchestrator(
             number_verification_gateway=MockNumberVerificationGateway(
                 verified_numbers=(request.phone_number,)
             ),
@@ -68,7 +68,7 @@ class MockTelecomOrchestratorTest(unittest.TestCase):
 
     def test_orchestrator_stops_when_verification_fails(self) -> None:
         request = build_request()
-        orchestrator = MockTelecomOrchestrator(
+        orchestrator = TelecomOrchestrator(
             number_verification_gateway=MockNumberVerificationGateway(),
             quality_on_demand_gateway=MockQualityOnDemandGateway(),
             policy=load_default_qod_policy(),
@@ -84,7 +84,7 @@ class MockTelecomOrchestratorTest(unittest.TestCase):
 
     def test_orchestrator_returns_partial_when_qod_is_denied(self) -> None:
         request = build_request()
-        orchestrator = MockTelecomOrchestrator(
+        orchestrator = TelecomOrchestrator(
             number_verification_gateway=MockNumberVerificationGateway(
                 verified_numbers=(request.phone_number,)
             ),

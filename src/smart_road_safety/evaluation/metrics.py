@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..orchestration import MockSessionResult
+from ..orchestration import SessionResult
 from .models import ExpectedWorkflowOutcome
 
 
@@ -32,7 +32,7 @@ class ScenarioSuiteSummary:
 
 
 def score_scenario(
-    actual: MockSessionResult, expected: ExpectedWorkflowOutcome
+    actual: SessionResult, expected: ExpectedWorkflowOutcome
 ) -> ScenarioMetricSummary:
     qod_selectivity_score = (
         1.0 if actual.mobile_view.qod_requested == expected.qod_requested else 0.0

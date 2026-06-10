@@ -12,7 +12,7 @@ from ..data import build_adapter_from_manifest_path
 from ..evaluation import run_scenario_suite
 from ..export import export_scenario_report_markdown
 from ..integration import MockNumberVerificationGateway, MockQualityOnDemandGateway
-from ..orchestration import MockSessionRequest, MockTelecomOrchestrator
+from ..orchestration import SessionRequest, TelecomOrchestrator
 from ..policy import QodPolicy, load_default_qod_policy
 
 
@@ -79,10 +79,10 @@ def _build_handler() -> type[BaseHTTPRequestHandler]:
             return
 
         def _handle_orchestration(self, payload: dict[str, Any]) -> None:
-            request = MockSessionRequest.from_dict(payload["request"])
+            request = SessionRequest.from_dict(payload["request"])
             gateway_payload = payload.get("gateway_setup", {})
             policy = _load_policy(payload.get("policy_path"))
-            orchestrator = MockTelecomOrchestrator(
+            orchestrator = TelecomOrchestrator(
                 number_verification_gateway=MockNumberVerificationGateway(
                     verified_numbers=tuple(
                         str(value)

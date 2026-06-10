@@ -6,7 +6,7 @@ from pathlib import Path
 
 from ..analysis import run_analysis_session
 from ..integration import MockNumberVerificationGateway, MockQualityOnDemandGateway
-from ..orchestration import MockTelecomOrchestrator
+from ..orchestration import TelecomOrchestrator
 from ..policy import QodPolicy, load_default_qod_policy
 from .metrics import score_scenario, summarize_suite
 from .models import (
@@ -49,7 +49,7 @@ def run_scenario_suite(
                 raise ValueError(
                     f"Scenario {scenario.scenario_id} has no executable request payload."
                 )
-            orchestrator = MockTelecomOrchestrator(
+            orchestrator = TelecomOrchestrator(
                 number_verification_gateway=MockNumberVerificationGateway(
                     verified_numbers=scenario.gateway_setup.verified_numbers
                 ),

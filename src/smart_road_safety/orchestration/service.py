@@ -77,7 +77,7 @@ class SceneAnalysisSummary:
 
 
 @dataclass(frozen=True)
-class MockSessionRequest:
+class SessionRequest:
     session_id: str
     phone_number: str
     device_session_id: str
@@ -104,7 +104,7 @@ class MockSessionRequest:
         )
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "MockSessionRequest":
+    def from_dict(cls, payload: dict[str, Any]) -> "SessionRequest":
         required_keys = {
             "session_id",
             "phone_number",
@@ -116,7 +116,7 @@ class MockSessionRequest:
         missing = sorted(required_keys - payload.keys())
         if missing:
             raise ValueError(
-                f"Mock session request is missing required keys: {', '.join(missing)}"
+                f"Session request is missing required keys: {', '.join(missing)}"
             )
 
         scene_signal = SceneSignal(
@@ -147,7 +147,7 @@ class MockSessionRequest:
         )
 
     @classmethod
-    def from_path(cls, file_path: str | Path) -> "MockSessionRequest":
+    def from_path(cls, file_path: str | Path) -> "SessionRequest":
         payload = json.loads(Path(file_path).read_text(encoding="utf-8"))
         return cls.from_dict(payload)
 
@@ -204,7 +204,7 @@ class MobileWorkflowView:
 
 
 @dataclass(frozen=True)
-class MockSessionResult:
+class SessionResult:
     status: str
     bootstrap_result: MobileSessionBootstrapResult
     qod_decision: QodDecision
@@ -217,7 +217,7 @@ class MockSessionResult:
         object.__setattr__(self, "status", _require_status(self.status))
 
 
-class MockTelecomOrchestrator:
+class TelecomOrchestrator:
     def __init__(
         self,
         number_verification_gateway: NumberVerificationGateway,
@@ -228,7 +228,7 @@ class MockTelecomOrchestrator:
         self._quality_on_demand_gateway = quality_on_demand_gateway
         self._policy = policy if policy is not None else load_default_qod_policy()
 
-    def run(self, request: MockSessionRequest) -> MockSessionResult:
+    def run(self, request: SessionRequest) -> SessionResult:
         bootstrap_request = MobileSessionBootstrapRequest(
             phone_number=request.phone_number,
             device_session_id=request.device_session_id,
@@ -285,7 +285,7 @@ class MockTelecomOrchestrator:
                 driver_risk_label=request.analysis_summary.driver_risk_label,
                 summary_message="Verification failed, so the workflow stopped before QoD.",
             )
-            return MockSessionResult(
+            return SessionResult(
                 status="FAILED",
                 bootstrap_result=bootstrap_result,
                 qod_decision=decision,
@@ -365,7 +365,7 @@ class MockTelecomOrchestrator:
             summary_message=summary_message,
         )
 
-        return MockSessionResult(
+        return SessionResult(
             status=status,
             bootstrap_result=bootstrap_result,
             qod_decision=decision,

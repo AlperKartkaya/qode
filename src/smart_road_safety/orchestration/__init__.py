@@ -1,16 +1,16 @@
 from .service import (
-    MockSessionRequest,
-    MockSessionResult,
-    MockTelecomOrchestrator,
+    SessionRequest,
+    SessionResult,
+    TelecomOrchestrator,
     MobileWorkflowView,
     OrchestrationEvent,
     SceneAnalysisSummary,
 )
 
 __all__ = [
-    "MockSessionRequest",
-    "MockSessionResult",
-    "MockTelecomOrchestrator",
+    "SessionRequest",
+    "SessionResult",
+    "TelecomOrchestrator",
     "MobileWorkflowView",
     "OrchestrationEvent",
     "SceneAnalysisSummary",

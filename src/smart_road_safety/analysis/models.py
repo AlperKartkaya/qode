@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ..orchestration import MockSessionResult
+from ..orchestration import SessionResult
 
 
 def _require_text(value: str, field_name: str) -> str:
@@ -264,4 +264,4 @@ class AnalysisSessionRequest:
 @dataclass(frozen=True)
 class AnalysisSessionResult:
     analysis_result: AnalysisResult
-    workflow_result: MockSessionResult
+    workflow_result: SessionResult
