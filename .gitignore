@@ -8,4 +8,5 @@ build/
 *.pyc
 .DS_Store
 data/video_*.mp4
+.env
 
