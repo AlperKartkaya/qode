@@ -8,5 +8,9 @@ build/
 *.pyc
 .DS_Store
 data/video_*.mp4
+data/datasets/**
+!data/datasets/
+!data/datasets/*/
+!data/datasets/*/manifest.json
+out/
 .env
-

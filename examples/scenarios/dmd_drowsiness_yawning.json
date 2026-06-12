@@ -1,0 +1,29 @@
+{
+  "scenario_id": "dmd-drowsiness-yawning",
+  "description": "DMD drowsiness session with OpenLABEL yawning actions.",
+  "analysis_session_request": {
+    "session_id": "scenario-dmd-drowsiness-yawning",
+    "phone_number": "+905551112243",
+    "device_session_id": "device-dmd-drowsiness-yawning",
+    "requested_profile": "standard",
+    "verification_should_pass": true,
+    "qod_should_allow_boost": true,
+    "dataset_selection": {
+      "dataset_root": "data/datasets/dmd-drowsiness",
+      "manifest_path": "data/datasets/dmd-drowsiness/manifest.json",
+      "sample_id": "gA_1_s5"
+    }
+  },
+  "expected": {
+    "status": "SUCCESS",
+    "qod_requested": true,
+    "qod_accepted": true,
+    "active_profile": "boosted",
+    "target_vehicle_detected": false,
+    "plate_candidate_detected": false,
+    "driver_risk_label": "yawning_with_hand"
+  },
+  "notes": [
+    "Ground truth comes from DMD drowsiness OpenLABEL yawning intervals."
+  ]
+}

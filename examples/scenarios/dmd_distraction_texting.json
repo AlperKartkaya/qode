@@ -1,0 +1,29 @@
+{
+  "scenario_id": "dmd-distraction-texting",
+  "description": "DMD distraction session with OpenLABEL texting and phone-call actions.",
+  "analysis_session_request": {
+    "session_id": "scenario-dmd-distraction-texting",
+    "phone_number": "+905551112242",
+    "device_session_id": "device-dmd-distraction-texting",
+    "requested_profile": "standard",
+    "verification_should_pass": true,
+    "qod_should_allow_boost": true,
+    "dataset_selection": {
+      "dataset_root": "data/datasets/dmd-distraction",
+      "manifest_path": "data/datasets/dmd-distraction/manifest.json",
+      "sample_id": "gA_1_s2"
+    }
+  },
+  "expected": {
+    "status": "SUCCESS",
+    "qod_requested": true,
+    "qod_accepted": true,
+    "active_profile": "boosted",
+    "target_vehicle_detected": false,
+    "plate_candidate_detected": false,
+    "driver_risk_label": "texting_left"
+  },
+  "notes": [
+    "Ground truth comes from DMD OpenLABEL action types in the selected session."
+  ]
+}

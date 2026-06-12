@@ -7,7 +7,11 @@ from .models import (
     SceneAnalyzer,
 )
 from .observations import ObservationRegistry, ObservedEvent, VideoObservation
-from .placeholder import PlaceholderSceneAnalyzer, run_analysis_session
+from .placeholder import (
+    PlaceholderSceneAnalyzer,
+    RuleBasedSceneAnalyzer,
+    run_analysis_session,
+)
 
 __all__ = [
     "AnalysisResult",
@@ -16,6 +20,7 @@ __all__ = [
     "AnalyzerInput",
     "DatasetSelection",
     "PlaceholderSceneAnalyzer",
+    "RuleBasedSceneAnalyzer",
     "ObservationRegistry",
     "ObservedEvent",
     "SceneAnalyzer",

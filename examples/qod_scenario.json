@@ -1,7 +1,7 @@
 {
-  "togg_candidate_confidence": 0.82,
-  "plate_visibility_score": 0.48,
-  "driver_risk_score": 0.21,
-  "distance_meters": 32.0,
+  "togg_candidate_confidence": 0.0,
+  "plate_visibility_score": 0.0,
+  "driver_risk_score": 0.88,
+  "distance_meters": null,
   "current_profile": "standard"
 }

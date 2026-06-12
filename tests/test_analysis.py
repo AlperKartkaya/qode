@@ -12,13 +12,14 @@ from smart_road_safety.analysis import (
     AnalysisSessionRequest,
     AnalyzerInput,
     PlaceholderSceneAnalyzer,
+    RuleBasedSceneAnalyzer,
     run_analysis_session,
 )
 
 
 class PlaceholderSceneAnalyzerTest(unittest.TestCase):
     def test_placeholder_scene_analyzer_detects_target_vehicle_and_plate(self) -> None:
-        analyzer = PlaceholderSceneAnalyzer()
+        analyzer = RuleBasedSceneAnalyzer()
         result = analyzer.analyze(
             AnalyzerInput(
                 source_ref="placeholder://analysis/1",
@@ -33,6 +34,9 @@ class PlaceholderSceneAnalyzerTest(unittest.TestCase):
 
         self.assertTrue(result.target_vehicle_detected)
         self.assertTrue(result.plate_candidate_detected)
+
+    def test_legacy_placeholder_alias_still_points_to_rule_based_analyzer(self) -> None:
+        self.assertIs(PlaceholderSceneAnalyzer, RuleBasedSceneAnalyzer)
 
 
 class AnalysisSessionTest(unittest.TestCase):
@@ -110,6 +114,63 @@ class AnalysisSessionTest(unittest.TestCase):
         )
         self.assertEqual(result.workflow_result.status, "SUCCESS")
         self.assertTrue(result.workflow_result.mobile_view.qod_requested)
+
+    @unittest.skipUnless(
+        (ROOT / "data" / "datasets" / "state-farm-distracted-driver").exists(),
+        "real State Farm dataset is not present",
+    )
+    def test_run_analysis_session_can_load_state_farm_sample(self) -> None:
+        request = AnalysisSessionRequest.from_path(
+            ROOT / "examples" / "analysis_session_state_farm.json"
+        )
+
+        result = run_analysis_session(request)
+
+        self.assertEqual(result.analysis_result.driver_risk_label, "texting_right")
+        self.assertFalse(result.analysis_result.target_vehicle_detected)
+        self.assertEqual(result.workflow_result.mobile_view.active_profile, "boosted")
+
+    @unittest.skipUnless(
+        (ROOT / "data" / "datasets" / "dmd-distraction").exists(),
+        "real DMD distraction dataset is not present",
+    )
+    def test_run_analysis_session_can_load_dmd_distraction_sample(self) -> None:
+        request = AnalysisSessionRequest.from_path(
+            ROOT / "examples" / "analysis_session_dmd_distraction.json"
+        )
+
+        result = run_analysis_session(request)
+
+        self.assertEqual(result.analysis_result.driver_risk_label, "texting_left")
+        self.assertIn("ground_truth=openlabel_json", result.analysis_result.notes)
+
+    @unittest.skipUnless(
+        (ROOT / "data" / "datasets" / "dmd-drowsiness").exists(),
+        "real DMD drowsiness dataset is not present",
+    )
+    def test_run_analysis_session_can_load_dmd_drowsiness_sample(self) -> None:
+        request = AnalysisSessionRequest.from_path(
+            ROOT / "examples" / "analysis_session_dmd_drowsiness.json"
+        )
+
+        result = run_analysis_session(request)
+
+        self.assertEqual(result.analysis_result.driver_risk_label, "yawning_with_hand")
+        self.assertIn("ground_truth=openlabel_json", result.analysis_result.notes)
+
+    @unittest.skipUnless(
+        (ROOT / "data" / "datasets" / "DriverSVT-teknofest" / "DriverSVT.csv").exists(),
+        "real DriverSVT dataset is not present",
+    )
+    def test_run_analysis_session_can_load_driversvt_row(self) -> None:
+        request = AnalysisSessionRequest.from_path(
+            ROOT / "examples" / "analysis_session_driversvt.json"
+        )
+
+        result = run_analysis_session(request)
+
+        self.assertEqual(result.analysis_result.driver_risk_label, "No attention")
+        self.assertIn("ground_truth=csv_tabular.dangerousstate", result.analysis_result.notes)
 
 
 if __name__ == "__main__":

@@ -9,6 +9,9 @@ if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
 from smart_road_safety.data import (
+    DMDDistractionAdapter,
+    DriverSVTAdapter,
+    StateFarmAdapter,
     build_adapter_from_manifest,
     build_adapter_from_manifest_path,
 )
@@ -92,6 +95,66 @@ class DatasetAdapterTest(unittest.TestCase):
         self.assertEqual(inventory.sample_count, 3)
         self.assertEqual(inventory.get_sample("video_1").sample_id, "video_1")
         self.assertEqual(len(inventory.get_sample("video_1").screenshot_paths), 4)
+
+    @unittest.skipUnless(
+        (ROOT / "data" / "datasets" / "state-farm-distracted-driver").exists(),
+        "real State Farm dataset is not present",
+    )
+    def test_state_farm_manifest_loads_real_labelled_inventory(self) -> None:
+        adapter = build_adapter_from_manifest_path(
+            manifest_path=ROOT
+            / "data"
+            / "datasets"
+            / "state-farm-distracted-driver"
+            / "manifest.json",
+            dataset_root=ROOT / "data" / "datasets" / "state-farm-distracted-driver",
+        )
+
+        self.assertIsInstance(adapter, StateFarmAdapter)
+        inventory = adapter.load_state_farm_inventory()
+
+        self.assertEqual(inventory.train_count, 22424)
+        self.assertEqual(inventory.test_count, 79726)
+        self.assertEqual(len(inventory.subjects), 26)
+        self.assertEqual(
+            inventory.get_sample("p002_c1_img_16856").class_name, "texting_right"
+        )
+
+    @unittest.skipUnless(
+        (ROOT / "data" / "datasets" / "dmd-distraction").exists(),
+        "real DMD distraction dataset is not present",
+    )
+    def test_dmd_manifest_discovers_real_sessions(self) -> None:
+        adapter = build_adapter_from_manifest_path(
+            manifest_path=ROOT / "data" / "datasets" / "dmd-distraction" / "manifest.json",
+            dataset_root=ROOT / "data" / "datasets" / "dmd-distraction",
+        )
+
+        self.assertIsInstance(adapter, DMDDistractionAdapter)
+        inventory = adapter.load_dmd_inventory()
+        session = inventory.get_session("gA_1_s2")
+
+        self.assertEqual(inventory.session_count, 3)
+        self.assertEqual(session.frame_count, 13641)
+        self.assertIn("driver_actions/texting_left", session.action_types)
+
+    @unittest.skipUnless(
+        (ROOT / "data" / "datasets" / "DriverSVT-teknofest" / "DriverSVT.csv").exists(),
+        "real DriverSVT dataset is not present",
+    )
+    def test_driversvt_manifest_loads_real_row(self) -> None:
+        adapter = build_adapter_from_manifest_path(
+            manifest_path=ROOT / "data" / "datasets" / "DriverSVT-teknofest" / "manifest.json",
+            dataset_root=ROOT / "data" / "datasets" / "DriverSVT-teknofest",
+        )
+
+        self.assertIsInstance(adapter, DriverSVTAdapter)
+        inventory = adapter.load_inventory()
+        row = adapter.load_row("row:575631")
+
+        self.assertEqual(inventory.sample_count, 17561501)
+        self.assertEqual(row.dangerous_state, "No attention")
+        self.assertEqual(row.user_id, "4160")
 
 
 if __name__ == "__main__":

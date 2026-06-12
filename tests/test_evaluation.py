@@ -78,8 +78,8 @@ class EvaluationRunnerTest(unittest.TestCase):
             output_path=output_path,
         )
 
-        self.assertEqual(report.summary.scenario_count, 3)
-        self.assertEqual(report.summary.expectation_pass_count, 3)
+        self.assertEqual(report.summary.scenario_count, 7)
+        self.assertEqual(report.summary.expectation_pass_count, 7)
         self.assertEqual(report.summary.average_behavior_label_agreement_score, 1.0)
         self.assertTrue(output_path.exists())
 

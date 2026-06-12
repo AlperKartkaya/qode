@@ -2,6 +2,426 @@
   "report_version": "scenario-to-score-v1",
   "scenarios": [
     {
+      "scenario_id": "dmd-distraction-texting",
+      "description": "DMD distraction session with OpenLABEL texting and phone-call actions.",
+      "expected": {
+        "status": "SUCCESS",
+        "qod_requested": true,
+        "qod_accepted": true,
+        "active_profile": "boosted",
+        "target_vehicle_detected": false,
+        "plate_candidate_detected": false,
+        "driver_risk_label": "texting_left"
+      },
+      "actual": {
+        "status": "SUCCESS",
+        "bootstrap_result": {
+          "session_id": "scenario-dmd-distraction-texting",
+          "verified": true,
+          "active_profile": "standard",
+          "verification_reference": "mock-nv-905551112242",
+          "message": "VERIFICATION.SUCCESS"
+        },
+        "qod_decision": {
+          "should_activate": true,
+          "requested_profile": "boosted",
+          "reasons": [
+            "driver risk score suggests a higher-detail inspection window"
+          ],
+          "expected_benefit": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
+        },
+        "qod_request": {
+          "session_id": "scenario-dmd-distraction-texting",
+          "target_profile": "boosted",
+          "reason": "driver risk score suggests a higher-detail inspection window",
+          "duration_seconds": 30
+        },
+        "qod_result": {
+          "accepted": true,
+          "applied_profile": "boosted",
+          "request_reference": "mock-qod-scenario-dmd-distraction-texting",
+          "expires_in_seconds": 30,
+          "denial_reason": null
+        },
+        "mobile_view": {
+          "session_id": "scenario-dmd-distraction-texting",
+          "status": "SUCCESS",
+          "verification_passed": true,
+          "active_profile": "boosted",
+          "qod_requested": true,
+          "qod_accepted": true,
+          "source_ref": "data/datasets/dmd-distraction/dmd/gA/1/s2/gA_1_s2_2019-03-08T09;21;03+01;00_rgb_face.mp4",
+          "target_vehicle_detected": false,
+          "plate_candidate_detected": false,
+          "driver_risk_label": "texting_left",
+          "summary_message": "Workflow completed with boosted network quality."
+        },
+        "events": [
+          {
+            "phase": "BOOTSTRAP_REQUESTED",
+            "context_code": "SESSION.BOOTSTRAP_REQUESTED",
+            "message": "Session bootstrap started for device-dmd-distraction-texting"
+          },
+          {
+            "phase": "NUMBER_VERIFIED",
+            "context_code": "NUMBER_VERIFICATION.SUCCESS",
+            "message": "Silent number verification passed."
+          },
+          {
+            "phase": "QOD_EVALUATED",
+            "context_code": "QOD.REQUEST_REQUIRED",
+            "message": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
+          },
+          {
+            "phase": "QOD_ACTIVATED",
+            "context_code": "QOD.ACTIVATED",
+            "message": "QoD request accepted by the mock gateway."
+          }
+        ]
+      },
+      "trace": {
+        "scenario_id": "dmd-distraction-texting",
+        "phases": [
+          "BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFIED",
+          "QOD_EVALUATED",
+          "QOD_ACTIVATED"
+        ],
+        "context_codes": [
+          "SESSION.BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFICATION.SUCCESS",
+          "QOD.REQUEST_REQUIRED",
+          "QOD.ACTIVATED"
+        ],
+        "qod_reasons": [
+          "driver risk score suggests a higher-detail inspection window"
+        ],
+        "verification_reference": "mock-nv-905551112242",
+        "qod_request_reference": "mock-qod-scenario-dmd-distraction-texting"
+      },
+      "metrics": {
+        "qod_selectivity_score": 1.0,
+        "policy_consistency_score": 1.0,
+        "behavior_label_agreement_score": 1.0,
+        "all_expectations_met": true
+      }
+    },
+    {
+      "scenario_id": "dmd-drowsiness-yawning",
+      "description": "DMD drowsiness session with OpenLABEL yawning actions.",
+      "expected": {
+        "status": "SUCCESS",
+        "qod_requested": true,
+        "qod_accepted": true,
+        "active_profile": "boosted",
+        "target_vehicle_detected": false,
+        "plate_candidate_detected": false,
+        "driver_risk_label": "yawning_with_hand"
+      },
+      "actual": {
+        "status": "SUCCESS",
+        "bootstrap_result": {
+          "session_id": "scenario-dmd-drowsiness-yawning",
+          "verified": true,
+          "active_profile": "standard",
+          "verification_reference": "mock-nv-905551112243",
+          "message": "VERIFICATION.SUCCESS"
+        },
+        "qod_decision": {
+          "should_activate": true,
+          "requested_profile": "boosted",
+          "reasons": [
+            "driver risk score suggests a higher-detail inspection window"
+          ],
+          "expected_benefit": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
+        },
+        "qod_request": {
+          "session_id": "scenario-dmd-drowsiness-yawning",
+          "target_profile": "boosted",
+          "reason": "driver risk score suggests a higher-detail inspection window",
+          "duration_seconds": 30
+        },
+        "qod_result": {
+          "accepted": true,
+          "applied_profile": "boosted",
+          "request_reference": "mock-qod-scenario-dmd-drowsiness-yawning",
+          "expires_in_seconds": 30,
+          "denial_reason": null
+        },
+        "mobile_view": {
+          "session_id": "scenario-dmd-drowsiness-yawning",
+          "status": "SUCCESS",
+          "verification_passed": true,
+          "active_profile": "boosted",
+          "qod_requested": true,
+          "qod_accepted": true,
+          "source_ref": "data/datasets/dmd-drowsiness/dmd/gA/1/s5/gA_1_s5_2019-03-14T14;26;17+01;00_rgb_face.mp4",
+          "target_vehicle_detected": false,
+          "plate_candidate_detected": false,
+          "driver_risk_label": "yawning_with_hand",
+          "summary_message": "Workflow completed with boosted network quality."
+        },
+        "events": [
+          {
+            "phase": "BOOTSTRAP_REQUESTED",
+            "context_code": "SESSION.BOOTSTRAP_REQUESTED",
+            "message": "Session bootstrap started for device-dmd-drowsiness-yawning"
+          },
+          {
+            "phase": "NUMBER_VERIFIED",
+            "context_code": "NUMBER_VERIFICATION.SUCCESS",
+            "message": "Silent number verification passed."
+          },
+          {
+            "phase": "QOD_EVALUATED",
+            "context_code": "QOD.REQUEST_REQUIRED",
+            "message": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
+          },
+          {
+            "phase": "QOD_ACTIVATED",
+            "context_code": "QOD.ACTIVATED",
+            "message": "QoD request accepted by the mock gateway."
+          }
+        ]
+      },
+      "trace": {
+        "scenario_id": "dmd-drowsiness-yawning",
+        "phases": [
+          "BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFIED",
+          "QOD_EVALUATED",
+          "QOD_ACTIVATED"
+        ],
+        "context_codes": [
+          "SESSION.BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFICATION.SUCCESS",
+          "QOD.REQUEST_REQUIRED",
+          "QOD.ACTIVATED"
+        ],
+        "qod_reasons": [
+          "driver risk score suggests a higher-detail inspection window"
+        ],
+        "verification_reference": "mock-nv-905551112243",
+        "qod_request_reference": "mock-qod-scenario-dmd-drowsiness-yawning"
+      },
+      "metrics": {
+        "qod_selectivity_score": 1.0,
+        "policy_consistency_score": 1.0,
+        "behavior_label_agreement_score": 1.0,
+        "all_expectations_met": true
+      }
+    },
+    {
+      "scenario_id": "driversvt-no-attention",
+      "description": "DriverSVT telemetry row with row-level No attention dangerous-state label.",
+      "expected": {
+        "status": "SUCCESS",
+        "qod_requested": true,
+        "qod_accepted": true,
+        "active_profile": "boosted",
+        "target_vehicle_detected": false,
+        "plate_candidate_detected": false,
+        "driver_risk_label": "No attention"
+      },
+      "actual": {
+        "status": "SUCCESS",
+        "bootstrap_result": {
+          "session_id": "scenario-driversvt-no-attention",
+          "verified": true,
+          "active_profile": "standard",
+          "verification_reference": "mock-nv-905551112244",
+          "message": "VERIFICATION.SUCCESS"
+        },
+        "qod_decision": {
+          "should_activate": true,
+          "requested_profile": "boosted",
+          "reasons": [
+            "driver risk score suggests a higher-detail inspection window"
+          ],
+          "expected_benefit": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
+        },
+        "qod_request": {
+          "session_id": "scenario-driversvt-no-attention",
+          "target_profile": "boosted",
+          "reason": "driver risk score suggests a higher-detail inspection window",
+          "duration_seconds": 30
+        },
+        "qod_result": {
+          "accepted": true,
+          "applied_profile": "boosted",
+          "request_reference": "mock-qod-scenario-driversvt-no-attention",
+          "expires_in_seconds": 30,
+          "denial_reason": null
+        },
+        "mobile_view": {
+          "session_id": "scenario-driversvt-no-attention",
+          "status": "SUCCESS",
+          "verification_passed": true,
+          "active_profile": "boosted",
+          "qod_requested": true,
+          "qod_accepted": true,
+          "source_ref": "data/datasets/DriverSVT-teknofest/DriverSVT.csv#row:575631",
+          "target_vehicle_detected": false,
+          "plate_candidate_detected": false,
+          "driver_risk_label": "No attention",
+          "summary_message": "Workflow completed with boosted network quality."
+        },
+        "events": [
+          {
+            "phase": "BOOTSTRAP_REQUESTED",
+            "context_code": "SESSION.BOOTSTRAP_REQUESTED",
+            "message": "Session bootstrap started for device-driversvt-no-attention"
+          },
+          {
+            "phase": "NUMBER_VERIFIED",
+            "context_code": "NUMBER_VERIFICATION.SUCCESS",
+            "message": "Silent number verification passed."
+          },
+          {
+            "phase": "QOD_EVALUATED",
+            "context_code": "QOD.REQUEST_REQUIRED",
+            "message": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
+          },
+          {
+            "phase": "QOD_ACTIVATED",
+            "context_code": "QOD.ACTIVATED",
+            "message": "QoD request accepted by the mock gateway."
+          }
+        ]
+      },
+      "trace": {
+        "scenario_id": "driversvt-no-attention",
+        "phases": [
+          "BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFIED",
+          "QOD_EVALUATED",
+          "QOD_ACTIVATED"
+        ],
+        "context_codes": [
+          "SESSION.BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFICATION.SUCCESS",
+          "QOD.REQUEST_REQUIRED",
+          "QOD.ACTIVATED"
+        ],
+        "qod_reasons": [
+          "driver risk score suggests a higher-detail inspection window"
+        ],
+        "verification_reference": "mock-nv-905551112244",
+        "qod_request_reference": "mock-qod-scenario-driversvt-no-attention"
+      },
+      "metrics": {
+        "qod_selectivity_score": 1.0,
+        "policy_consistency_score": 1.0,
+        "behavior_label_agreement_score": 1.0,
+        "all_expectations_met": true
+      }
+    },
+    {
+      "scenario_id": "state-farm-texting-right",
+      "description": "State Farm labelled train image with texting-right driver behavior.",
+      "expected": {
+        "status": "SUCCESS",
+        "qod_requested": true,
+        "qod_accepted": true,
+        "active_profile": "boosted",
+        "target_vehicle_detected": false,
+        "plate_candidate_detected": false,
+        "driver_risk_label": "texting_right"
+      },
+      "actual": {
+        "status": "SUCCESS",
+        "bootstrap_result": {
+          "session_id": "scenario-state-farm-texting",
+          "verified": true,
+          "active_profile": "standard",
+          "verification_reference": "mock-nv-905551112241",
+          "message": "VERIFICATION.SUCCESS"
+        },
+        "qod_decision": {
+          "should_activate": true,
+          "requested_profile": "boosted",
+          "reasons": [
+            "driver risk score suggests a higher-detail inspection window"
+          ],
+          "expected_benefit": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
+        },
+        "qod_request": {
+          "session_id": "scenario-state-farm-texting",
+          "target_profile": "boosted",
+          "reason": "driver risk score suggests a higher-detail inspection window",
+          "duration_seconds": 30
+        },
+        "qod_result": {
+          "accepted": true,
+          "applied_profile": "boosted",
+          "request_reference": "mock-qod-scenario-state-farm-texting",
+          "expires_in_seconds": 30,
+          "denial_reason": null
+        },
+        "mobile_view": {
+          "session_id": "scenario-state-farm-texting",
+          "status": "SUCCESS",
+          "verification_passed": true,
+          "active_profile": "boosted",
+          "qod_requested": true,
+          "qod_accepted": true,
+          "source_ref": "data/datasets/state-farm-distracted-driver/imgs/train/c1/img_16856.jpg",
+          "target_vehicle_detected": false,
+          "plate_candidate_detected": false,
+          "driver_risk_label": "texting_right",
+          "summary_message": "Workflow completed with boosted network quality."
+        },
+        "events": [
+          {
+            "phase": "BOOTSTRAP_REQUESTED",
+            "context_code": "SESSION.BOOTSTRAP_REQUESTED",
+            "message": "Session bootstrap started for device-state-farm-texting"
+          },
+          {
+            "phase": "NUMBER_VERIFIED",
+            "context_code": "NUMBER_VERIFICATION.SUCCESS",
+            "message": "Silent number verification passed."
+          },
+          {
+            "phase": "QOD_EVALUATED",
+            "context_code": "QOD.REQUEST_REQUIRED",
+            "message": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
+          },
+          {
+            "phase": "QOD_ACTIVATED",
+            "context_code": "QOD.ACTIVATED",
+            "message": "QoD request accepted by the mock gateway."
+          }
+        ]
+      },
+      "trace": {
+        "scenario_id": "state-farm-texting-right",
+        "phases": [
+          "BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFIED",
+          "QOD_EVALUATED",
+          "QOD_ACTIVATED"
+        ],
+        "context_codes": [
+          "SESSION.BOOTSTRAP_REQUESTED",
+          "NUMBER_VERIFICATION.SUCCESS",
+          "QOD.REQUEST_REQUIRED",
+          "QOD.ACTIVATED"
+        ],
+        "qod_reasons": [
+          "driver risk score suggests a higher-detail inspection window"
+        ],
+        "verification_reference": "mock-nv-905551112241",
+        "qod_request_reference": "mock-qod-scenario-state-farm-texting"
+      },
+      "metrics": {
+        "qod_selectivity_score": 1.0,
+        "policy_consistency_score": 1.0,
+        "behavior_label_agreement_score": 1.0,
+        "all_expectations_met": true
+      }
+    },
+    {
       "scenario_id": "video-1-smoking",
       "description": "Smoking and unsafe scanning are observed while the target vehicle approaches the camera.",
       "expected": {
@@ -29,7 +449,7 @@
             "plate is visible but not yet clear enough for reliable reading",
             "driver risk score suggests a higher-detail inspection window"
           ],
-          "expected_benefit": "better detail for plate, in-cabin, or target-vehicle analysis"
+          "expected_benefit": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
         },
         "qod_request": {
           "session_id": "scenario-video-1",
@@ -71,7 +491,7 @@
           {
             "phase": "QOD_EVALUATED",
             "context_code": "QOD.REQUEST_REQUIRED",
-            "message": "better detail for plate, in-cabin, or target-vehicle analysis"
+            "message": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
           },
           {
             "phase": "QOD_ACTIVATED",
@@ -136,7 +556,7 @@
             "plate is visible but not yet clear enough for reliable reading",
             "driver risk score suggests a higher-detail inspection window"
           ],
-          "expected_benefit": "better detail for plate, in-cabin, or target-vehicle analysis"
+          "expected_benefit": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
         },
         "qod_request": {
           "session_id": "scenario-video-2",
@@ -178,7 +598,7 @@
           {
             "phase": "QOD_EVALUATED",
             "context_code": "QOD.REQUEST_REQUIRED",
-            "message": "better detail for plate, in-cabin, or target-vehicle analysis"
+            "message": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
           },
           {
             "phase": "QOD_ACTIVATED",
@@ -243,7 +663,7 @@
             "plate is visible but not yet clear enough for reliable reading",
             "driver risk score suggests a higher-detail inspection window"
           ],
-          "expected_benefit": "better detail for plate, in-cabin, or target-vehicle analysis"
+          "expected_benefit": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
         },
         "qod_request": {
           "session_id": "scenario-video-3",
@@ -285,7 +705,7 @@
           {
             "phase": "QOD_EVALUATED",
             "context_code": "QOD.REQUEST_REQUIRED",
-            "message": "better detail for plate, in-cabin, or target-vehicle analysis"
+            "message": "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
           },
           {
             "phase": "QOD_ACTIVATED",
@@ -324,8 +744,8 @@
     }
   ],
   "summary": {
-    "scenario_count": 3,
-    "expectation_pass_count": 3,
+    "scenario_count": 7,
+    "expectation_pass_count": 7,
     "qod_request_rate": 1.0,
     "qod_acceptance_rate": 1.0,
     "average_qod_selectivity_score": 1.0,

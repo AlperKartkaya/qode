@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 
-from ..data import build_adapter_from_manifest_path
 from ..integration import MockNumberVerificationGateway, MockQualityOnDemandGateway
 from ..orchestration import (
     SceneAnalysisSummary,
@@ -20,11 +18,11 @@ from .models import (
     DatasetSelection,
     SceneAnalyzer,
 )
-from .observations import ObservationRegistry
+from .dataset import build_dataset_backed_analysis_result
 
 
 @dataclass
-class PlaceholderSceneAnalyzer(SceneAnalyzer):
+class RuleBasedSceneAnalyzer(SceneAnalyzer):
     policy: QodPolicy | None = None
 
     def analyze(self, analyzer_input: AnalyzerInput) -> AnalysisResult:
@@ -72,8 +70,12 @@ class PlaceholderSceneAnalyzer(SceneAnalyzer):
         if driver_risk_score > 0.0:
             states.append("driver risk score available")
         if not states:
-            return "Placeholder analyzer produced no significant signals."
-        return "Placeholder analyzer produced: " + ", ".join(states) + "."
+            return "Rule-based analyzer produced no significant signals."
+        return "Rule-based analyzer produced: " + ", ".join(states) + "."
+
+
+# Backward-compatible public alias for earlier scaffold tests/imports.
+PlaceholderSceneAnalyzer = RuleBasedSceneAnalyzer
 
 
 def run_analysis_session(
@@ -85,7 +87,7 @@ def run_analysis_session(
     active_analyzer = (
         analyzer
         if analyzer is not None
-        else PlaceholderSceneAnalyzer(policy=active_policy)
+        else RuleBasedSceneAnalyzer(policy=active_policy)
     )
     analysis_result = _build_analysis_result(
         request=request,
@@ -143,39 +145,4 @@ def _build_analysis_result(
             "AnalysisSessionRequest requires analyzer_input or dataset_selection."
         )
 
-    return _build_dataset_backed_result(request.dataset_selection)
-
-
-def _build_dataset_backed_result(dataset_selection: DatasetSelection) -> AnalysisResult:
-    adapter = build_adapter_from_manifest_path(
-        manifest_path=dataset_selection.manifest_path,
-        dataset_root=dataset_selection.dataset_root,
-    )
-    inventory = adapter.load_inventory()
-    sample = inventory.get_sample(dataset_selection.sample_id)
-    observations_path = (
-        Path(dataset_selection.observations_path)
-        if dataset_selection.observations_path is not None
-        else Path(dataset_selection.dataset_root) / "video_observations.json"
-    )
-    observation = ObservationRegistry.from_path(observations_path).get_sample(
-        dataset_selection.sample_id
-    )
-    return AnalysisResult(
-        source_ref=sample.primary_source_ref,
-        quality_profile="standard",
-        target_vehicle_detected=observation.target_vehicle_present,
-        target_vehicle_confidence=1.0 if observation.target_vehicle_present else 0.0,
-        plate_candidate_detected=observation.plate_visible,
-        plate_visibility_score=observation.plate_visibility_score,
-        driver_risk_score=observation.risk_score,
-        driver_risk_label=observation.risk_label,
-        distance_meters=None,
-        summary_message=observation.summary,
-        notes=(
-            f"sample_id={sample.sample_id}",
-            f"video_path={sample.video_path}",
-            f"screenshot_count={len(sample.screenshot_paths)}",
-            *(event.label for event in observation.driver_events),
-        ),
-    )
+    return build_dataset_backed_analysis_result(request.dataset_selection)

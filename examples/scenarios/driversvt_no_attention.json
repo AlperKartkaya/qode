@@ -1,0 +1,29 @@
+{
+  "scenario_id": "driversvt-no-attention",
+  "description": "DriverSVT telemetry row with row-level No attention dangerous-state label.",
+  "analysis_session_request": {
+    "session_id": "scenario-driversvt-no-attention",
+    "phone_number": "+905551112244",
+    "device_session_id": "device-driversvt-no-attention",
+    "requested_profile": "standard",
+    "verification_should_pass": true,
+    "qod_should_allow_boost": true,
+    "dataset_selection": {
+      "dataset_root": "data/datasets/DriverSVT-teknofest",
+      "manifest_path": "data/datasets/DriverSVT-teknofest/manifest.json",
+      "sample_id": "row:575631"
+    }
+  },
+  "expected": {
+    "status": "SUCCESS",
+    "qod_requested": true,
+    "qod_accepted": true,
+    "active_profile": "boosted",
+    "target_vehicle_detected": false,
+    "plate_candidate_detected": false,
+    "driver_risk_label": "No attention"
+  },
+  "notes": [
+    "Ground truth comes from DriverSVT dangerousstate at CSV row id 575631."
+  ]
+}

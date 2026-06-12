@@ -1,6 +1,8 @@
 {
   "sample_unit": "mixed",
-  "video_extensions": [".mp4"],
+  "video_extensions": [
+    ".mp4"
+  ],
   "annotation_format": "human_curated_clip_observations",
   "includes_train_split": false,
   "includes_validation_split": false,
@@ -18,5 +20,6 @@
   "has_in_cabin_annotations": true,
   "has_driver_behavior_annotations": true,
   "speed_unit": null,
-  "notes": "Observed delivery contains three MP4 videos and three screenshot folders with four PNG images each. Clip-level behavior observations are encoded in data/video_observations.json and are the authoritative labels for this final media-only dataset."
+  "notes": "Secondary legacy observed-media bundle with three MP4 videos and companion screenshot folders. Clip-level behavior observations are encoded in data/video_observations.json and remain authoritative for this legacy sample set; the four primary datasets live under data/datasets/.",
+  "dataset_name": "legacy-observed-media-bundle"
 }

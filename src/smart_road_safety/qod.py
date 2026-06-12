@@ -74,7 +74,7 @@ def evaluate_qod_need(
         active_policy.boosted_profile if should_activate else signal.current_profile
     )
     expected_benefit = (
-        "better detail for plate, in-cabin, or target-vehicle analysis"
+        "better detail for driver-risk, in-cabin, plate, or target-vehicle analysis"
         if should_activate
         else "stay on the current profile because there is no strong evidence of benefit"
     )

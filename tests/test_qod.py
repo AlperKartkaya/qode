@@ -33,6 +33,24 @@ class QodPolicyTest(unittest.TestCase):
         self.assertEqual(decision.requested_profile, BOOSTED_PROFILE)
         self.assertGreaterEqual(len(decision.reasons), 1)
 
+    def test_qod_requests_boost_when_driver_risk_is_high(self) -> None:
+        signal = SceneSignal(
+            togg_candidate_confidence=0.0,
+            plate_visibility_score=0.0,
+            driver_risk_score=0.88,
+            distance_meters=None,
+            current_profile=STANDARD_PROFILE,
+        )
+
+        decision = evaluate_qod_need(signal)
+
+        self.assertTrue(decision.should_activate)
+        self.assertEqual(decision.requested_profile, BOOSTED_PROFILE)
+        self.assertIn(
+            "driver risk score suggests a higher-detail inspection window",
+            decision.reasons,
+        )
+
     def test_qod_stays_put_when_scene_is_not_critical(self) -> None:
         signal = SceneSignal(
             togg_candidate_confidence=0.20,

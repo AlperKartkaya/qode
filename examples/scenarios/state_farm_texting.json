@@ -1,0 +1,29 @@
+{
+  "scenario_id": "state-farm-texting-right",
+  "description": "State Farm labelled train image with texting-right driver behavior.",
+  "analysis_session_request": {
+    "session_id": "scenario-state-farm-texting",
+    "phone_number": "+905551112241",
+    "device_session_id": "device-state-farm-texting",
+    "requested_profile": "standard",
+    "verification_should_pass": true,
+    "qod_should_allow_boost": true,
+    "dataset_selection": {
+      "dataset_root": "data/datasets/state-farm-distracted-driver",
+      "manifest_path": "data/datasets/state-farm-distracted-driver/manifest.json",
+      "sample_id": "p002_c1_img_16856"
+    }
+  },
+  "expected": {
+    "status": "SUCCESS",
+    "qod_requested": true,
+    "qod_accepted": true,
+    "active_profile": "boosted",
+    "target_vehicle_detected": false,
+    "plate_candidate_detected": false,
+    "driver_risk_label": "texting_right"
+  },
+  "notes": [
+    "Ground truth comes from State Farm driver_imgs_list.csv and class folder c1."
+  ]
+}

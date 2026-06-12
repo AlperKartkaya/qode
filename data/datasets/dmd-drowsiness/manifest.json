@@ -1,0 +1,36 @@
+{
+  "dataset_name": "dmd-drowsiness",
+  "sample_unit": "video_clip",
+  "video_extensions": [
+    ".mp4",
+    ".avi"
+  ],
+  "annotation_format": "openlabel_json",
+  "includes_train_split": false,
+  "includes_validation_split": false,
+  "includes_test_split": false,
+  "targets": [
+    "driver_behavior",
+    "drowsiness"
+  ],
+  "has_frame_level_annotations": true,
+  "has_clip_level_annotations": false,
+  "has_plate_text": false,
+  "has_speed_ground_truth": false,
+  "has_in_cabin_annotations": true,
+  "has_driver_behavior_annotations": true,
+  "speed_unit": null,
+  "notes": "DMD (Driver Monitoring Dataset) drowsiness subset. Four multi-camera RGB video sessions with OpenLABEL frame-level annotations for eye state, blinking, and yawning.",
+  "session_count": 4,
+  "annotated_frame_count": 21583,
+  "action_types": [
+    "blinks/blinking",
+    "eyes_state/close",
+    "eyes_state/closing",
+    "eyes_state/open",
+    "eyes_state/opening",
+    "eyes_state/undefined",
+    "yawning/Yawning with hand",
+    "yawning/Yawning without hand"
+  ]
+}

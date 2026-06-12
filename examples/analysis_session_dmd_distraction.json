@@ -1,0 +1,13 @@
+{
+  "session_id": "analysis-dmd-distraction-001",
+  "phone_number": "+905551112242",
+  "device_session_id": "analysis-device-dmd-distraction",
+  "requested_profile": "standard",
+  "verification_should_pass": true,
+  "qod_should_allow_boost": true,
+  "dataset_selection": {
+    "dataset_root": "data/datasets/dmd-distraction",
+    "manifest_path": "data/datasets/dmd-distraction/manifest.json",
+    "sample_id": "gA_1_s2"
+  }
+}

@@ -1,18 +1,26 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 
 REQUIRED_TARGETS = {
-    "vehicle",
-    "plate",
     "driver_behavior",
 }
 
-ALLOWED_SAMPLE_UNITS = {"video_clip", "frame", "mixed"}
+ALLOWED_SAMPLE_UNITS = {"video_clip", "frame", "mixed", "telemetry_row"}
+
+KNOWN_ANNOTATION_FORMATS = {
+    "human_curated_clip_observations",
+    "openlabel_json",
+    "folder_class_csv",
+    "csv_tabular",
+    # legacy example manifests kept for adapter-compatibility tests
+    "json",
+    "csv",
+}
 
 
 @dataclass(frozen=True)
@@ -32,6 +40,7 @@ class DatasetManifest:
     has_driver_behavior_annotations: bool
     speed_unit: str | None
     notes: str = ""
+    extra_fields: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_path(cls, file_path: str | Path) -> "DatasetManifest":
@@ -80,6 +89,9 @@ class DatasetManifest:
             if payload["speed_unit"] is None
             else str(payload["speed_unit"]),
             notes=str(payload.get("notes", "")),
+            extra_fields={
+                key: value for key, value in payload.items() if key not in required_keys
+            },
         )
 
 
@@ -104,13 +116,23 @@ def compare_manifest_to_assumptions(manifest: DatasetManifest) -> list[Adaptatio
             )
         )
 
-    if not manifest.video_extensions:
+    if manifest.annotation_format not in KNOWN_ANNOTATION_FORMATS:
+        gaps.append(
+            AdaptationGap(
+                assumption_id="DS-003",
+                severity="medium",
+                message=f"Unexpected annotation format: {manifest.annotation_format}",
+                action="Inspect the annotation source and add a parser/manifest contract for it.",
+            )
+        )
+
+    if manifest.sample_unit in {"video_clip", "mixed"} and not manifest.video_extensions:
         gaps.append(
             AdaptationGap(
                 assumption_id="DS-001",
                 severity="high",
                 message="No video extensions were declared.",
-                action="Confirm whether the dataset is still video-based or image-based.",
+                action="Confirm whether the video/mixed dataset is still video-based.",
             )
         )
 
@@ -125,15 +147,23 @@ def compare_manifest_to_assumptions(manifest: DatasetManifest) -> list[Adaptatio
             )
         )
 
+    has_row_level_annotations = bool(
+        manifest.extra_fields.get("has_row_level_annotations")
+    ) or (
+        manifest.sample_unit == "telemetry_row"
+        and manifest.annotation_format == "csv_tabular"
+        and manifest.has_driver_behavior_annotations
+    )
     if (
         not manifest.has_frame_level_annotations
         and not manifest.has_clip_level_annotations
+        and not has_row_level_annotations
     ):
         gaps.append(
             AdaptationGap(
                 assumption_id="DS-008",
                 severity="high",
-                message="Neither frame-level nor clip-level annotations are declared.",
+                message="No frame-level, clip-level, or row-level annotations are declared.",
                 action="Inspect the dataset and redefine the annotation contract.",
             )
         )
@@ -152,6 +182,7 @@ def compare_manifest_to_assumptions(manifest: DatasetManifest) -> list[Adaptatio
         "km/h",
         "kmh",
         "kph",
+        "dataset_native",
     }:
         gaps.append(
             AdaptationGap(

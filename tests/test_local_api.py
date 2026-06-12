@@ -86,6 +86,29 @@ class LocalApiTest(unittest.TestCase):
         )
         self.assertEqual(payload["workflow_result"]["status"], "SUCCESS")
 
+    def test_analysis_session_endpoint_returns_state_farm_result(self) -> None:
+        request_payload = {
+            "request": json.loads(
+                (ROOT / "examples" / "analysis_session_state_farm.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+        }
+        connection = HTTPConnection(self.host, self.port)
+        connection.request(
+            "POST",
+            "/analysis-session/run",
+            body=json.dumps(request_payload),
+            headers={"Content-Type": "application/json"},
+        )
+        response = connection.getresponse()
+        payload = json.loads(response.read().decode("utf-8"))
+        connection.close()
+
+        self.assertEqual(response.status, 200)
+        self.assertEqual(payload["analysis_result"]["driver_risk_label"], "texting_right")
+        self.assertFalse(payload["analysis_result"]["target_vehicle_detected"])
+
     def test_dataset_inventory_endpoint_returns_real_inventory(self) -> None:
         request_payload = {
             "manifest_path": str(ROOT / "data" / "real_dataset_manifest.json"),
@@ -121,7 +144,7 @@ class LocalApiTest(unittest.TestCase):
         connection.close()
 
         self.assertEqual(response.status, 200)
-        self.assertEqual(payload["report"]["summary"]["scenario_count"], 3)
+        self.assertEqual(payload["report"]["summary"]["scenario_count"], 7)
 
     def test_export_endpoint_writes_markdown_file(self) -> None:
         evaluation_payload = {

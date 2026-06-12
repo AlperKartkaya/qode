@@ -22,11 +22,8 @@ class ManifestChecksTest(unittest.TestCase):
                 "includes_validation_split": False,
                 "includes_test_split": True,
                 "targets": [
-                    "vehicle",
-                    "plate",
-                    "speed",
-                    "in_cabin_object",
                     "driver_behavior",
+                    "distraction",
                 ],
                 "has_frame_level_annotations": True,
                 "has_clip_level_annotations": True,
@@ -50,7 +47,7 @@ class ManifestChecksTest(unittest.TestCase):
                 "includes_train_split": True,
                 "includes_validation_split": True,
                 "includes_test_split": True,
-                "targets": ["vehicle", "plate"],
+                "targets": ["vehicle", "plate"],  # missing driver_behavior
                 "has_frame_level_annotations": True,
                 "has_clip_level_annotations": False,
                 "has_plate_text": True,
@@ -68,6 +65,25 @@ class ManifestChecksTest(unittest.TestCase):
                 gap.assumption_id == "DS-004" and gap.severity == "high" for gap in gaps
             )
         )
+
+    def test_frame_dataset_without_video_extensions_is_valid(self) -> None:
+        manifest = DatasetManifest.from_path(
+            ROOT / "data" / "datasets" / "state-farm-distracted-driver" / "manifest.json"
+        )
+
+        gaps = compare_manifest_to_assumptions(manifest)
+
+        self.assertEqual(gaps, [])
+
+    def test_telemetry_row_dataset_without_video_extensions_is_valid(self) -> None:
+        manifest = DatasetManifest.from_path(
+            ROOT / "data" / "datasets" / "DriverSVT-teknofest" / "manifest.json"
+        )
+
+        gaps = compare_manifest_to_assumptions(manifest)
+
+        self.assertEqual(gaps, [])
+        self.assertEqual(manifest.extra_fields["row_count"], 17561501)
 
 
 if __name__ == "__main__":

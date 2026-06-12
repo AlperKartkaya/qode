@@ -19,5 +19,5 @@
   "has_in_cabin_annotations": true,
   "has_driver_behavior_annotations": true,
   "speed_unit": "km/h",
-  "notes": "Alternative manifest used to test contradiction against the current video-first assumptions."
+  "notes": "Legacy compatibility manifest used to exercise generic frame-adapter behavior; not the current real dataset contract."
 }

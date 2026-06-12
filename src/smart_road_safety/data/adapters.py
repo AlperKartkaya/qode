@@ -24,6 +24,8 @@ class DatasetMediaSample:
     sample_id: str
     video_path: str
     screenshot_paths: tuple[str, ...]
+    label: str | None = None
+    metadata: dict[str, str] = field(default_factory=dict)
 
     @property
     def primary_source_ref(self) -> str:
@@ -223,11 +225,23 @@ class ManifestAdapterRegistry:
 
 
 def build_default_registry() -> ManifestAdapterRegistry:
+    from .real_adapters import (
+        DMDDistractionAdapter,
+        DMDDrowsinessAdapter,
+        DriverSVTAdapter,
+        StateFarmAdapter,
+    )
+
     registry = ManifestAdapterRegistry()
+    registry.register(StateFarmAdapter)
+    registry.register(DMDDistractionAdapter)
+    registry.register(DMDDrowsinessAdapter)
+    registry.register(DriverSVTAdapter)
     registry.register(ObservedMediaBundleDatasetAdapter)
     registry.register(AssumedVideoClipDatasetAdapter)
     registry.register(AssumedFrameDatasetAdapter)
     return registry
+
 
 
 def build_adapter_from_manifest(

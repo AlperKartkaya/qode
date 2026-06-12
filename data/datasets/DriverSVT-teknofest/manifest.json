@@ -1,0 +1,37 @@
+{
+  "dataset_name": "DriverSVT-teknofest",
+  "sample_unit": "telemetry_row",
+  "video_extensions": [],
+  "annotation_format": "csv_tabular",
+  "includes_train_split": false,
+  "includes_validation_split": false,
+  "includes_test_split": false,
+  "targets": [
+    "driver_behavior",
+    "distraction",
+    "drowsiness",
+    "speed"
+  ],
+  "has_frame_level_annotations": false,
+  "has_clip_level_annotations": false,
+  "has_plate_text": false,
+  "has_speed_ground_truth": true,
+  "has_in_cabin_annotations": true,
+  "has_driver_behavior_annotations": true,
+  "speed_unit": "dataset_native",
+  "notes": "DriverSVT (Smartphone-Measured Vehicle Telemetry Data for Driver State Identification). 17,561,501 CSV telemetry rows from 633 drivers with row-level dangerousstate labels and dataset-native numeric speed values. Includes gforce, perclos, head_pose, mouth_open_ratio, heart_rate, accelerometer, gyroscope, magnetometer, gravity, and euler angle data.",
+  "row_count": 17561501,
+  "unique_users": 633,
+  "state_labels": [
+    "Normal",
+    "Camera off",
+    "Distraction",
+    "Unfastened belt",
+    "Drowsiness",
+    "No attention",
+    "Using phone",
+    "Eating",
+    "Smoking"
+  ],
+  "has_row_level_annotations": true
+}

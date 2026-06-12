@@ -1,0 +1,36 @@
+{
+  "dataset_name": "state-farm-distracted-driver",
+  "sample_unit": "frame",
+  "video_extensions": [],
+  "annotation_format": "folder_class_csv",
+  "includes_train_split": true,
+  "includes_validation_split": false,
+  "includes_test_split": true,
+  "targets": [
+    "driver_behavior",
+    "distraction"
+  ],
+  "has_frame_level_annotations": true,
+  "has_clip_level_annotations": false,
+  "has_plate_text": false,
+  "has_speed_ground_truth": false,
+  "has_in_cabin_annotations": true,
+  "has_driver_behavior_annotations": true,
+  "speed_unit": null,
+  "notes": "State Farm Distracted Driver Detection dataset. 22,424 labelled training images across 10 distraction classes (c0-c9) from 26 train subjects. 79,726 official test images are present but unlabeled. Images are organized by class folder under imgs/train/c{0-9}/ and train metadata lives in driver_imgs_list.csv.",
+  "train_image_count": 22424,
+  "test_image_count": 79726,
+  "train_subject_count": 26,
+  "class_labels": [
+    "safe_driving",
+    "texting_right",
+    "phone_right",
+    "texting_left",
+    "phone_left",
+    "operating_radio",
+    "drinking",
+    "reaching_behind",
+    "hair_and_makeup",
+    "talking_to_passenger"
+  ]
+}
