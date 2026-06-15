@@ -33,5 +33,25 @@
     "Eating",
     "Smoking"
   ],
-  "has_row_level_annotations": true
+  "has_row_level_annotations": true,
+  "competition_role": "support_training_telemetry_and_speed",
+  "ftr_output_families_covered": [
+    "sofor_eylemi"
+  ],
+  "ftr_labels_covered": [
+    "telefonla_konusma",
+    "sigara_icme",
+    "emniyet_kemeri_ihlali",
+    "etrafa_bakinma",
+    "esneme",
+    "slalom_proxy"
+  ],
+  "ftr_known_gaps": [
+    "visual_arac_bilgisi",
+    "plate_text",
+    "vehicle_color",
+    "vehicle_type",
+    "nesneler",
+    "yolcular"
+  ]
 }

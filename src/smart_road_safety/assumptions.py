@@ -18,111 +18,155 @@ ASSUMPTIONS: tuple[AssumptionRecord, ...] = (
         assumption_id="DS-001",
         domain="dataset packaging",
         statement=(
-            "The primary project data now consists of State Farm image frames, "
-            "DMD video/OpenLABEL subsets, and DriverSVT CSV telemetry; the "
-            "legacy three-video media bundle is secondary."
+            "Support datasets are State Farm images, DMD videos/OpenLABEL, "
+            "DriverSVT telemetry, and the legacy three-video TOGG-like bundle; "
+            "the final evaluator runs on organizer-provided videos."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Verified from data/datasets/* and data/real_dataset_manifest.json.",
-        impact_surface=("ingestion", "batching", "preprocessing"),
+        verify_when_dataset_arrives="Verified from FTR and 2026 şartname source documents.",
+        impact_surface=("ingestion", "preprocessing", "report wording"),
     ),
     AssumptionRecord(
         assumption_id="DS-002",
         domain="sample unit",
         statement=(
-            "Sample units vary by dataset: State Farm images, DMD video sessions, "
-            "DriverSVT telemetry rows, and legacy video clips."
+            "Support sample units vary by dataset, but final FTR inference sample "
+            "unit is one video at /app/data/input/video.mp4."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Verified from manifests and dataset tree inspection.",
-        impact_surface=("dataset adapters", "evaluation"),
+        verify_when_dataset_arrives="Verified from FTR Docker contract.",
+        impact_surface=("dataset adapters", "submission wrapper"),
     ),
     AssumptionRecord(
         assumption_id="DS-003",
         domain="annotation source",
         statement=(
-            "Annotations come from State Farm folder/CSV labels, DMD OpenLABEL JSON, "
-            "DriverSVT dangerousstate CSV labels, and the legacy clip observation registry."
+            "Support annotations keep their native labels, but final output must be "
+            "the exact FTR results.json schema with ASCII-safe labels."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Verified from local label files and manifests.",
-        impact_surface=("parsers", "schema validation", "evaluation"),
+        verify_when_dataset_arrives="Verified from FTR output examples.",
+        impact_surface=("parsers", "schema validation", "competition exporter"),
     ),
     AssumptionRecord(
         assumption_id="DS-004",
         domain="targets",
         statement=(
-            "Driver-behavior monitoring is the primary target family; vehicle/plate "
-            "detection is available only for the legacy observed media bundle."
+            "The competition target taxonomy includes vehicle body type, plate, "
+            "vehicle color, driver actions, selected objects, and passenger positions."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Verified from primary dataset labels.",
-        impact_surface=("model heads", "UI output", "evaluation"),
+        verify_when_dataset_arrives="Verified from FTR expected values and 2026 şartname target list.",
+        impact_surface=("model heads", "output schema", "evaluation", "KTR report"),
+    ),
+    AssumptionRecord(
+        assumption_id="DS-005",
+        domain="plate labels",
+        statement=(
+            "Plate OCR is required for FTR output; current local support datasets do "
+            "not provide reusable exact Turkish plate text labels."
+        ),
+        confidence="high",
+        verify_when_dataset_arrives="Update only if organizer publishes labelled plate ground truth.",
+        impact_surface=("OCR pipeline", "post-processing", "output validation"),
     ),
     AssumptionRecord(
         assumption_id="DS-006",
         domain="speed labels",
         statement=(
-            "DriverSVT provides numeric dataset-native speed telemetry; State Farm "
-            "and DMD do not provide speed ground truth."
+            "The şartname mentions real vehicle speed, but the current FTR results.json "
+            "schema omits a speed key; keep speed as an internal/reporting objective until updated."
+        ),
+        confidence="medium",
+        verify_when_dataset_arrives="Re-check if final KTR/FTR guidance revises results.json.",
+        impact_surface=("normalization", "reporting", "optional model head"),
+    ),
+    AssumptionRecord(
+        assumption_id="DS-007",
+        domain="in-cabin labels",
+        statement=(
+            "FTR requires exact labels for driver actions, teknocan/bilgisayar, "
+            "and passenger-seat positions; existing datasets cover only a subset."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Verified from DriverSVT.csv and absent unit docs.",
-        impact_surface=("normalization", "reporting"),
+        verify_when_dataset_arrives="Verified from FTR labels and current manifests.",
+        impact_surface=("classification schema", "dataset gap analysis"),
     ),
     AssumptionRecord(
         assumption_id="DS-008",
         domain="annotation granularity",
         statement=(
-            "Annotation granularity is per-image for State Farm, frame-level intervals "
-            "for DMD, row-level states for DriverSVT, and clip-level observations for legacy media."
+            "Support granularity varies, while final output is event-level with "
+            "zaman_saniye plus one per-video arac_bilgisi summary."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Verified from manifests and local annotation files.",
-        impact_surface=("temporal logic", "metrics", "adapters"),
+        verify_when_dataset_arrives="Verified from FTR output examples.",
+        impact_surface=("temporal logic", "metrics", "adapter outputs"),
     ),
     AssumptionRecord(
-        assumption_id="DS-009",
-        domain="split strategy",
+        assumption_id="DS-010",
+        domain="TOGG trigger",
         statement=(
-            "State Farm has labelled train subjects and an unlabeled official test set; "
-            "DMD and DriverSVT require custom subject/user-grouped splits."
+            "TOGG/target-vehicle approach is a primary competition trigger for QoD; "
+            "driver-behavior-only datasets are insufficient for the full yarışma scope."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Update only if official competition splits are provided.",
-        impact_surface=("experimentation", "evaluation"),
+        verify_when_dataset_arrives="Verified from şartname purpose and QoD scenario wording.",
+        impact_surface=("trigger policy", "detection logic", "model roadmap"),
     ),
     AssumptionRecord(
         assumption_id="DS-012",
         domain="QoD policy",
         statement=(
-            "QoD should be triggered only when higher network quality has an observable "
-            "benefit for driver-risk or detailed in-cabin analysis."
+            "QoD should be requested only when TOGG approach, plate readability, "
+            "driver-risk, or in-cabin detail creates observable benefit."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Confirm against final API docs and judging guidance.",
-        impact_surface=("network orchestration", "simulation"),
+        verify_when_dataset_arrives="Verified from şartname QoD scoring description; calibrate live later.",
+        impact_surface=("network orchestration", "simulation", "report"),
+    ),
+    AssumptionRecord(
+        assumption_id="DS-013",
+        domain="Number Verification integration",
+        statement=(
+            "Real credentials are unavailable; mocks remain isolated while design "
+            "tracks CAMARA/Open Gateway silent SIM/phone verification semantics."
+        ),
+        confidence="high",
+        verify_when_dataset_arrives="Update when Turkcell credentials/base URL/device details are granted.",
+        impact_surface=("mobile/auth integration",),
     ),
     AssumptionRecord(
         assumption_id="DS-014",
         domain="QoD API integration",
         statement=(
-            "Real QoD endpoint details remain unavailable, so the repository keeps "
-            "explicit mock-backed QoD activation behavior."
+            "Real credentials are unavailable; mocks remain isolated while design "
+            "tracks CAMARA/Open Gateway temporary QoS-session semantics."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Update only if operator access is separately granted.",
-        impact_surface=("API clients", "mobile flow", "backend integration"),
+        verify_when_dataset_arrives="Update when Turkcell credentials/base URL/QoS profile names are granted.",
+        impact_surface=("API client", "orchestration"),
     ),
     AssumptionRecord(
         assumption_id="OR-002",
         domain="orchestration risk labels",
         statement=(
-            "Mobile-facing risk labels are derived from the selected real dataset label "
-            "or the legacy observation registry."
+            "Internal labels may remain richer, but competition export must map to "
+            "the exact FTR label set and reject unmapped labels."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Update only if the project taxonomy intentionally changes.",
+        verify_when_dataset_arrives="Verified from FTR exact-match warning.",
         impact_surface=("mobile output", "reporting", "evaluation"),
+    ),
+    AssumptionRecord(
+        assumption_id="AN-002",
+        domain="analyzer outputs",
+        statement=(
+            "The internal AnalysisResult remains useful for orchestration, but a "
+            "separate FTR competition output contract is required for results.json."
+        ),
+        confidence="high",
+        verify_when_dataset_arrives="Verified from FTR schema mismatch.",
+        impact_surface=("orchestration integration", "local API", "CLI"),
     ),
 )

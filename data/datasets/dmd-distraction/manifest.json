@@ -43,5 +43,25 @@
     "hands_using_wheel/only_left",
     "hands_using_wheel/only_right",
     "talking/talking"
+  ],
+  "competition_role": "support_training_driver_actions",
+  "ftr_output_families_covered": [
+    "sofor_eylemi"
+  ],
+  "ftr_labels_covered": [
+    "telefonla_konusma",
+    "su_icme",
+    "arkaya_bakma_proxy",
+    "etrafa_bakinma_proxy"
+  ],
+  "ftr_known_gaps": [
+    "arac_bilgisi",
+    "plate_text",
+    "vehicle_color",
+    "vehicle_type",
+    "nesneler",
+    "yolcular",
+    "slalom",
+    "emniyet_kemeri_ihlali"
   ]
 }

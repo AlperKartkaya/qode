@@ -4,12 +4,20 @@ from .analysis import (
     AnalysisSessionResult,
     AnalyzerInput,
     DatasetSelection,
-    PlaceholderSceneAnalyzer,
+    RuleBasedSceneAnalyzer,
     SceneAnalyzer,
     run_analysis_session,
 )
 from .assumptions import ASSUMPTIONS, AssumptionRecord
 from .contracts import BoundingBox, DetectionRecord, FrameAnalysis
+from .competition import (
+    DetectionEvent,
+    FtrCompetitionResult,
+    VehicleInfo,
+    build_ftr_result_from_analysis,
+    validate_ftr_result_payload,
+    write_ftr_result,
+)
 from .data import (
     AssumedFrameDatasetAdapter,
     AssumedVideoClipDatasetAdapter,
@@ -67,6 +75,7 @@ __all__ = [
     "AssumptionRecord",
     "AnalyzerInput",
     "BoundingBox",
+    "DetectionEvent",
     "DatasetInventory",
     "DatasetAdapter",
     "DatasetManifest",
@@ -75,6 +84,7 @@ __all__ = [
     "DetectionRecord",
     "ExpectedWorkflowOutcome",
     "FrameAnalysis",
+    "FtrCompetitionResult",
     "IngestionPlan",
     "MobileSessionBootstrapRequest",
     "MobileSessionBootstrapResult",
@@ -84,8 +94,8 @@ __all__ = [
     "SessionRequest",
     "SessionResult",
     "TelecomOrchestrator",
+    "VehicleInfo",
     "ObservedMediaBundleDatasetAdapter",
-    "PlaceholderSceneAnalyzer",
     "NumberVerificationRequest",
     "NumberVerificationResult",
     "OrchestrationEvent",
@@ -93,6 +103,7 @@ __all__ = [
     "QodActivationResult",
     "QodDecision",
     "QodPolicy",
+    "RuleBasedSceneAnalyzer",
     "SceneAnalyzer",
     "ScenarioDefinition",
     "ScenarioGatewaySetup",
@@ -105,6 +116,7 @@ __all__ = [
     "SceneSignal",
     "create_local_api_server",
     "build_adapter_from_manifest",
+    "build_ftr_result_from_analysis",
     "build_qod_activation_request",
     "compare_manifest_to_assumptions",
     "evaluate_qod_need",
@@ -114,4 +126,6 @@ __all__ = [
     "run_analysis_session",
     "run_scenario_suite",
     "run_local_api_server",
+    "validate_ftr_result_payload",
+    "write_ftr_result",
 ]

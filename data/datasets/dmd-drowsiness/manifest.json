@@ -32,5 +32,23 @@
     "eyes_state/undefined",
     "yawning/Yawning with hand",
     "yawning/Yawning without hand"
+  ],
+  "competition_role": "support_training_drowsiness",
+  "ftr_output_families_covered": [
+    "sofor_eylemi"
+  ],
+  "ftr_labels_covered": [
+    "esneme"
+  ],
+  "ftr_known_gaps": [
+    "arac_bilgisi",
+    "plate_text",
+    "vehicle_color",
+    "vehicle_type",
+    "nesneler",
+    "yolcular",
+    "telefonla_konusma",
+    "sigara_icme",
+    "slalom"
   ]
 }

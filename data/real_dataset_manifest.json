@@ -21,5 +21,24 @@
   "has_driver_behavior_annotations": true,
   "speed_unit": null,
   "notes": "Secondary legacy observed-media bundle with three MP4 videos and companion screenshot folders. Clip-level behavior observations are encoded in data/video_observations.json and remain authoritative for this legacy sample set; the four primary datasets live under data/datasets/.",
-  "dataset_name": "legacy-observed-media-bundle"
+  "dataset_name": "legacy-observed-media-bundle",
+  "competition_role": "legacy_ftr_like_validation",
+  "ftr_output_families_covered": [
+    "arac_bilgisi",
+    "sofor_eylemi"
+  ],
+  "ftr_labels_covered": [
+    "sigara_icme",
+    "telefonla_konusma",
+    "slalom",
+    "etrafa_bakinma"
+  ],
+  "ftr_known_gaps": [
+    "exact_plate_text",
+    "vehicle_type",
+    "vehicle_color",
+    "nesneler.teknocan",
+    "nesneler.bilgisayar",
+    "yolcular"
+  ]
 }

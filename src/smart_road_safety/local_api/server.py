@@ -8,6 +8,13 @@ from pathlib import Path
 from typing import Any
 
 from ..analysis import AnalysisSessionRequest, run_analysis_session
+from ..competition import (
+    VehicleInfo,
+    build_ftr_result_from_analysis,
+    read_ftr_result,
+    validate_ftr_result_payload,
+    write_ftr_result,
+)
 from ..data import build_adapter_from_manifest_path
 from ..evaluation import run_scenario_suite
 from ..export import export_scenario_report_markdown
@@ -55,6 +62,12 @@ def _build_handler() -> type[BaseHTTPRequestHandler]:
                     return
                 if self.path == "/analysis-session/run":
                     self._handle_analysis_session(payload)
+                    return
+                if self.path == "/competition/ftr-output":
+                    self._handle_ftr_output(payload)
+                    return
+                if self.path == "/competition/validate-ftr-output":
+                    self._handle_validate_ftr_output(payload)
                     return
                 if self.path == "/dataset/inventory":
                     self._handle_dataset_inventory(payload)
@@ -113,6 +126,37 @@ def _build_handler() -> type[BaseHTTPRequestHandler]:
             policy = _load_policy(payload.get("policy_path"))
             result = run_analysis_session(request=request, policy=policy)
             self._send_json(HTTPStatus.OK, asdict(result))
+
+        def _handle_ftr_output(self, payload: dict[str, Any]) -> None:
+            request = AnalysisSessionRequest.from_dict(payload["request"])
+            policy = _load_policy(payload.get("policy_path"))
+            session_result = run_analysis_session(request=request, policy=policy)
+            ftr_result = build_ftr_result_from_analysis(
+                analysis_result=session_result.analysis_result,
+                video_id=str(payload["video_id"]),
+                vehicle_info=VehicleInfo.from_dict(payload["vehicle_info"]),
+                event_time_seconds=float(payload.get("event_time_seconds", 0.0)),
+            )
+            response: dict[str, Any] = {"result": ftr_result.to_dict()}
+            output_path = payload.get("output_path")
+            if output_path is not None:
+                target = write_ftr_result(ftr_result, str(output_path))
+                response["output_path"] = str(target)
+            self._send_json(HTTPStatus.OK, response)
+
+        def _handle_validate_ftr_output(self, payload: dict[str, Any]) -> None:
+            if "result_path" in payload:
+                result = read_ftr_result(payload["result_path"])
+            else:
+                result = validate_ftr_result_payload(payload["result"])
+            self._send_json(
+                HTTPStatus.OK,
+                {
+                    "result": "pass",
+                    "video_id": result.video_id,
+                    "tespit_count": len(result.tespitler),
+                },
+            )
 
         def _handle_dataset_inventory(self, payload: dict[str, Any]) -> None:
             adapter = build_adapter_from_manifest_path(

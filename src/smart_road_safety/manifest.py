@@ -10,6 +10,13 @@ REQUIRED_TARGETS = {
     "driver_behavior",
 }
 
+FTR_REQUIRED_OUTPUT_FAMILIES = {
+    "arac_bilgisi",
+    "sofor_eylemi",
+    "nesneler",
+    "yolcular",
+}
+
 ALLOWED_SAMPLE_UNITS = {"video_clip", "frame", "mixed", "telemetry_row"}
 
 KNOWN_ANNOTATION_FORMATS = {
@@ -147,6 +154,27 @@ def compare_manifest_to_assumptions(manifest: DatasetManifest) -> list[Adaptatio
             )
         )
 
+    ftr_families = {
+        str(value)
+        for value in manifest.extra_fields.get("ftr_output_families_covered", [])
+    }
+    missing_ftr_families = sorted(FTR_REQUIRED_OUTPUT_FAMILIES - ftr_families)
+    if missing_ftr_families:
+        gaps.append(
+            AdaptationGap(
+                assumption_id="DS-004",
+                severity="medium",
+                message=(
+                    "Dataset does not cover every FTR output family: "
+                    + ", ".join(missing_ftr_families)
+                ),
+                action=(
+                    "Use this dataset as support data only and add/curate "
+                    "FTR-aligned data for the missing output families."
+                ),
+            )
+        )
+
     has_row_level_annotations = bool(
         manifest.extra_fields.get("has_row_level_annotations")
     ) or (
@@ -193,13 +221,16 @@ def compare_manifest_to_assumptions(manifest: DatasetManifest) -> list[Adaptatio
             )
         )
 
-    if "plate_text" in manifest.targets and not manifest.has_plate_text:
+    if not manifest.has_plate_text:
         gaps.append(
             AdaptationGap(
                 assumption_id="DS-005",
-                severity="low",
-                message="Plate text is not directly available.",
-                action="Plan for plate localization first and optional OCR second.",
+                severity="medium",
+                message="FTR requires exact plate text, but this manifest has no plate-text labels.",
+                action=(
+                    "Add a plate OCR dataset/adapter or keep this dataset out of "
+                    "plate-text metric claims."
+                ),
             )
         )
 

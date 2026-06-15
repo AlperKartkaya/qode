@@ -7,6 +7,12 @@ from pathlib import Path
 
 from .analysis import AnalysisSessionRequest, run_analysis_session
 from .assumptions import ASSUMPTIONS
+from .competition import (
+    VehicleInfo,
+    build_ftr_result_from_analysis,
+    read_ftr_result,
+    write_ftr_result,
+)
 from .data import build_adapter_from_manifest_path
 from .evaluation import run_scenario_suite
 from .export import export_scenario_report_markdown
@@ -24,7 +30,7 @@ from .qod import SceneSignal, evaluate_qod_need
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Pre-dataset utilities for the smart road safety project."
+        description="Dataset-backed and FTR-aware utilities for the smart road safety project."
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -82,7 +88,10 @@ def _build_parser() -> argparse.ArgumentParser:
 
     run_orchestration = subparsers.add_parser(
         "run-mock-orchestration",
-        help="Run a mock end-to-end session bootstrap and QoD orchestration flow.",
+        help=(
+            "Run the support/demo session bootstrap and QoD orchestration flow "
+            "with isolated mock telecom gateways."
+        ),
     )
     run_orchestration.add_argument(
         "request_path",
@@ -96,7 +105,10 @@ def _build_parser() -> argparse.ArgumentParser:
 
     run_analysis_session_parser = subparsers.add_parser(
         "run-analysis-session",
-        help="Run an analysis session from either direct analyzer input or a real dataset sample selection.",
+        help=(
+            "Run the internal support/demo analysis session. "
+            "Use build-ftr-output for the source-of-truth competition JSON."
+        ),
     )
     run_analysis_session_parser.add_argument(
         "request_path",
@@ -108,9 +120,60 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Optional QoD policy JSON file. If omitted, the packaged default is used.",
     )
 
+    build_ftr_output = subparsers.add_parser(
+        "build-ftr-output",
+        help=(
+            "Run an analysis session and write the FTR/KTR results.json schema. "
+            "Requires explicit vehicle info because support datasets do not carry "
+            "exact plate/type/color labels."
+        ),
+    )
+    build_ftr_output.add_argument(
+        "request_path",
+        help="Path to an analysis session request JSON file.",
+    )
+    build_ftr_output.add_argument(
+        "--vehicle-info-path",
+        required=True,
+        help="JSON file with tip, plaka, renk, confidence_score.",
+    )
+    build_ftr_output.add_argument(
+        "--video-id",
+        required=True,
+        help="Video id/name to emit in FTR results.json.",
+    )
+    build_ftr_output.add_argument(
+        "--output-path",
+        default="out/results.json",
+        help="Path where FTR results JSON will be written.",
+    )
+    build_ftr_output.add_argument(
+        "--event-time-seconds",
+        type=float,
+        default=0.0,
+        help="Timestamp to assign to analysis-derived detection events.",
+    )
+    build_ftr_output.add_argument(
+        "--policy-path",
+        default=None,
+        help="Optional QoD policy JSON file. If omitted, the packaged default is used.",
+    )
+
+    validate_ftr_output = subparsers.add_parser(
+        "validate-ftr-output",
+        help="Validate an FTR/KTR results.json file against the source-of-truth schema.",
+    )
+    validate_ftr_output.add_argument(
+        "result_path",
+        help="Path to a results.json file.",
+    )
+
     run_scenarios = subparsers.add_parser(
         "run-scenarios",
-        help="Run one or more deterministic scenarios and emit a score report.",
+        help=(
+            "Run support/demo QoD scenarios. "
+            "This is not the final FTR evaluator contract."
+        ),
     )
     run_scenarios.add_argument(
         "scenario_path",
@@ -129,7 +192,10 @@ def _build_parser() -> argparse.ArgumentParser:
 
     export_report = subparsers.add_parser(
         "export-scenario-report",
-        help="Render judge-friendly markdown from a scenario report JSON file.",
+        help=(
+            "Render markdown from a support/demo scenario report JSON file. "
+            "KTR/FTR report content is planned in docs/ktr_implementation_plan.md."
+        ),
     )
     export_report.add_argument(
         "report_path",
@@ -143,7 +209,10 @@ def _build_parser() -> argparse.ArgumentParser:
 
     serve_local_api = subparsers.add_parser(
         "serve-local-api",
-        help="Start a tiny local HTTP API for orchestration and evaluation.",
+        help=(
+            "Start a tiny local HTTP API exposing FTR endpoints plus support/demo "
+            "orchestration and evaluation routes."
+        ),
     )
     serve_local_api.add_argument(
         "--host",
@@ -270,6 +339,43 @@ def _run_analysis_session(request_path: str, policy_path: str | None) -> int:
     return 0
 
 
+def _build_ftr_output(
+    request_path: str,
+    vehicle_info_path: str,
+    video_id: str,
+    output_path: str,
+    event_time_seconds: float,
+    policy_path: str | None,
+) -> int:
+    policy = (
+        load_default_qod_policy()
+        if policy_path is None
+        else QodPolicy.from_path(policy_path)
+    )
+    request = AnalysisSessionRequest.from_path(request_path)
+    session_result = run_analysis_session(request=request, policy=policy)
+    vehicle_payload = json.loads(Path(vehicle_info_path).read_text(encoding="utf-8"))
+    vehicle_info = VehicleInfo.from_dict(vehicle_payload)
+    ftr_result = build_ftr_result_from_analysis(
+        analysis_result=session_result.analysis_result,
+        video_id=video_id,
+        vehicle_info=vehicle_info,
+        event_time_seconds=event_time_seconds,
+    )
+    target = write_ftr_result(ftr_result, output_path)
+    print(f"results_path={target}")
+    print(json.dumps(ftr_result.to_dict(), indent=2))
+    return 0
+
+
+def _validate_ftr_output(result_path: str) -> int:
+    result = read_ftr_result(result_path)
+    print("result=pass")
+    print(f"video_id={result.video_id}")
+    print(f"tespit_count={len(result.tespitler)}")
+    return 0
+
+
 def _run_scenarios(
     scenario_path: str, output_path: str, policy_path: str | None
 ) -> int:
@@ -322,6 +428,17 @@ def main() -> int:
         return _run_mock_orchestration(args.request_path, args.policy_path)
     if args.command == "run-analysis-session":
         return _run_analysis_session(args.request_path, args.policy_path)
+    if args.command == "build-ftr-output":
+        return _build_ftr_output(
+            args.request_path,
+            args.vehicle_info_path,
+            args.video_id,
+            args.output_path,
+            args.event_time_seconds,
+            args.policy_path,
+        )
+    if args.command == "validate-ftr-output":
+        return _validate_ftr_output(args.result_path)
     if args.command == "run-scenarios":
         return _run_scenarios(args.scenario_path, args.output_path, args.policy_path)
     if args.command == "export-scenario-report":

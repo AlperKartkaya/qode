@@ -109,6 +109,40 @@ class LocalApiTest(unittest.TestCase):
         self.assertEqual(payload["analysis_result"]["driver_risk_label"], "texting_right")
         self.assertFalse(payload["analysis_result"]["target_vehicle_detected"])
 
+    def test_competition_ftr_output_endpoint_returns_source_of_truth_schema(self) -> None:
+        request_payload = {
+            "request": json.loads(
+                (ROOT / "examples" / "analysis_session_request.json").read_text(
+                    encoding="utf-8"
+                )
+            ),
+            "vehicle_info": json.loads(
+                (ROOT / "examples" / "ftr_vehicle_info.json").read_text(
+                    encoding="utf-8"
+                )
+            ),
+            "video_id": "video_1.mp4",
+            "event_time_seconds": 1.5,
+        }
+        connection = HTTPConnection(self.host, self.port)
+        connection.request(
+            "POST",
+            "/competition/ftr-output",
+            body=json.dumps(request_payload),
+            headers={"Content-Type": "application/json"},
+        )
+        response = connection.getresponse()
+        payload = json.loads(response.read().decode("utf-8"))
+        connection.close()
+
+        self.assertEqual(response.status, 200)
+        self.assertEqual(payload["result"]["video_id"], "video_1.mp4")
+        self.assertEqual(payload["result"]["arac_bilgisi"]["plaka"], "34ABC123")
+        self.assertEqual(
+            {event["etiket"] for event in payload["result"]["tespitler"]},
+            {"sigara_icme", "etrafa_bakinma"},
+        )
+
     def test_dataset_inventory_endpoint_returns_real_inventory(self) -> None:
         request_payload = {
             "manifest_path": str(ROOT / "data" / "real_dataset_manifest.json"),
