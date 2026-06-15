@@ -9,7 +9,12 @@ from torchvision import datasets, transforms, models
 from pathlib import Path
 
 def train_model(epochs: int = 5, batch_size: int = 32, lr: float = 0.001):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
     print(f"Using device: {device}")
     
     data_dir = Path("data/datasets/processed_state_farm")
@@ -102,10 +107,10 @@ def train_model(epochs: int = 5, batch_size: int = 32, lr: float = 0.001):
                         optimizer.step()
                         
                 running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data)
+                running_corrects += torch.sum(preds == labels.data).item()
                 
             epoch_loss = running_loss / len(image_datasets[phase])
-            epoch_acc = running_corrects.double() / len(image_datasets[phase])
+            epoch_acc = running_corrects / len(image_datasets[phase])
             
             print(f"{phase.capitalize()} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}")
             

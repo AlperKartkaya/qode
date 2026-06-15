@@ -53,13 +53,21 @@ def train_model(dataset_dir_str: str = "data/datasets/yolo_ftr_dataset"):
     # Using 'yolo11s.pt' as a solid tradeoff between speed (T4 runtime) and accuracy
     model = YOLO("yolo11s.pt")
     
-    print("Starting fine-tuning...")
+    import torch
+    if torch.cuda.is_available():
+        device_val = 0
+    elif torch.backends.mps.is_available():
+        device_val = "mps"
+    else:
+        device_val = "cpu"
+        
+    print(f"Starting fine-tuning on device: {device_val}...")
     results = model.train(
         data=str(yaml_path),
         epochs=30,
         imgsz=640,
         batch=16,
-        device=0,  # Run on GPU 0
+        device=device_val,
         workers=4,
         project="qode-smart-road-safety",
         name="yolo11s-ftr-detect"
