@@ -67,7 +67,7 @@ def make_weighted_sampler(dataset: datasets.ImageFolder) -> WeightedRandomSample
 
 
 def train_model(
-    data_dir: str = "data/datasets/vehicle_types",
+    data_dir: str = "data/datasets/qode-vehicle-types",
     epochs: int = 20,
     batch_size: int = 32,
     lr: float = 3e-4,

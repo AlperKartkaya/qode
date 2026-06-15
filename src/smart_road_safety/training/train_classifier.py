@@ -63,14 +63,14 @@ def train_model(
     print(f"[Train] Device: {device}")
 
     # ── Dataset paths ─────────────────────────────────────────────────────────
-    data_dir  = Path("data/datasets/processed_state_farm")
+    data_dir  = Path("data/datasets/qode-driver-behaviors")
     train_dir = data_dir / "train"
     val_dir   = data_dir / "val"
 
     if not train_dir.exists() or not val_dir.exists():
         print(
             f"[Train] ERROR: Processed dataset not found at {data_dir}.\n"
-            "        Run:  python -m smart_road_safety.training.preprocess_state_farm --max-samples 0"
+            "        Run:  python src/smart_road_safety/training/build_datasets.py"
         )
         return
 
