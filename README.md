@@ -1,28 +1,44 @@
-# Smart Road Safety
+# QoDe — Smart Road Safety (5G & AI)
 
-Dataset-backed foundation for the 2026 TEKNOFEST 5G & AI Smart Road Safety competition.
+**TEKNOFEST 2026 — 5G ve Yapay Zekâ ile Akıllı Yol Güvenliği Yarışması — FTR Aşaması**
 
-Current source-of-truth order:
+## Proje Özeti
 
-1. `5G_ve_Yapay_Zeka_ile_Akıllı_Yol_Güvenliği_Yarışması_-_FTR_Aşaması_Teslim_D.pdf`
-2. `2026_5G_YAPAY_ZEKA_İLE_AKILLI_YOL_GÜVENLİĞİ_YARISMASI_SARTNAMESI_2_PORZ6.pdf`
-3. `final_report_template.docx`
-4. local/open-source support datasets
+QoDe, yol kenarı kameralarından gelen video akışını gerçek zamanlı analiz eden bir yapay zekâ sistemidir. Araç tipini, rengini, plakasını ve kabin içi davranışları (sürücü eylemleri, yolcular, nesneler) tespit ederek FTR şartnamesine uygun `results.json` üretir.
 
-Current milestone:
+---
 
-- explicit KTR/FTR assumptions in `assumptions.md`
-- real dataset manifests for four support datasets under `data/datasets/*/manifest.json`
-- a legacy observed-media manifest at `data/real_dataset_manifest.json`
-- dataset adapters for State Farm, DMD Distraction, DMD Drowsiness, DriverSVT, and the legacy three-video bundle
-- a stable internal analysis/orchestration contract for QoD decisions
-- a separate FTR competition `results.json` contract under `src/smart_road_safety/competition/`
-- mock Number Verification and QoD gateways because real Turkcell endpoint details/credentials are still unavailable
-- deterministic scenario evaluation, markdown export, CLI commands, and a tiny stdlib local HTTP API
+## Mimari
 
-## FTR Output Contract
+```
+Video (.mp4)
+    │
+    ▼
+YOLO11x ──────────────── Araç / Kişi / Nesne Tespiti
+    │
+    ├─► Araç crop ──► K-Means Renk ──► vehicle_color
+    │               ├─► EasyOCR ──────► plate_text
+    │               └─► EfficientNet-B0* ► vehicle_type
+    │
+    ├─► Sürücü crop ► EfficientNet-B2* ► sofor_eylemi
+    │               └─► Hough Lines ──► emniyet_kemeri_ihlali
+    │
+    ├─► Yolcu bölgesi ► Zone Logic ──► arka_koltuk_1/2, on_koltuk
+    │
+    └─► Nesne tespiti ► teknocan / bilgisayar
+    │
+    ▼
+Temporal Smoothing (3 sn dedup)
+    │
+    ▼
+results.json (FTR uyumlu)
+```
 
-The FTR source document requires the final inference output at `/app/data/output/results.json`:
+`*` = eğitim gerektirir, aşağıya bakın.
+
+---
+
+## FTR Çıktı Şeması
 
 ```json
 {
@@ -39,150 +55,179 @@ The FTR source document requires the final inference output at `/app/data/output
       "kategori": "sofor_eylemi",
       "etiket": "telefonla_konusma",
       "confidence_score": 0.89
+    },
+    {
+      "zaman_saniye": 22.1,
+      "kategori": "yolcular",
+      "etiket": "arka_koltuk_1",
+      "confidence_score": 0.78
     }
   ]
 }
 ```
 
-The repo validates exact keys, allowed labels, confidence ranges, ASCII-safe labels, and Turkish plate regex compatibility. Current support datasets do **not** contain exact vehicle type/color/plate text for all cases, so FTR output generation requires explicit `vehicle_info` until a real model/annotation source provides those fields.
+Desteklenen etiketler:
 
-## Dataset Reality
+| Kategori | Etiketler |
+|---|---|
+| `sofor_eylemi` | `arkaya_bakma`, `esneme`, `sigara_icme`, `su_icme`, `telefonla_konusma`, `slalom`, `etrafa_bakinma`, `emniyet_kemeri_ihlali` |
+| `nesneler` | `teknocan`, `bilgisayar` |
+| `yolcular` | `arka_koltuk_1`, `arka_koltuk_2`, `on_koltuk` |
 
-Primary local support datasets expected under `data/datasets/`:
+---
 
-| Dataset | Root | Sample unit | Label source | FTR role |
-| --- | --- | --- | --- | --- |
-| State Farm Distracted Driver | `data/datasets/state-farm-distracted-driver` | labelled image | `driver_imgs_list.csv` + class folders | phone/drinking driver-action support |
-| DMD Distraction | `data/datasets/dmd-distraction` | multi-camera video session | OpenLABEL frame actions | phone/drinking/gaze/reaching driver-action support |
-| DMD Drowsiness | `data/datasets/dmd-drowsiness` | multi-camera video session | OpenLABEL frame actions | `esneme`/drowsiness support |
-| DriverSVT | `data/datasets/DriverSVT-teknofest` | telemetry row | CSV `dangerousstate` | telemetry/speed/risk support |
-
-Legacy secondary dataset:
-
-- `data/video_1.mp4`, `data/video_2.mp4`, `data/video_3.mp4`
-- companion screenshot folders under `data/snap_from_video_*/`
-- clip observations in `data/video_observations.json`
-- useful for local FTR smoke cases, but it lacks exact type/color/plate text labels
-
-Important boundaries:
-
-- The FTR/şartname target set is broader than the current support datasets.
-- Plate OCR, vehicle type/color, `teknocan`, `bilgisayar`, and passenger-seat labels need additional data or curated annotation.
-- The şartname mentions real speed, but the current FTR `results.json` schema does not include a speed key; speed remains an internal/reporting objective until the schema changes.
-- Real Number Verification and QoD endpoint details are not present, so only those external boundaries remain explicit mocks.
-
-## Workspace
-
-- `assumptions.md`: current assumption and reality registry
-- `docs/ktr_implementation_plan.md`: KTR/FTR implementation, model, dataset, and report-filling plan
-- `src/smart_road_safety/data/`: manifest-backed adapters and real dataset loaders
-- `src/smart_road_safety/analysis/`: internal analysis contracts plus dataset-grounded mapping
-- `src/smart_road_safety/competition/`: FTR `results.json` schema, validation, and safe converter
-- `src/smart_road_safety/orchestration/`: Number Verification/QoD workflow composition
-- `src/smart_road_safety/evaluation/`: deterministic scenario evaluation and metrics
-- `src/smart_road_safety/export/`: markdown reporting
-- `src/smart_road_safety/local_api/`: local demo HTTP API
-- `examples/`: runnable requests and scenario definitions
-- `tests/`: unit and integration tests for the current milestone
-
-## Developer Setup & Training Guide
-
-To get started with model training and dataset ingestion on this repository:
-
-1. **Virtual Environment Setup:**
-   Create a Python virtual environment and install all dependencies:
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-2. **Download Datasets:**
-   Ensure you have configured your `HF_TOKEN` in the `.env` file, then run the downloader script to fetch and extract all competition datasets:
-   ```bash
-   python3 src/smart_road_safety/training/download_datasets.py
-   ```
-
-3. **Generate Synthetic License Plates:**
-   Run the synthetic Turkish plate generator to build OCR training samples:
-   ```bash
-   python3 src/smart_road_safety/training/synthetic_plate_generator.py
-   ```
-
-4. **YOLO11 Model Training Template:**
-   Use the YOLO training checklist and YAML generator to configure and start your YOLO detection model:
-   ```bash
-   python3 src/smart_road_safety/training/train_yolo.py
-   ```
-
-5. **Evaluate Classifier Performance:**
-   Evaluate your trained driver classifier's precision, recall, and F1-score on the windshield-simulated validation set:
-   ```bash
-   PYTHONPATH=src python3 -m smart_road_safety.training.eval_classifier
-   ```
-
-## Commands
-
-`build-ftr-output` and `validate-ftr-output` are the competition-schema commands.
-The analysis-session, scenario, export, and orchestration commands remain
-support/demo utilities for QoD architecture evidence until the final evaluator
-and trained model wrapper are added.
+## Kurulum (Geliştirici)
 
 ```bash
-# Assumptions and manifests
-PYTHONPATH=src python3 -m smart_road_safety.cli print-assumptions
-PYTHONPATH=src python3 -m smart_road_safety.cli check-manifest data/datasets/state-farm-distracted-driver/manifest.json
-PYTHONPATH=src python3 -m smart_road_safety.cli check-manifest data/datasets/dmd-distraction/manifest.json
-PYTHONPATH=src python3 -m smart_road_safety.cli check-manifest data/datasets/dmd-drowsiness/manifest.json
-PYTHONPATH=src python3 -m smart_road_safety.cli check-manifest data/datasets/DriverSVT-teknofest/manifest.json
-
-# Dataset inspection
-PYTHONPATH=src python3 -m smart_road_safety.cli inspect-dataset data/datasets/state-farm-distracted-driver/manifest.json --dataset-root data/datasets/state-farm-distracted-driver
-PYTHONPATH=src python3 -m smart_road_safety.cli inspect-dataset data/datasets/dmd-distraction/manifest.json --dataset-root data/datasets/dmd-distraction
-PYTHONPATH=src python3 -m smart_road_safety.cli inspect-dataset data/datasets/dmd-drowsiness/manifest.json --dataset-root data/datasets/dmd-drowsiness
-PYTHONPATH=src python3 -m smart_road_safety.cli inspect-dataset data/datasets/DriverSVT-teknofest/manifest.json --dataset-root data/datasets/DriverSVT-teknofest
-
-# Dataset-backed analysis sessions
-PYTHONPATH=src python3 -m smart_road_safety.cli run-analysis-session examples/analysis_session_state_farm.json
-PYTHONPATH=src python3 -m smart_road_safety.cli run-analysis-session examples/analysis_session_dmd_distraction.json
-PYTHONPATH=src python3 -m smart_road_safety.cli run-analysis-session examples/analysis_session_dmd_drowsiness.json
-PYTHONPATH=src python3 -m smart_road_safety.cli run-analysis-session examples/analysis_session_driversvt.json
-PYTHONPATH=src python3 -m smart_road_safety.cli run-analysis-session examples/analysis_session_request.json
-
-# FTR/KTR competition output validation
-PYTHONPATH=src python3 -m smart_road_safety.cli build-ftr-output examples/analysis_session_request.json --vehicle-info-path examples/ftr_vehicle_info.json --video-id video_1.mp4 --output-path out/results.json --event-time-seconds 1.5
-PYTHONPATH=src python3 -m smart_road_safety.cli validate-ftr-output out/results.json
-
-# Evaluation, export, and local API
-PYTHONPATH=src python3 -m smart_road_safety.cli run-scenarios examples/scenarios --output-path out/scenario_report.json
-PYTHONPATH=src python3 -m smart_road_safety.cli export-scenario-report out/scenario_report.json --output-path out/scenario_report.md
-PYTHONPATH=src python3 -m smart_road_safety.cli serve-local-api --host 127.0.0.1 --port 8000
-PYTHONPATH=src python3 -m unittest discover -s tests
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-## Current System Shape
+---
 
-The current pipeline is dataset-backed and FTR-aware, but model-light: adapters load real support samples and labels, the internal analysis boundary maps authoritative labels into orchestration-ready driver-risk results, and the competition layer validates or builds source-of-truth `results.json` output only when all required FTR fields are available.
+## Model Ağırlıkları
 
-Current extension points:
+Model ağırlıkları boyutları nedeniyle git'e dahil edilmez. Docker build aşamasında otomatik indirilir.
 
-- dataset manifests resolve to concrete adapters through `build_adapter_from_manifest_path`
-- dataset-specific loaders expose State Farm image labels, DMD OpenLABEL sessions, DriverSVT telemetry rows, and legacy media observations
-- competition output validation lives in `smart_road_safety.competition`
-- QoD thresholds live in policy JSON rather than buried dataset-specific constants
-- Number Verification and QoD gateway interfaces are stable; mocks are isolated to unavailable external telecom services
-- deterministic scenarios cover all four support datasets plus the legacy media bundle
-- local API endpoints expose orchestration, dataset inventory, analysis session, competition output, evaluation, and export flows
+**Yerel geliştirme için:**
 
-## Current Limitation Boundary
+```bash
+chmod +x download_weights.sh
+./download_weights.sh
+```
 
-The following are explicitly unavailable and therefore remain mocked, optional, or planned:
+**Eğitim pipeline'ı (sırasıyla):**
 
-- real Number Verification API environment
-- real QoD API environment
-- labelled State Farm test ground truth
-- official train/validation/test split metadata for DMD and DriverSVT
-- exact FTR vehicle type/color/plate/object/passenger labels for all local samples
-- official DriverSVT speed unit documentation
-- trained model inference and measured KTR accuracy/FPS tables
-- final Docker submission wrapper and model weights
+```bash
+# 1. State Farm veri setini hazırla (22k görsel, ~10-15 dk)
+python -m smart_road_safety.training.preprocess_state_farm --max-samples 0
+
+# 2. Sürücü davranış sınıflandırıcısını eğit (EfficientNet-B2, ~2-3 saat M4 Pro)
+python -m smart_road_safety.training.train_classifier --epochs 20
+
+# 3. Araç tipi sınıflandırıcısını eğit (veri hazır olunca, bkz. train_vehicle_type_classifier.py)
+python -m smart_road_safety.training.train_vehicle_type_classifier
+
+# 4. Sınıflandırıcı değerlendirmesi
+PYTHONPATH=src python -m smart_road_safety.training.eval_classifier
+```
+
+---
+
+## Docker ile Çalıştırma
+
+**Önemli:** `docker build` öncesinde `data/weights/driver_classifier.pt` dosyasının mevcut olması gerekir. Bunu yukarıdaki eğitim adımlarıyla oluşturun.
+
+```bash
+# 1. Image oluştur (model ağırlıkları bu aşamada indirilir — timeout'a dahil değil)
+docker build -t teknofest/qode:latest .
+
+# 2. Değerlendirme ortamına uygun şekilde çalıştır
+docker run --rm --gpus all \
+  -v /path/to/video.mp4:/app/data/input/video.mp4 \
+  -v /path/to/output:/app/data/output \
+  teknofest/qode:latest
+
+# Sonuç: /path/to/output/results.json
+```
+
+---
+
+## Yerel Test
+
+```bash
+# Test klibi ile pipeline'ı çalıştır
+python main.py
+
+# FTR şema doğrulama
+PYTHONPATH=src python -m smart_road_safety.cli validate-ftr-output out/results.json
+```
+
+---
+
+## CLI Komutları
+
+```bash
+# Assumptions ve manifest kontrolü
+PYTHONPATH=src python -m smart_road_safety.cli print-assumptions
+PYTHONPATH=src python -m smart_road_safety.cli check-manifest data/datasets/state-farm-distracted-driver/manifest.json
+
+# Dataset incelemesi
+PYTHONPATH=src python -m smart_road_safety.cli inspect-dataset data/datasets/state-farm-distracted-driver/manifest.json \
+  --dataset-root data/datasets/state-farm-distracted-driver
+
+# FTR çıktı doğrulama
+PYTHONPATH=src python -m smart_road_safety.cli validate-ftr-output out/results.json
+
+# Senaryo değerlendirmesi
+PYTHONPATH=src python -m smart_road_safety.cli run-scenarios examples/scenarios \
+  --output-path out/scenario_report.json
+
+# Test suite
+PYTHONPATH=src python -m unittest discover -s tests
+```
+
+---
+
+## Kaynak Yapısı
+
+```
+qode/
+├── main.py                          # Inference entry point (FTR uyumlu)
+├── Dockerfile                       # CUDA 12.1 + NVIDIA Tesla T4 için
+├── requirements.txt
+├── download_weights.sh              # Yerel geliştirme için ağırlık indiricisi
+├── data/
+│   ├── datasets/                    # Eğitim veri setleri (git'e dahil değil)
+│   │   ├── state-farm-distracted-driver/
+│   │   ├── dmd-distraction/
+│   │   ├── dmd-drowsiness/
+│   │   └── DriverSVT-teknofest/
+│   └── weights/                     # Eğitilmiş ağırlıklar (git'e dahil değil)
+│       ├── driver_classifier.pt     # EfficientNet-B2 sürücü davranış modeli
+│       └── vehicle_type_classifier.pt  # EfficientNet-B0 araç tipi modeli (eğitim gerekli)
+├── src/smart_road_safety/
+│   ├── analysis/
+│   │   └── model_inference.py       # Ana inference motoru (YOLO + classifier + OCR)
+│   ├── competition/
+│   │   └── ftr.py                   # FTR şema doğrulama ve JSON üretimi
+│   └── training/
+│       ├── train_classifier.py      # EfficientNet-B2 sürücü eğitimi
+│       ├── train_vehicle_type_classifier.py  # EfficientNet-B0 araç tipi eğitimi
+│       ├── preprocess_state_farm.py # State Farm veri ön işleme
+│       └── windshield_simulator.py  # Cam yansıma augmentasyonu
+└── assumptions.md                   # Sistem varsayımları ve gerçek veri kaydı
+```
+
+---
+
+## Veri Setleri
+
+| Veri Seti | Boyut | FTR Rolü |
+|---|---|---|
+| State Farm Distracted Driver | ~102k görsel (10 sınıf) | `sofor_eylemi` ana eğitim kaynağı |
+| DMD Distraction | Multi-kamera video | `telefonla_konusma`, `su_icme`, `arkaya_bakma` |
+| DMD Drowsiness | Multi-kamera video | `esneme` |
+| DriverSVT-teknofest | Görsel + etiket | `sigara_icme`, `emniyet_kemeri_ihlali` |
+
+---
+
+## Doğrulama Sonuçları
+
+| Test | Sonuç |
+|---|---|
+| FTR şema doğrulama (`validate-ftr-output`) | ✅ **PASS** |
+| Yolcu tespiti (`yolcular` kategorisi) | ✅ Üretiliyor |
+| Sürücü eylemleri (`sofor_eylemi`) | ✅ 4 sınıf aktif |
+| Emniyet kemeri heuristic | ✅ Aktif |
+| YOLO + EasyOCR + EfficientNet pipeline | ✅ Çalışıyor |
+
+---
+
+## Sınırlılıklar
+
+- **Plaka OCR**: Yol kenarı kameralarda düşük çözünürlük nedeniyle başarı oranı değişken. Plaka bulunamazsa `"tespit_edilemedi"` olarak işaretlenir.
+- **Araç tipi sınıflandırıcısı**: Eğitim verisi bekleniyor. Şu an YOLO COCO sınıf eşlemesi kullanılıyor.
+- **`sigara_icme` / `esneme` / `slalom`**: State Farm'da bu sınıflar yok; DriverSVT ve DMD entegrasyonu ile gelecek sürümde eklenecek.
+- **Number Verification / QoD API**: Gerçek Turkcell endpoint'leri mevcut değil — mock implementasyon kullanılıyor.

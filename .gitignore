@@ -7,7 +7,7 @@ dist/
 build/
 *.pyc
 .DS_Store
-# Keep video test clips and raw datasets out of git (too large)
+# Keep large video files and raw datasets out of git
 data/video_*.mp4
 data/test_clip.mp4
 data/datasets/**
@@ -16,6 +16,8 @@ data/datasets/**
 !data/datasets/*/manifest.json
 out/
 .env
-# Model weights are intentionally tracked so Docker image can bundle them.
-# The FTR evaluation server has no internet access — weights must be present.
-# !*.pt  <-- weights are now tracked (removed the blanket *.pt exclusion)
+# Model weights are downloaded automatically during Docker build (see Dockerfile).
+# They are NOT tracked in git because:
+#   yolo11x.pt  = 113 MB (> GitHub 100 MB limit)
+#   driver_classifier.pt = 6 MB (kept local, uploaded to Hugging Face for portability)
+*.pt
