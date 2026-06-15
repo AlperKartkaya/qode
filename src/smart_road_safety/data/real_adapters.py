@@ -266,6 +266,8 @@ def _discover_dmd_sessions(
     ann_files = sorted(dataset_root.rglob(f"*{annotation_suffix}"))
 
     for ann_path in ann_files:
+        if ann_path.name.startswith("._"):
+            continue
         session_dir = ann_path.parent
         filename_prefix = ann_path.name.split("_rgb_ann_")[0]
         prefix_parts = filename_prefix.split("_")

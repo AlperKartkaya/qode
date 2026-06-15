@@ -1,0 +1,29 @@
+{
+  "scenario_id": "video-1-smoking",
+  "description": "Smoking and unsafe scanning are observed while the target vehicle approaches the camera.",
+  "analysis_session_request": {
+    "session_id": "scenario-video-1",
+    "phone_number": "+905551112231",
+    "device_session_id": "device-video-1",
+    "requested_profile": "standard",
+    "verification_should_pass": true,
+    "qod_should_allow_boost": true,
+    "dataset_selection": {
+      "dataset_root": "data",
+      "manifest_path": "data/real_dataset_manifest.json",
+      "sample_id": "video_1"
+    }
+  },
+  "expected": {
+    "status": "SUCCESS",
+    "qod_requested": true,
+    "qod_accepted": true,
+    "active_profile": "boosted",
+    "target_vehicle_detected": true,
+    "plate_candidate_detected": true,
+    "driver_risk_label": "smoking_and_unsafe_scanning"
+  },
+  "notes": [
+    "Authoritative clip meaning comes from the provided human observation registry."
+  ]
+}

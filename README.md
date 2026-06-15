@@ -85,7 +85,35 @@ Important boundaries:
 - `examples/`: runnable requests and scenario definitions
 - `tests/`: unit and integration tests for the current milestone
 
-Large dataset payloads remain local-only; `.gitignore` keeps `data/datasets/**` ignored except the small manifest JSON files.
+## Developer Setup & Training Guide
+
+To get started with model training and dataset ingestion on this repository:
+
+1. **Virtual Environment Setup:**
+   Create a Python virtual environment and install all dependencies:
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. **Download Datasets:**
+   Ensure you have configured your `HF_TOKEN` in the `.env` file, then run the downloader script to fetch and extract all competition datasets:
+   ```bash
+   python3 src/smart_road_safety/training/download_datasets.py
+   ```
+
+3. **Generate Synthetic License Plates:**
+   Run the synthetic Turkish plate generator to build OCR training samples:
+   ```bash
+   python3 src/smart_road_safety/training/synthetic_plate_generator.py
+   ```
+
+4. **YOLO11 Model Training Template:**
+   Use the YOLO training checklist and YAML generator to configure and start your YOLO detection model:
+   ```bash
+   python3 src/smart_road_safety/training/train_yolo.py
+   ```
 
 ## Commands
 

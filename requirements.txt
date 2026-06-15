@@ -1,0 +1,14 @@
+# Core Model Libraries
+ultralytics>=8.3.0
+paddleocr>=2.7.3
+
+# Image and Video Processing
+opencv-python-headless>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0
+pyyaml>=6.0.1
+
+# Utility Libraries
+huggingface_hub>=0.19.0
+pypdf>=3.17.0
+python-docx>=1.0.1
