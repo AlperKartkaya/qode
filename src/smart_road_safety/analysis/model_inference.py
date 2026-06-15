@@ -213,7 +213,7 @@ class SceneAnalysisEngine:
             ckpt = torch.load(path, map_location=self.device)
             self.driver_classes = ckpt.get(
                 "class_names",
-                ["arkaya_bakma", "etrafa_bakinma", "su_icme", "telefonla_konusma"],
+                ["arkaya_bakma", "esneme", "etrafa_bakinma", "sigara_icme", "su_icme", "telefonla_konusma"],
             )
             arch = ckpt.get("model_architecture", "mobilenet_v3_small")
 
