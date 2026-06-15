@@ -86,7 +86,23 @@ def upload():
         print("      pip install huggingface_hub")
         sys.exit(1)
 
-    token = os.environ.get("HF_TOKEN") or None
+    # .env dosyasından HF_TOKEN okuma (python-dotenv kurmaya gerek kalmadan)
+    env_path = Path(".env")
+    env_token = None
+    if env_path.exists():
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("HF_TOKEN="):
+                    env_token = line.strip().split("=", 1)[1].strip().strip("'\"")
+
+    token = os.environ.get("HF_TOKEN") or env_token
+
+    if not token:
+        print("[!] Hata: HF_TOKEN bulunamadı.")
+        print("    Lütfen .env dosyasına HF_TOKEN=hf_xxxxx ekleyin")
+        print("    veya terminalde 'export HF_TOKEN=hf_xxxxx' çalıştırın.")
+        sys.exit(1)
+
     api = HfApi(token=token)
 
     # ── Repo oluştur (zaten varsa geç) ────────────────────────────────────────
