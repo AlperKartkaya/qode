@@ -115,6 +115,12 @@ To get started with model training and dataset ingestion on this repository:
    python3 src/smart_road_safety/training/train_yolo.py
    ```
 
+5. **Evaluate Classifier Performance:**
+   Evaluate your trained driver classifier's precision, recall, and F1-score on the windshield-simulated validation set:
+   ```bash
+   PYTHONPATH=src python3 -m smart_road_safety.training.eval_classifier
+   ```
+
 ## Commands
 
 `build-ftr-output` and `validate-ftr-output` are the competition-schema commands.
