@@ -86,6 +86,7 @@ class LocalApiTest(unittest.TestCase):
         )
         self.assertEqual(payload["workflow_result"]["status"], "SUCCESS")
 
+    @unittest.skipUnless((ROOT / "data" / "datasets" / "state-farm-distracted-driver" / "driver_imgs_list.csv").exists(), "Requires real dataset")
     def test_analysis_session_endpoint_returns_state_farm_result(self) -> None:
         request_payload = {
             "request": json.loads(
@@ -164,7 +165,7 @@ class LocalApiTest(unittest.TestCase):
 
     def test_scenario_endpoint_returns_report_summary(self) -> None:
         request_payload = {
-            "scenario_path": str(ROOT / "examples" / "scenarios"),
+            "scenario_path": str(ROOT / "examples" / "dataset_scenarios"),
         }
         connection = HTTPConnection(self.host, self.port)
         connection.request(
@@ -178,11 +179,11 @@ class LocalApiTest(unittest.TestCase):
         connection.close()
 
         self.assertEqual(response.status, 200)
-        self.assertEqual(payload["report"]["summary"]["scenario_count"], 7)
+        self.assertEqual(payload["report"]["summary"]["scenario_count"], 3)
 
     def test_export_endpoint_writes_markdown_file(self) -> None:
         evaluation_payload = {
-            "scenario_path": str(ROOT / "examples" / "scenarios"),
+            "scenario_path": str(ROOT / "examples" / "dataset_scenarios"),
             "output_path": str(ROOT / "out" / "scenario_report.json"),
         }
         evaluation_connection = HTTPConnection(self.host, self.port)

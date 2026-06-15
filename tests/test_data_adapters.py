@@ -97,7 +97,7 @@ class DatasetAdapterTest(unittest.TestCase):
         self.assertEqual(len(inventory.get_sample("video_1").screenshot_paths), 4)
 
     @unittest.skipUnless(
-        (ROOT / "data" / "datasets" / "state-farm-distracted-driver").exists(),
+        (ROOT / "data" / "datasets" / "state-farm-distracted-driver" / "driver_imgs_list.csv").exists(),
         "real State Farm dataset is not present",
     )
     def test_state_farm_manifest_loads_real_labelled_inventory(self) -> None:
@@ -121,7 +121,7 @@ class DatasetAdapterTest(unittest.TestCase):
         )
 
     @unittest.skipUnless(
-        (ROOT / "data" / "datasets" / "dmd-distraction").exists(),
+        len(list((ROOT / "data" / "datasets" / "dmd-distraction").rglob("*_rgb_ann_distraction.json"))) > 0,
         "real DMD distraction dataset is not present",
     )
     def test_dmd_manifest_discovers_real_sessions(self) -> None:

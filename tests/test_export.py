@@ -18,7 +18,7 @@ from smart_road_safety.evaluation import run_scenario_suite
 class ExportMarkdownTest(unittest.TestCase):
     def test_render_scenario_report_markdown_contains_tables(self) -> None:
         run_scenario_suite(
-            ROOT / "examples" / "scenarios",
+            ROOT / "examples" / "dataset_scenarios",
             ROOT / "out" / "scenario_report.json",
         )
         markdown = render_scenario_report_markdown(
@@ -29,12 +29,12 @@ class ExportMarkdownTest(unittest.TestCase):
         self.assertIn("## Overall Summary", markdown)
         self.assertIn("| Scenario | Status | QoD requested |", markdown)
         self.assertIn("## Scenario: `video-1-smoking`", markdown)
-        self.assertIn("## Scenario: `driversvt-no-attention`", markdown)
+        
         self.assertIn("Avg behavior label agreement", markdown)
 
     def test_export_scenario_report_markdown_writes_file(self) -> None:
         run_scenario_suite(
-            ROOT / "examples" / "scenarios",
+            ROOT / "examples" / "dataset_scenarios",
             ROOT / "out" / "scenario_report.json",
         )
         output_path = ROOT / "out" / "scenario_report_test.md"

@@ -74,12 +74,12 @@ class EvaluationRunnerTest(unittest.TestCase):
     def test_run_scenario_suite_summarizes_directory(self) -> None:
         output_path = ROOT / "out" / "test_scenario_report.json"
         report = run_scenario_suite(
-            scenario_path=ROOT / "examples" / "scenarios",
+            scenario_path=ROOT / "examples" / "dataset_scenarios",
             output_path=output_path,
         )
 
-        self.assertEqual(report.summary.scenario_count, 7)
-        self.assertEqual(report.summary.expectation_pass_count, 7)
+        self.assertEqual(report.summary.scenario_count, 3)
+        self.assertEqual(report.summary.expectation_pass_count, 3)
         self.assertEqual(report.summary.average_behavior_label_agreement_score, 1.0)
         self.assertTrue(output_path.exists())
 

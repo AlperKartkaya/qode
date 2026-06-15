@@ -116,7 +116,7 @@ class AnalysisSessionTest(unittest.TestCase):
         self.assertTrue(result.workflow_result.mobile_view.qod_requested)
 
     @unittest.skipUnless(
-        (ROOT / "data" / "datasets" / "state-farm-distracted-driver").exists(),
+        (ROOT / "data" / "datasets" / "state-farm-distracted-driver" / "driver_imgs_list.csv").exists(),
         "real State Farm dataset is not present",
     )
     def test_run_analysis_session_can_load_state_farm_sample(self) -> None:
@@ -131,7 +131,7 @@ class AnalysisSessionTest(unittest.TestCase):
         self.assertEqual(result.workflow_result.mobile_view.active_profile, "boosted")
 
     @unittest.skipUnless(
-        (ROOT / "data" / "datasets" / "dmd-distraction").exists(),
+        len(list((ROOT / "data" / "datasets" / "dmd-distraction").rglob("*_rgb_ann_distraction.json"))) > 0,
         "real DMD distraction dataset is not present",
     )
     def test_run_analysis_session_can_load_dmd_distraction_sample(self) -> None:
@@ -145,7 +145,7 @@ class AnalysisSessionTest(unittest.TestCase):
         self.assertIn("ground_truth=openlabel_json", result.analysis_result.notes)
 
     @unittest.skipUnless(
-        (ROOT / "data" / "datasets" / "dmd-drowsiness").exists(),
+        len(list((ROOT / "data" / "datasets" / "dmd-drowsiness").rglob("*_rgb_ann_drowsiness.json"))) > 0,
         "real DMD drowsiness dataset is not present",
     )
     def test_run_analysis_session_can_load_dmd_drowsiness_sample(self) -> None:
