@@ -1,0 +1,11 @@
+flowchart TD
+    A["/app/data/input/video.mp4"] --> B["Video ingest & frame sampling"]
+    B --> C["Vehicle / plate / object detector\nYOLO11 primary, RT-DETR ablation"]
+    B --> D["Driver action recognizer\nVideoMAE / SlowFast family"]
+    B --> E["Track and motion analysis\nByteTrack + geometry"]
+    C --> F["Plate OCR and Turkish regex normalization"]
+    D --> G["FTR label mapping"]
+    E --> G
+    F --> H["FTR schema validator"]
+    G --> H
+    H --> I["/app/data/output/results.json"]

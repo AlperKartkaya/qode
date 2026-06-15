@@ -36,6 +36,8 @@ Implemented now:
 - deterministic scenario playback and dataset-grounded scoring harness
 - markdown export and thin local HTTP wrapper for demo-oriented integration
 - analysis boundary that maps all four support datasets plus the legacy clip observations into the stable orchestration contract
+- `main.py`/`Dockerfile` FTR entry-point wrapper that uses explicit sidecar metadata or curated local samples and fails loudly when trained arbitrary-video inference is unavailable
+- tracked Mermaid architecture sources under `docs/diagrams/`, rendered diagram PNGs, and KTR v1 report appendices with code snippets as images
 
 **FTR inference pipeline (fully integrated as of June 2026):**
 - `main.py` — full video-to-`results.json` pipeline with temporal smoothing and confidence gating
@@ -86,7 +88,7 @@ Unavailable in the current delivery:
 - labelled test ground truth for State Farm
 - FTR-aligned open labels for vehicle color, exact vehicle body type, Turkish plate text, `teknocan`, `bilgisayar`, and passenger-seat occupancy in the current primary support datasets
 - official DriverSVT speed unit documentation beyond the numeric `speed` telemetry column
-- reproducible model-training artifacts, benchmark metrics, and report-ready tables for the final KTR report
+- final deep-learning model weights, full benchmark metrics, and FPS/runtime tables for arbitrary organizer videos; lightweight reproducible report baselines are implemented
 
 ## Assumption Registry
 
@@ -103,9 +105,9 @@ Unavailable in the current delivery:
 | DS-009 | split strategy | State Farm validation should be grouped by subject; DMD and DriverSVT splits should be grouped by subject/user; final validation should additionally include a KTR holdout of legacy/curated videos rendered into FTR `results.json` outputs. | high | update if organizer publishes official validation split | experimentation workflow, KTR evidence |
 | DS-010 | target-vehicle scope | TOGG/target-vehicle approach remains a primary visual use case, but the current KTR final report must discuss it as vehicle/plate/video analysis rather than as a QoD trigger story. Driver-behavior-only datasets are not sufficient to prove the full visual scope. | high | updated from the 2026-06-15 user scope change that removes QoD from KTR report focus | detection logic, model roadmap, report wording |
 | DS-011 | final-report scope | QoD and telecom API integration remain support/demo code paths in the repository, but they must be excluded from the generated KTR final report for this milestone. | high | update only if the user explicitly re-adds QoD to the final-report scope | reporting, generated DOCX, markdown exports |
-| DS-012 | report evidence | The KTR report evidence must center on FTR output compliance, dataset construction, trained model artifacts, model metrics, FPS/runtime measurements where available, and source-code traceability. | high | update when trained deep-learning weights and official evaluator outputs are available | training, evaluation, report generation |
+| DS-012 | report evidence | The KTR report evidence must center on FTR output compliance, dataset construction, trained model artifacts, model metrics, FPS/runtime measurements where available, Mermaid architecture sources with rendered diagrams, and source-code traceability appendices as images. | high | update when trained deep-learning weights and official evaluator outputs are available | training, evaluation, report generation |
 | DS-013 | telecom integration | Real Number Verification/Turkcell environment details are still unavailable, but this is no longer a blocker for the current KTR report because telecom integration is out of report scope. | high | update when telecom work is explicitly re-scoped | demo integration only |
-| DS-014 | report generator | The report generator must produce a `final_report_template.docx`-aligned DOCX and a markdown QA artifact from repo-grounded evidence without inventing unavailable model results. | high | verify with DOCX text extraction and generated artifact checks | reporting, tests, manual QA |
+| DS-014 | report generator | The report generator must produce a `final_report_template.docx`-aligned `ktr_v1.docx`, markdown QA artifact, evidence JSON, rendered Mermaid-backed architecture sections, and image-based code appendices from repo-grounded evidence without inventing unavailable model results. | high | verify with DOCX text extraction/rendering and generated artifact checks | reporting, tests, manual QA |
 | DS-015 | evaluation focus | Final/KTR evaluation for this milestone must emphasize AI accuracy/precision for FTR labels, dataset balance/coverage, model-training evidence, runtime/FPS readiness, and report quality. | high | updated from user scope change removing QoD from KTR report | roadmap prioritization, KTR sections |
 | DS-016 | privacy and sharing | Organizer-provided 5G network details, video files, training material, Q&A content, and evaluation data must not be shared outside the competition without Turkcell permission. | high | verified from şartname participation/privacy rule | repo hygiene, publication, data handling |
 | OR-001 | orchestration source reference | Internal orchestration may keep a stable `source_ref`, but final submission must emit `video_id` and FTR keys rather than internal source references. | high | verified from FTR examples | orchestration inputs, competition exporter |
@@ -167,7 +169,7 @@ Unavailable in the current delivery:
 - operator credentials, SIM/device binding, and live QoD/Number Verification environment details
 - official final test-video labels
 - FTR-aligned annotations for vehicle body type, vehicle color, exact plate text, passengers, `teknocan`, and `bilgisayar`
-- trained model weights and measured accuracy/FPS tables
+- final trained deep-learning model weights and measured accuracy/FPS tables; lightweight baseline model artifacts are available for KTR evidence
 - official speed-output key in FTR `results.json`
 
 ## Adaptation Checklist For Future Work
@@ -179,6 +181,7 @@ Unavailable in the current delivery:
 5. Keep QoD/telecom support paths outside generated KTR final-report content unless the report scope changes again.
 6. Keep telecom mocks isolated behind gateway interfaces until real credentials and base URLs are provided.
 7. Do not add environment-detection or evaluation-environment branching to final Docker code.
+8. Keep `main.py` honest: use explicit input sidecars, curated local samples, or trained model inference; never silently fabricate FTR predictions for unknown videos.
 
 ## Recommended Update Style
 

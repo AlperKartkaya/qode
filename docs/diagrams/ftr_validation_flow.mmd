@@ -1,0 +1,13 @@
+sequenceDiagram
+    participant CLI as CLI / main.py
+    participant Analyzer as Analysis Boundary
+    participant Bridge as FTR Bridge
+    participant Validator as Schema Validator
+    participant Output as results.json
+    CLI->>Analyzer: run_analysis_session(request)
+    Analyzer-->>CLI: AnalysisResult with risk label and evidence notes
+    CLI->>Bridge: build_ftr_result_from_analysis(...)
+    Bridge->>Bridge: normalize plate and map labels
+    Bridge->>Validator: FtrCompetitionResult.from_dict(payload)
+    Validator-->>Bridge: exact keys, labels, confidence, timestamp checks
+    Bridge->>Output: write_ftr_result(...)

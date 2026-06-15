@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import zipfile
 import tempfile
 import unittest
 from pathlib import Path
@@ -104,8 +105,20 @@ class ReportModelTrainingTest(unittest.TestCase):
             markdown = Path(result.markdown_path).read_text(encoding="utf-8")
             self.assertIn("PROJE ÖZETİ", text)
             self.assertIn("YOLO11", text)
-            self.assertNotIn("QoD", text)
-            self.assertNotIn("QoD", markdown)
+            self.assertIn("EK A. GÖRSEL KOD REFERANSLARI", text)
+            self.assertIn("docs/diagrams/ktr_ai_pipeline.mmd", text)
+            self.assertIn("src/smart_road_safety/competition/ftr.py", text)
+            self.assertIn("![Şekil 1. KTR yapay zekâ çıkarım hattı]", markdown)
+            self.assertIn("docs/report_assets/code_snippets/ftr_contract.png", markdown)
+            self.assertNotIn("```mermaid", markdown)
+            self.assertNotIn("```python", markdown)
+            self.assertNotIn("flowchart TD", text)
+            self.assertNotIn("def build_final_report", text)
+            self.assertNotIn("Quality on Demand", text)
+            self.assertNotIn("Quality on Demand", markdown)
+            with zipfile.ZipFile(result.docx_path) as zf:
+                names = set(zf.namelist())
+            self.assertTrue(any(name.startswith("word/media/image") for name in names))
 
     def _write_state_farm_fixture(self, root: Path) -> None:
         dataset_root = root / "datasets" / "state-farm-distracted-driver"

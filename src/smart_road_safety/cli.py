@@ -213,32 +213,32 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     build_final_report_parser.add_argument(
         "--output-path",
-        default="out/ktr_final_report.docx",
+        default="ktr_v1.docx",
         help="DOCX report output path.",
     )
     build_final_report_parser.add_argument(
         "--markdown-path",
-        default="out/ktr_final_report.md",
+        default="out/ktr_v1.md",
         help="Markdown QA artifact output path.",
     )
     build_final_report_parser.add_argument(
         "--evidence-path",
-        default="out/ktr_report_evidence.json",
+        default="out/ktr_v1_evidence.json",
         help="Structured evidence JSON output path.",
     )
     build_final_report_parser.add_argument(
         "--team-name",
-        default="Doldurulacak",
+        default="QoDe",
         help="Team name to print on the cover page.",
     )
     build_final_report_parser.add_argument(
         "--team-id",
-        default="Doldurulacak",
+        default="886046",
         help="Team ID to print on the cover page.",
     )
     build_final_report_parser.add_argument(
         "--application-id",
-        default="Doldurulacak",
+        default="4865671",
         help="Application ID to print on the cover page.",
     )
 
@@ -249,12 +249,12 @@ def _build_parser() -> argparse.ArgumentParser:
     prepare_ktr_report.add_argument("--data-root", default="data")
     prepare_ktr_report.add_argument("--template-path", default="final_report_template.docx")
     prepare_ktr_report.add_argument("--model-output-dir", default="out/model_artifacts")
-    prepare_ktr_report.add_argument("--output-path", default="out/ktr_final_report.docx")
-    prepare_ktr_report.add_argument("--markdown-path", default="out/ktr_final_report.md")
-    prepare_ktr_report.add_argument("--evidence-path", default="out/ktr_report_evidence.json")
-    prepare_ktr_report.add_argument("--team-name", default="Doldurulacak")
-    prepare_ktr_report.add_argument("--team-id", default="Doldurulacak")
-    prepare_ktr_report.add_argument("--application-id", default="Doldurulacak")
+    prepare_ktr_report.add_argument("--output-path", default="ktr_v1.docx")
+    prepare_ktr_report.add_argument("--markdown-path", default="out/ktr_v1.md")
+    prepare_ktr_report.add_argument("--evidence-path", default="out/ktr_v1_evidence.json")
+    prepare_ktr_report.add_argument("--team-name", default="QoDe")
+    prepare_ktr_report.add_argument("--team-id", default="886046")
+    prepare_ktr_report.add_argument("--application-id", default="4865671")
     prepare_ktr_report.add_argument("--max-driver-svt-rows", type=int, default=50000)
 
     run_scenarios = subparsers.add_parser(

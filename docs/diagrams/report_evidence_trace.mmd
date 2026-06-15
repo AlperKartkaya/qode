@@ -1,0 +1,8 @@
+flowchart LR
+    A["Dataset manifests"] --> D["Report evidence JSON"]
+    B["Trained report model artifacts"] --> D
+    C["FTR source-of-truth schema"] --> D
+    D --> E["Markdown QA artifact"]
+    D --> F["ktr_v1.docx"]
+    G["Repo source snippets"] --> F
+    H["Mermaid architecture files"] --> F

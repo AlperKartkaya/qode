@@ -13,6 +13,19 @@ Source-of-truth sırası:
 3. `final_report_template.docx`
 4. local/open-source support datasets
 
+Current milestone:
+
+- explicit KTR/FTR assumptions in `assumptions.md`
+- real dataset manifests for support datasets under `data/datasets/*/manifest.json`
+- dataset adapters for State Farm, DMD Distraction, DMD Drowsiness, DriverSVT, and the legacy three-video bundle
+- real YOLO/EasyOCR/classifier inference path in `main.py` and `src/smart_road_safety/analysis/model_inference.py`
+- training scripts for driver behavior, vehicle type, YOLO, synthetic plates, windshield augmentation, and Hugging Face weight upload/download
+- separate FTR competition `results.json` contract under `src/smart_road_safety/competition/`
+- reproducible report-model artifact training under `src/smart_road_safety/modeling/`
+- KTR DOCX/Markdown/evidence generation under `src/smart_road_safety/reporting/`
+- tracked Mermaid architecture sources under `docs/diagrams/`, rendered diagram PNGs, and image-based code appendices for the report
+- deterministic scenario evaluation, markdown export, CLI commands, and a tiny stdlib local HTTP API
+
 ---
 
 ## Mimari
@@ -83,7 +96,7 @@ Desteklenen etiketler:
 | `nesneler` | `teknocan`, `bilgisayar` |
 | `yolcular` | `arka_koltuk_1`, `arka_koltuk_2`, `on_koltuk` |
 
-Repo exact keyleri, izin verilen etiketleri, confidence aralıklarını, ASCII-safe etiketleri ve Türk plaka regex uyumluluğunu doğrular. Mevcut support veri setleri tüm örneklerde exact araç tipi/renk/plaka metni içermediği için bu alanlar gerçek model/anotasyon kaynağı gelene kadar açık `vehicle_info` veya model çıkarımı gerektirir.
+Repo exact keyleri, izin verilen etiketleri, confidence aralıklarını, ASCII-safe etiketleri ve Türk plaka regex uyumluluğunu doğrular. Mevcut support veri setleri tüm örneklerde exact araç tipi/renk/plaka metni içermediği için bu alanlar gerçek model/anotasyon kaynağı gelene kadar inference veya açık `vehicle_info.json` sidecar gerektirir.
 
 ---
 
@@ -146,7 +159,7 @@ python -m smart_road_safety.training.preprocess_state_farm --max-samples 0
 # 2. Sürücü davranış sınıflandırıcısını eğit (EfficientNet-B2, ~2-3 saat M4 Pro)
 python -m smart_road_safety.training.train_classifier --epochs 20
 
-# 3. Araç tipi sınıflandırıcısını eğit (veri hazır olunca, bkz. train_vehicle_type_classifier.py)
+# 3. Araç tipi sınıflandırıcısını eğit
 python -m smart_road_safety.training.train_vehicle_type_classifier
 
 # 4. Sınıflandırıcı değerlendirmesi
@@ -156,7 +169,7 @@ PYTHONPATH=src python -m smart_road_safety.training.eval_classifier
 KTR rapor metrikleri için hafif ve tekrar üretilebilir local kanıt artefactleri ayrıca üretilebilir:
 
 ```bash
-PYTHONPATH=src python3 -m smart_road_safety.cli train-report-models --max-driver-svt-rows 50000
+PYTHONPATH=src python -m smart_road_safety.cli train-report-models --max-driver-svt-rows 50000
 ```
 
 ---
@@ -213,8 +226,9 @@ PYTHONPATH=src python -m smart_road_safety.cli train-report-models --max-driver-
 PYTHONPATH=src python -m smart_road_safety.cli build-final-report \
   --template-path final_report_template.docx \
   --model-artifacts-path out/model_artifacts/ktr_model_artifacts.json \
-  --output-path out/ktr_final_report.docx \
-  --markdown-path out/ktr_final_report.md
+  --output-path ktr_v1.docx \
+  --markdown-path out/ktr_v1.md \
+  --evidence-path out/ktr_v1_evidence.json
 PYTHONPATH=src python -m smart_road_safety.cli prepare-ktr-report --max-driver-svt-rows 50000
 
 # Senaryo değerlendirmesi ve export
@@ -245,6 +259,9 @@ qode/
 │   │   ├── dmd-drowsiness/
 │   │   └── DriverSVT-teknofest/
 │   └── weights/                     # Eğitilmiş ağırlıklar (git'e dahil değil)
+├── docs/
+│   ├── diagrams/                    # Mermaid kaynakları ve render edilmiş rapor görselleri
+│   └── report_assets/               # Rapor ek görselleri
 ├── src/smart_road_safety/
 │   ├── analysis/
 │   │   └── model_inference.py       # Ana inference motoru (YOLO + classifier + OCR)
@@ -263,8 +280,8 @@ qode/
 
 The current pipeline is dataset-backed, FTR-aware, model-training enabled, and report-artifact ready:
 
-- `main.py` runs the FTR-compatible inference entry point.
-- `smart_road_safety.analysis.model_inference` integrates YOLO11x, EasyOCR, and classifier-backed post-processing.
+- `main.py` runs the FTR-compatible real inference entry point and refuses to emit placeholder vehicle metadata when inference and sidecar metadata are both unavailable.
+- `smart_road_safety.analysis.model_inference` integrates YOLO11x, EasyOCR, classifier-backed post-processing, passenger logic, and heuristic seatbelt detection.
 - `smart_road_safety.training` contains dataset preprocessing, synthetic plate generation, windshield augmentation, classifier training, YOLO training, and evaluation scripts.
 - `smart_road_safety.competition` validates/builds source-of-truth `results.json`.
 - `smart_road_safety.modeling` generates reproducible local report artefacts for KTR evidence.
@@ -292,4 +309,5 @@ The current pipeline is dataset-backed, FTR-aware, model-training enabled, and r
 - Araç tipi sınıflandırıcısı: eğitim verisi ve model ağırlığı durumuna göre EfficientNet-B0 ya da YOLO COCO sınıf eşlemesi kullanılır.
 - `sigara_icme` / `esneme` / `slalom`: State Farm tek başına bu sınıfları kapsamaz; DMD, DriverSVT, synthetic/curated data ve temporal logic ile tamamlanır.
 - Exact FTR vehicle type/color/plate/object/passenger labels tüm local sample'larda yoktur; bu alanlar ek veri veya curated annotation gerektirir.
+- Organizer-side metadata/ground-truth for final hidden videos is not available locally; current `main.py` uses inference and only accepts explicit `vehicle_info.json` as a sidecar override.
 - Real Number Verification ve QoD endpoint'leri mevcut değildir; bu destek/demo servisleri KTR final rapor kapsamı dışında tutulur.

@@ -63,9 +63,9 @@ Hard rules:
 
 The generator now produces both:
 
-- `out/ktr_final_report.docx` — DOCX following the template section order and font intent.
-- `out/ktr_final_report.md` — text QA artifact for review/diff.
-- `out/ktr_report_evidence.json` — structured evidence backing the report.
+- `ktr_v1.docx` — DOCX following the template section order, strict final_report_template.docx style rules, rendered Mermaid diagrams, and image-based code appendices.
+- `out/ktr_v1.md` — text QA artifact for review/diff.
+- `out/ktr_v1_evidence.json` — structured evidence backing the report.
 
 ## 3. Current Repo Compliance Audit
 
@@ -76,7 +76,7 @@ The generator now produces both:
 | Model artifacts | `src/smart_road_safety/modeling/report_models.py` trains reproducible local baselines | Gives report-ready evidence now | Add deep model weights later under same artifact pattern. |
 | Report generator | `src/smart_road_safety/reporting/final_report.py` builds DOCX/Markdown/evidence | Aligned with template | Use `prepare-ktr-report` for one-command generation. |
 | FTR CLI | `build-ftr-output`, `validate-ftr-output` | Aligned | Use for schema smoke and final wrapper validation. |
-| Docker submission | Not yet present | Required before final delivery | Add `main.py`, Dockerfile, pinned runtime dependencies, model weights. |
+| Docker submission | `main.py` and `Dockerfile` present after teammate merge; wrapper uses explicit sidecars or curated local samples and fails loudly when arbitrary-video inference weights are unavailable | Partially aligned | Add final deep model weights/inference before hidden-video submission. |
 
 ## 4. Dataset Strategy
 
@@ -133,8 +133,9 @@ PYTHONPATH=src python3 -m smart_road_safety.cli train-report-models \
 PYTHONPATH=src python3 -m smart_road_safety.cli build-final-report \
   --template-path final_report_template.docx \
   --model-artifacts-path out/model_artifacts/ktr_model_artifacts.json \
-  --output-path out/ktr_final_report.docx \
-  --markdown-path out/ktr_final_report.md
+  --output-path ktr_v1.docx \
+  --markdown-path out/ktr_v1.md \
+  --evidence-path out/ktr_v1_evidence.json
 
 PYTHONPATH=src python3 -m smart_road_safety.cli prepare-ktr-report \
   --max-driver-svt-rows 50000
@@ -148,7 +149,7 @@ Current trained report artifacts:
 - `driver_svt_telemetry_centroid.json`
 - bundle: `ktr_model_artifacts.json`
 
-These are lightweight, reproducible baselines. They ground the report today and define the artifact shape that later deep-learning weights and metrics should fill.
+These are lightweight, reproducible baselines. They ground the report today and define the artifact shape that later deep-learning weights and metrics should fill. `docs/diagrams/*.mmd`, `docs/diagrams/rendered/*.png`, and `docs/report_assets/code_snippets/*.png` add rendered architecture and source-code traceability to the KTR v1 report without displaying raw code blocks.
 
 ## 7. KTR Report Filling Plan
 
@@ -201,6 +202,6 @@ Use FTR document, report template, dataset pages, model framework docs, and repo
 
 - Add FTR-aligned labels for exact plate text, vehicle type/color, passengers, `teknocan`, and `bilgisayar`.
 - Train and export deep model weights for the selected architectures.
-- Add Docker runtime wrapper reading `/app/data/input/video.mp4` and writing `/app/data/output/results.json`.
+- Replace the current explicit-sidecar/curated-sample Docker wrapper with trained arbitrary-video inference once final weights are available.
 - Measure FPS/latency and final per-label metrics.
 - Replace report placeholders for team/app IDs with official values.
