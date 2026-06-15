@@ -24,14 +24,14 @@ echo ""
 echo "Adım 1: Veri seti hazırlanıyor (State Farm ~22k görsel)"
 echo "Bu işlem cam yansıma (windshield) augmentasyonlarını uygulayacaktır."
 echo "------------------------------------------------------------------"
-python3 -m smart_road_safety.training.preprocess_state_farm --max-samples 0
+PYTHONPATH=src python3 -m smart_road_safety.training.preprocess_state_farm --max-samples 0
 echo ""
 
 echo "Adım 2: Model eğitimi başlıyor"
 echo "İlerleme çubuğu (progress bar) her epoch için aktif edildi."
 echo "------------------------------------------------------------------"
 # M4 Pro için iyi bir batch size (32 veya 64, bellek durumuna göre)
-python3 -m smart_road_safety.training.train_classifier \
+PYTHONPATH=src python3 -m smart_road_safety.training.train_classifier \
     --epochs 20 \
     --batch-size 32 \
     --lr 0.0003 \
