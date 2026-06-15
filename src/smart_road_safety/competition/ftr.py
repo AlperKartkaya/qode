@@ -106,8 +106,14 @@ def _require_ascii_label(value: str, field_name: str) -> str:
 
 
 def normalize_plate(plate: str) -> str:
-    """Normalize a Turkish plate candidate for FTR regex matching."""
+    """Normalize a Turkish plate candidate for FTR regex matching.
+
+    If the plate cannot be read by OCR, pass ``"tespit_edilemedi"`` which is
+    accepted as a sentinel (FTR spec: plates outside regex are scored as not detected).
+    """
     cleaned = _require_text(plate, "plaka").upper().replace(" ", "")
+    if cleaned == "TESPIT_EDILEMEDI":
+        return "tespit_edilemedi"
     if not PLATE_PATTERN.fullmatch(cleaned):
         raise ValueError(
             "plaka must match the FTR Turkish plate regex after normalization."

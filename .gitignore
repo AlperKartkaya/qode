@@ -7,10 +7,17 @@ dist/
 build/
 *.pyc
 .DS_Store
+# Keep large video files and raw datasets out of git
 data/video_*.mp4
+data/test_clip.mp4
 data/datasets/**
 !data/datasets/
 !data/datasets/*/
 !data/datasets/*/manifest.json
 out/
 .env
+# Model weights are downloaded automatically during Docker build (see Dockerfile).
+# They are NOT tracked in git because:
+#   yolo11x.pt  = 113 MB (> GitHub 100 MB limit)
+#   driver_classifier.pt = 6 MB (kept local, uploaded to Hugging Face for portability)
+*.pt

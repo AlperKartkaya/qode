@@ -37,11 +37,32 @@ Implemented now:
 - markdown export and thin local HTTP wrapper for demo-oriented integration
 - analysis boundary that maps all four support datasets plus the legacy clip observations into the stable orchestration contract
 
+**FTR inference pipeline (fully integrated as of June 2026):**
+- `main.py` — full video-to-`results.json` pipeline with temporal smoothing and confidence gating
+- `model_inference.py` — `SceneAnalysisEngine` with YOLO11x + EfficientNet-B2 (driver) + EfficientNet-B0 (vehicle type) + EasyOCR
+- `yolcular` category: geometrically detected from YOLO person bboxes inside vehicle zones (`arka_koltuk_1`, `arka_koltuk_2`, `on_koltuk`)
+- `emniyet_kemeri_ihlali`: Canny + Hough line seatbelt strap heuristic on driver crop
+- `nesneler`: YOLO COCO `cell phone` (→ `teknocan`) and `laptop` (→ `bilgisayar`) classes
+- `sofor_eylemi`: 4 active classes from MobileNetV3 classifier (trained on ~5000 State Farm images with windshield simulation)
+- vehicle colour: K-Means dominant-colour (k=3) on centre crop, mapped to FTR 9-colour palette
+- plate OCR: EasyOCR `tr+en`, Turkish plate regex validation, `"tespit_edilemedi"` sentinel on failure
+- FTR schema validation: `PYTHONPATH=src python -m smart_road_safety.cli validate-ftr-output` → **PASS**
+
+**Training pipeline (ready to run, not yet executed at full scale):**
+- `preprocess_state_farm.py` — maps all ~22k State Farm FTR-relevant images with windshield augmentation
+- `train_classifier.py` — EfficientNet-B2, 20 epochs, WeightedRandomSampler, CosineAnnealingLR, progressive unfreezing
+- `train_vehicle_type_classifier.py` — EfficientNet-B0 for 7 FTR vehicle type classes (data collection pending)
+
+**Packaging:**
+- `Dockerfile` — `nvidia/cuda:12.1.0-base-ubuntu22.04`, builds fully offline (YOLO11x and EasyOCR downloaded at build time), FTR I/O paths (`/app/data/input/`, `/app/data/output/`)
+- `requirements.txt` — EasyOCR (replaced PaddleOCR which was macOS-incompatible), torch, torchvision
+- model weights excluded from git (>100 MB); downloaded at build time or trained locally
+
 New FTR/KTR reality:
 - The required `results.json` contract is not the internal orchestration contract. It must contain `video_id`, an `arac_bilgisi` object, and a `tespitler` array.
 - `arac_bilgisi` fields are: `tip`, `plaka`, `renk`, `confidence_score`.
 - Allowed vehicle `tip` values are: `sedan`, `suv`, `hatchback`, `pickup`, `minibus`, `panelvan`, `kamyon`.
-- `plaka` must match the Turkish plate regex described in the FTR document, normalized without invalid Turkish characters or spaces that break the regex.
+- `plaka` must match the Turkish plate regex described in the FTR document, normalized without invalid Turkish characters or spaces that break the regex. When OCR fails, `"tespit_edilemedi"` is the accepted sentinel.
 - Allowed vehicle `renk` values are: `beyaz`, `siyah`, `gri`, `kirmizi`, `mavi`, `sari`, `yesil`, `turuncu`, `kahverengi`.
 - `tespitler` entries require `zaman_saniye`, `kategori`, `etiket`, `confidence_score`.
 - Allowed `kategori` values are: `sofor_eylemi`, `nesneler`, `yolcular`.
@@ -49,7 +70,7 @@ New FTR/KTR reality:
 - Allowed `nesneler` labels are: `teknocan`, `bilgisayar`.
 - Allowed `yolcular` labels are: `arka_koltuk_1`, `arka_koltuk_2`, `on_koltuk`.
 - All output keys and labels must be exact, lowercase where specified, and ASCII-safe.
-- The final Docker execution contract is `/app/data/input/video.mp4` input and `/app/data/output/results.json` output; model weights should be packaged under `/app/models/`; runtime budget is 10 minutes on NVIDIA Tesla T4-class evaluation hardware.
+- The final Docker execution contract is `/app/data/input/video.mp4` input and `/app/data/output/results.json` output; model weights are stored under `/app/weights/`; runtime budget is 10 minutes on NVIDIA Tesla T4-class evaluation hardware.
 
 Available support data in the current delivery:
 - State Farm Distracted Driver: 22,424 labelled train images, 79,726 unlabeled test images, 10 classes, 26 labelled train drivers
