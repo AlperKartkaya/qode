@@ -23,6 +23,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 from torchvision import datasets, transforms, models
 from pathlib import Path
 from collections import Counter
+from tqdm import tqdm
 
 
 def make_weighted_sampler(dataset: datasets.ImageFolder) -> WeightedRandomSampler:
@@ -170,7 +171,7 @@ def train_model(
             running_loss = 0.0
             running_correct = 0
 
-            for inputs, labels in loader:
+            for inputs, labels in tqdm(loader, desc=f"  {phase.capitalize():5s}", leave=False):
                 inputs, labels = inputs.to(device), labels.to(device)
                 optimizer.zero_grad()
 
