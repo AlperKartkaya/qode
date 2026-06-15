@@ -7,12 +7,15 @@ dist/
 build/
 *.pyc
 .DS_Store
+# Keep video test clips and raw datasets out of git (too large)
 data/video_*.mp4
+data/test_clip.mp4
 data/datasets/**
 !data/datasets/
 !data/datasets/*/
 !data/datasets/*/manifest.json
 out/
 .env
-*.pt
-data/test_clip.mp4
+# Model weights are intentionally tracked so Docker image can bundle them.
+# The FTR evaluation server has no internet access — weights must be present.
+# !*.pt  <-- weights are now tracked (removed the blanket *.pt exclusion)

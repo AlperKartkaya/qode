@@ -1,14 +1,23 @@
-# Core Model Libraries
+# Core Deep Learning
+torch>=2.1.0
+torchvision>=0.16.0
+
+# Object Detection & Tracking
 ultralytics>=8.3.0
-paddleocr>=2.7.3
+
+# OCR — EasyOCR (paddleocr removed: incompatible with macOS/arm64)
+easyocr>=1.7.0
 
 # Image and Video Processing
 opencv-python-headless>=4.8.0
 numpy>=1.24.0
 Pillow>=10.0.0
-pyyaml>=6.0.1
+scipy>=1.11.0
 
-# Utility Libraries
+# Config & Data
+pyyaml>=6.0.1
 huggingface_hub>=0.19.0
+
+# Document Parsing (dev/reporting only — not needed at inference runtime)
 pypdf>=3.17.0
 python-docx>=1.0.1

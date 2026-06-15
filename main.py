@@ -1,130 +1,197 @@
+"""
+main.py — QoDe FTR Competition Entry Point
+
+Reads /app/data/input/video.mp4, runs the full inference pipeline, and writes
+/app/data/output/results.json conforming to the FTR output schema.
+
+Local testing: if /app/data/input is absent, falls back to data/ and ./ directories.
+"""
+
 import os
 import json
-from pathlib import Path
 import sys
+import collections
+from pathlib import Path
 
-# Ensure src is in path if not already
+# Make src importable whether running locally or from /app
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from smart_road_safety.analysis import AnalysisSessionRequest, AnalyzerInput, run_analysis_session
-from smart_road_safety.competition.ftr import build_ftr_result_from_analysis, write_ftr_result, VehicleInfo
+import cv2
+
+from smart_road_safety.analysis.model_inference import SceneAnalysisEngine
+from smart_road_safety.competition.ftr import (
+    FtrCompetitionResult,
+    VehicleInfo,
+    DetectionEvent,
+    write_ftr_result,
+)
+
+
+# ── Constants ─────────────────────────────────────────────────────────────────
+
+# Weights paths (Docker-first, then local dev fallback handled inside engine)
+YOLO_WEIGHTS   = "yolo11x.pt"
+DRIVER_WEIGHTS = "data/weights/driver_classifier.pt"
+VTYPE_WEIGHTS  = "data/weights/vehicle_type_classifier.pt"
+
+# Temporal smoothing: keep a rolling window of N seconds for voting
+SMOOTHING_WINDOW_SEC = 3.0
+
+# Minimum confidence to carry a detection event through to the final output
+MIN_EVENT_CONF = 0.55
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _find_video() -> tuple[Path, Path]:
+    """Return (video_path, output_dir) — tries Docker paths first, then local."""
+    docker_input = Path("/app/data/input")
+    docker_output = Path("/app/data/output")
+
+    if docker_input.exists():
+        mp4s = [f for f in docker_input.glob("*.mp4") if f.stat().st_size > 0]
+        if mp4s:
+            docker_output.mkdir(parents=True, exist_ok=True)
+            return mp4s[0], docker_output
+
+    # Local dev fallback
+    for search_dir in (Path("."), Path("data")):
+        mp4s = [f for f in search_dir.glob("*.mp4") if f.stat().st_size > 0]
+        if mp4s:
+            out = Path("out")
+            out.mkdir(exist_ok=True)
+            return mp4s[0], out
+
+    raise FileNotFoundError(
+        "No valid .mp4 file found in /app/data/input, '.', or 'data/'."
+    )
+
+
+def _mode(items: list) -> object:
+    """Return most common item in list, or None if empty."""
+    if not items:
+        return None
+    return collections.Counter(items).most_common(1)[0][0]
+
+
+# ── Main pipeline ─────────────────────────────────────────────────────────────
 
 def main() -> None:
-    input_dir = Path("/app/data/input")
-    output_dir = Path("/app/data/output")
-    
+    # ── Locate video ──────────────────────────────────────────────────────────
     try:
-        # Ensure dirs exist for local testing
-        input_dir.mkdir(parents=True, exist_ok=True)
-        output_dir.mkdir(parents=True, exist_ok=True)
-    except OSError:
-        pass # Probably not running in docker and /app is read-only on mac
-    
-    video_files = [f for f in input_dir.glob("*.mp4") if f.stat().st_size > 0]
-    if not video_files:
-        print("No valid mp4 file found in /app/data/input")
-        # For testing without docker, let's look locally
-        video_files = [f for f in Path(".").glob("*.mp4") if f.stat().st_size > 0]
-        if not video_files:
-            video_files = [f for f in Path("data").glob("*.mp4") if f.stat().st_size > 0]
-            if not video_files:
-                print("No valid mp4 file found locally either.")
-                return
-        video_path = video_files[0]
-        output_dir = Path("out")
-        output_dir.mkdir(exist_ok=True)
-    else:
-        video_path = video_files[0]
-    
-    print(f"Processing video: {video_path}")
-    
-    # Initialize real model inference engine
-    # Use yolo11x.pt for maximum performance as requested by the user
-    from smart_road_safety.analysis.model_inference import SceneAnalysisEngine
-    from smart_road_safety.competition.ftr import FtrCompetitionResult, VehicleInfo, DetectionEvent, write_ftr_result
-    
-    engine = SceneAnalysisEngine(yolo_model_name="yolo11x.pt")
-    
-    import cv2
+        video_path, output_dir = _find_video()
+    except FileNotFoundError as e:
+        print(f"[ERROR] {e}")
+        sys.exit(1)
+
+    print(f"[QoDe] Processing: {video_path}")
+
+    # ── Initialise inference engine ───────────────────────────────────────────
+    engine = SceneAnalysisEngine(
+        yolo_model_name=YOLO_WEIGHTS,
+        driver_model_path=DRIVER_WEIGHTS,
+        vehicle_type_model_path=VTYPE_WEIGHTS,
+    )
+
+    # ── Open video ────────────────────────────────────────────────────────────
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
-        print(f"Error: Could not open video: {video_path}")
-        return
-        
-    fps = cap.get(cv2.CAP_PROP_FPS)
+        print(f"[ERROR] Cannot open video: {video_path}")
+        sys.exit(1)
+
+    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    print(f"Video FPS: {fps}, Total Frames: {total_frames}")
-    
-    # Process 1 frame per second to speed up inference while maintaining high accuracy
-    frame_interval = max(1, int(fps)) if fps > 0 else 30
-    
-    frame_count = 0
-    processed_count = 0
-    
-    vehicle_types = []
-    vehicle_colors = []
-    vehicle_confidences = []
-    plates = {}
-    
-    all_detections = []
-    
+    duration_sec = total_frames / fps
+    print(f"[QoDe] FPS={fps:.1f}  frames={total_frames}  duration={duration_sec:.1f}s")
+
+    # Sample 1 frame per second (FTR videos are typically ≤10 min = 600 frames)
+    frame_step = max(1, int(fps))
+
+    # ── Accumulators ─────────────────────────────────────────────────────────
+    vehicle_types:  list[str]   = []
+    vehicle_colors: list[str]   = []
+    vehicle_confs:  list[float] = []
+    plate_votes:    dict[str, int] = {}
+
+    raw_events: list[dict] = []  # all per-frame detections before deduplication
+
+    frame_idx = 0
+    processed  = 0
+
+    # ── Frame loop ────────────────────────────────────────────────────────────
     while True:
         ret, frame = cap.read()
         if not ret:
             break
-            
-        if frame_count % frame_interval == 0:
-            timestamp = frame_count / fps if fps > 0 else float(processed_count)
-            # Run model-backed frame analysis
-            analysis = engine.analyze_frame(frame, timestamp)
-            processed_count += 1
-            
+
+        if frame_idx % frame_step == 0:
+            ts = frame_idx / fps
+            analysis = engine.analyze_frame(frame, ts)
+            processed += 1
+
             if analysis["vehicle_detected"]:
                 vehicle_types.append(analysis["vehicle_type"])
                 vehicle_colors.append(analysis["vehicle_color"])
-                vehicle_confidences.append(analysis["vehicle_confidence"])
-                
+                vehicle_confs.append(analysis["vehicle_confidence"])
                 if analysis["plate_text"]:
-                    plate = analysis["plate_text"]
-                    plates[plate] = plates.get(plate, 0) + 1
-                    
-            for event in analysis["driver_events"]:
-                all_detections.append(DetectionEvent(
-                    zaman_saniye=event["zaman_saniye"],
-                    kategori=event["kategori"],
-                    etiket=event["etiket"],
-                    confidence_score=event["confidence_score"]
-                ))
-                
-        frame_count += 1
-        
+                    p = analysis["plate_text"]
+                    plate_votes[p] = plate_votes.get(p, 0) + 1
+
+            for ev in analysis["driver_events"]:
+                if ev["confidence_score"] >= MIN_EVENT_CONF:
+                    raw_events.append(ev)
+
+        frame_idx += 1
+
     cap.release()
-    print(f"Processed {processed_count} frames.")
-    
-    # Determine final vehicle info
-    final_type = max(set(vehicle_types), key=vehicle_types.count) if vehicle_types else "sedan"
-    final_color = max(set(vehicle_colors), key=vehicle_colors.count) if vehicle_colors else "beyaz"
-    final_conf = sum(vehicle_confidences) / len(vehicle_confidences) if vehicle_confidences else 0.85
-    
-    # Get most common plate or default fallback
-    final_plate = max(plates, key=plates.get) if plates else "34TST123"
-    
+    print(f"[QoDe] Processed {processed} frames.")
+
+    # ── Temporal smoothing & deduplication ───────────────────────────────────
+    # Group events by (kategori, etiket) and deduplicate within SMOOTHING_WINDOW_SEC.
+    # Only keep one event per label per time window to avoid flooding the output.
+    deduplicated: list[dict] = []
+    last_seen: dict[tuple, float] = {}
+
+    for ev in sorted(raw_events, key=lambda e: e["zaman_saniye"]):
+        key = (ev["kategori"], ev["etiket"])
+        last_ts = last_seen.get(key, -999.0)
+        if ev["zaman_saniye"] - last_ts >= SMOOTHING_WINDOW_SEC:
+            deduplicated.append(ev)
+            last_seen[key] = ev["zaman_saniye"]
+
+    # ── Build final vehicle info ───────────────────────────────────────────────
+    final_type  = _mode(vehicle_types)  or "sedan"
+    final_color = _mode(vehicle_colors) or "beyaz"
+    final_conf  = (sum(vehicle_confs) / len(vehicle_confs)) if vehicle_confs else 0.80
+    final_plate = max(plate_votes, key=plate_votes.get) if plate_votes else "tespit_edilemedi"
+
     vehicle_info = VehicleInfo(
         tip=final_type,
         plaka=final_plate,
         renk=final_color,
-        confidence_score=final_conf
+        confidence_score=round(final_conf, 4),
     )
-    
+
     ftr_result = FtrCompetitionResult(
         video_id=video_path.name,
         arac_bilgisi=vehicle_info,
-        tespitler=tuple(all_detections)
+        tespitler=tuple(
+            DetectionEvent(
+                zaman_saniye=ev["zaman_saniye"],
+                kategori=ev["kategori"],
+                etiket=ev["etiket"],
+                confidence_score=ev["confidence_score"],
+            )
+            for ev in deduplicated
+        ),
     )
-    
+
     out_file = output_dir / "results.json"
     write_ftr_result(ftr_result, out_file)
-    print(f"FTR Output saved successfully to {out_file}")
+    print(f"[QoDe] results.json saved → {out_file}")
+    print(f"[QoDe] Vehicle: {final_type} / {final_color} / {final_plate} (conf={final_conf:.2f})")
+    print(f"[QoDe] Events:  {len(deduplicated)} unique detection(s)")
+
 
 if __name__ == "__main__":
     main()
