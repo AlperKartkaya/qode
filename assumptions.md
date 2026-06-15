@@ -14,9 +14,9 @@ Treat every assumption below as explicit project truth until a genuinely new ext
 ## Current Source-Of-Truth Order
 
 1. `5G_ve_Yapay_Zeka_ile_Akıllı_Yol_Güvenliği_Yarışması_-_FTR_Aşaması_Teslim_D.pdf` is the authoritative output-schema and packaging source for the current FTR/KTR implementation path.
-2. `2026_5G_YAPAY_ZEKA_İLE_AKILLI_YOL_GÜVENLİĞİ_YARISMASI_SARTNAMESI_2_PORZ6.pdf` is the authoritative competition-scope, scoring, API-use, and privacy source.
-3. Local datasets and open-source datasets are training/validation supports; they do not override the required FTR output labels or final evaluation contract.
-4. `final_report_template.docx` is the authoritative report outline for the next written deliverable.
+2. `final_report_template.docx` is the authoritative KTR final-report outline and formatting source for the next written deliverable.
+3. `2026_5G_YAPAY_ZEKA_İLE_AKILLI_YOL_GÜVENLİĞİ_YARISMASI_SARTNAMESI_2_PORZ6.pdf` remains competition background, but QoD/telecom integration is no longer in the scope of the KTR final report requested for this milestone.
+4. Local datasets and open-source datasets are training/validation supports; they do not override the required FTR output labels or final evaluation contract.
 
 ## Current Milestone Boundary
 
@@ -30,9 +30,9 @@ Implemented now:
 - authoritative human-curated clip observations in `data/video_observations.json` (legacy)
 - real dataset manifests for all four support datasets
 - shared domain contracts
-- Number Verification and QoD integration contracts with explicit mocks for unavailable credentials/endpoints
-- QoD decision simulation based on configurable policy files
-- orchestration flow for session bootstrap, verification, analysis handoff, and QoD activation
+- Number Verification and QoD integration contracts with explicit mocks for unavailable credentials/endpoints, retained as support/demo code only
+- QoD decision simulation based on configurable policy files, retained outside the current KTR report scope
+- orchestration flow for session bootstrap, verification, analysis handoff, and QoD activation, retained outside the current KTR report scope
 - deterministic scenario playback and dataset-grounded scoring harness
 - markdown export and thin local HTTP wrapper for demo-oriented integration
 - analysis boundary that maps all four support datasets plus the legacy clip observations into the stable orchestration contract
@@ -80,13 +80,13 @@ Available support data in the current delivery:
 - Legacy TOGG-like 3-video bundle with clip-level observations for vehicle presence, plate visibility, smoking, phone use, and erratic/slalom-like driving
 
 Unavailable in the current delivery:
-- official telecom API credentials, sandbox base URLs, client IDs/secrets, and SIM/device binding details
+- official telecom API credentials, sandbox base URLs, client IDs/secrets, and SIM/device binding details; these are no longer blockers for the current KTR final-report deliverable because QoD is out of scope
 - official FTR test-video ground-truth labels beyond the three local observed videos
 - official train/validation/test split metadata for DMD and DriverSVT
 - labelled test ground truth for State Farm
 - FTR-aligned open labels for vehicle color, exact vehicle body type, Turkish plate text, `teknocan`, `bilgisayar`, and passenger-seat occupancy in the current primary support datasets
 - official DriverSVT speed unit documentation beyond the numeric `speed` telemetry column
-- trained model weights and benchmark metrics for the final KTR report
+- reproducible model-training artifacts, benchmark metrics, and report-ready tables for the final KTR report
 
 ## Assumption Registry
 
@@ -101,19 +101,19 @@ Unavailable in the current delivery:
 | DS-007 | in-cabin labels | FTR in-cabin/action coverage is narrower and label-specific: `sigara_icme`, `telefonla_konusma`, `su_icme`, `esneme`, `arkaya_bakma`, `etrafa_bakinma`, `emniyet_kemeri_ihlali`, `slalom`, plus `teknocan`, `bilgisayar`, and passenger-seat positions. Existing datasets cover only a subset and need mapping plus gap-specific data. | high | verified from FTR labels and current manifests | classification schema, dataset gap analysis |
 | DS-008 | annotation granularity | Support granularity remains per-image, frame-level, row-level, or clip-level depending on dataset. Final output granularity is event-level with `zaman_saniye` for every detection plus one per-video vehicle summary. | high | verified from FTR output examples | temporal logic, metrics, adapter outputs |
 | DS-009 | split strategy | State Farm validation should be grouped by subject; DMD and DriverSVT splits should be grouped by subject/user; final validation should additionally include a KTR holdout of legacy/curated videos rendered into FTR `results.json` outputs. | high | update if organizer publishes official validation split | experimentation workflow, KTR evidence |
-| DS-010 | TOGG trigger | TOGG/target-vehicle approach is again a primary competition use case for QoD triggering. Driver-behavior-only datasets are not sufficient to prove the full yarışma scope. | high | verified from şartname purpose and QoD scenario wording | trigger policy, detection logic, model roadmap |
-| DS-011 | quality modes | The system must preserve at least two network-quality states: standard/best-effort analysis and QoD-boosted analysis after a critical scene trigger. | high | inspect final API docs and live environment | simulation, mobile flow, report architecture |
-| DS-012 | QoD policy | QoD should be requested only when there is an observable benefit: TOGG approach, plate readability need, driver-risk/in-cabin detail need, or other critical scene context. | high | verified from şartname QoD scoring description; calibrate with live API later | trigger policy, scoring, report |
-| DS-013 | Number Verification integration | Real Number Verification credentials and Turkcell environment details are not present. Keep mock behavior isolated, but design against CAMARA/Open Gateway semantics: silent SIM/phone-number verification over mobile data before session use. | high | update when Turkcell credentials/base URL/device details are granted | mobile/auth integration |
-| DS-014 | QoD API integration | Real QoD credentials/base URL are not present. Keep mock behavior isolated, but design against CAMARA/Open Gateway semantics: create/manage a temporary QoS session for the video/data flow only when policy says the scene is critical. | high | update when Turkcell credentials/base URL/QoS profile names are granted | API client, orchestration |
-| DS-015 | evaluation focus | Final/KTR evaluation must emphasize three axes: AI accuracy/precision for FTR labels, selective QoD/API integration, and modern software architecture/report quality. | high | verified from şartname scoring table | roadmap prioritization, KTR sections |
+| DS-010 | target-vehicle scope | TOGG/target-vehicle approach remains a primary visual use case, but the current KTR final report must discuss it as vehicle/plate/video analysis rather than as a QoD trigger story. Driver-behavior-only datasets are not sufficient to prove the full visual scope. | high | updated from the 2026-06-15 user scope change that removes QoD from KTR report focus | detection logic, model roadmap, report wording |
+| DS-011 | final-report scope | QoD and telecom API integration remain support/demo code paths in the repository, but they must be excluded from the generated KTR final report for this milestone. | high | update only if the user explicitly re-adds QoD to the final-report scope | reporting, generated DOCX, markdown exports |
+| DS-012 | report evidence | The KTR report evidence must center on FTR output compliance, dataset construction, trained model artifacts, model metrics, FPS/runtime measurements where available, and source-code traceability. | high | update when trained deep-learning weights and official evaluator outputs are available | training, evaluation, report generation |
+| DS-013 | telecom integration | Real Number Verification/Turkcell environment details are still unavailable, but this is no longer a blocker for the current KTR report because telecom integration is out of report scope. | high | update when telecom work is explicitly re-scoped | demo integration only |
+| DS-014 | report generator | The report generator must produce a `final_report_template.docx`-aligned DOCX and a markdown QA artifact from repo-grounded evidence without inventing unavailable model results. | high | verify with DOCX text extraction and generated artifact checks | reporting, tests, manual QA |
+| DS-015 | evaluation focus | Final/KTR evaluation for this milestone must emphasize AI accuracy/precision for FTR labels, dataset balance/coverage, model-training evidence, runtime/FPS readiness, and report quality. | high | updated from user scope change removing QoD from KTR report | roadmap prioritization, KTR sections |
 | DS-016 | privacy and sharing | Organizer-provided 5G network details, video files, training material, Q&A content, and evaluation data must not be shared outside the competition without Turkcell permission. | high | verified from şartname participation/privacy rule | repo hygiene, publication, data handling |
 | OR-001 | orchestration source reference | Internal orchestration may keep a stable `source_ref`, but final submission must emit `video_id` and FTR keys rather than internal source references. | high | verified from FTR examples | orchestration inputs, competition exporter |
 | OR-002 | orchestration risk labels | Mobile-facing labels may remain richer internally, but any competition export must map to the exact FTR label set and reject unmapped labels rather than silently emitting unsupported names. | high | verified from FTR exact-match warning | mobile output, reporting, evaluation |
 | OR-003 | orchestration identifiers | Real session IDs, API references, and QoS profile IDs will follow Turkcell/CAMARA environment formats; local deterministic IDs are acceptable only for mocks and tests. | high | inspect API environment details | orchestration traces, logging |
 | EV-001 | scenario fixtures | Scenario fixtures should include both current dataset-backed demos and FTR-export validation cases, especially legacy TOGG-like video cases that can produce `results.json`. | high | update as ground truth expands | evaluation, traceability |
 | EV-002 | behavior scoring | Existing dataset-grounded scoring remains useful for support-data experiments, but FTR scoring must validate exact labels, plate regex, confidence ranges, and event timestamps. | high | update when official evaluator is published | evaluation, reporting |
-| EV-003 | scenario coverage | Coverage must demonstrate all major FTR families: vehicle info, plate handling, driver actions, objects, passengers, QoD trigger/selectivity, and failure handling. | high | update as evaluation criteria evolve | evaluation, robustness |
+| EV-003 | scenario coverage | Coverage must demonstrate all major FTR families: vehicle info, plate handling, driver actions, objects, passengers, schema validation, and failure handling. | high | update as evaluation criteria evolve | evaluation, robustness |
 | EX-001 | markdown exports | Judge-friendly markdown remains useful, but KTR/FTR reporting also needs tables for dataset balance, model metrics, FPS, confidence thresholds, and Docker/runtime conformance. | high | compare generated report material against `final_report_template.docx` | reporting, presentation |
 | API-001 | local http wrapper | The current HTTP server is a local demo/development surface. It should expose competition-output generation/validation for local QA, but it is not the final production mobile backend. | high | replace with final integration strategy if required | demo integration, mobile client |
 | API-002 | local endpoint payloads | Local API payloads may reuse internal contracts, but FTR-facing endpoints and CLI commands must speak `results.json` schema exactly. | high | inspect final mobile/backend boundaries | mobile integration, local API |
@@ -176,7 +176,7 @@ Unavailable in the current delivery:
 2. Validate every FTR-facing output against exact keys, labels, ASCII constraints, plate regex, confidence ranges, and timestamp types.
 3. Keep support-dataset adapters useful for training and ablations, but do not claim they fully match FTR.
 4. Add or curate FTR-aligned vehicle/plate/color/object/passenger data before training final heads.
-5. Keep QoD thresholds configurable; do not bury dataset-specific constants inside model code.
+5. Keep QoD/telecom support paths outside generated KTR final-report content unless the report scope changes again.
 6. Keep telecom mocks isolated behind gateway interfaces until real credentials and base URLs are provided.
 7. Do not add environment-detection or evaluation-environment branching to final Docker code.
 

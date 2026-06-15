@@ -23,9 +23,11 @@ from .integration import (
 )
 from .local_api import run_local_api_server
 from .manifest import DatasetManifest, compare_manifest_to_assumptions
+from .modeling import train_report_models
 from .orchestration import SessionRequest, TelecomOrchestrator
 from .policy import QodPolicy, load_default_qod_policy
 from .qod import SceneSignal, evaluate_qod_need
+from .reporting import build_final_report
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -167,6 +169,93 @@ def _build_parser() -> argparse.ArgumentParser:
         "result_path",
         help="Path to a results.json file.",
     )
+
+    train_report_models_parser = subparsers.add_parser(
+        "train-report-models",
+        help=(
+            "Train lightweight, reproducible model artifacts for the KTR final "
+            "report tables."
+        ),
+    )
+    train_report_models_parser.add_argument(
+        "--data-root",
+        default="data",
+        help="Root folder containing local support datasets.",
+    )
+    train_report_models_parser.add_argument(
+        "--output-dir",
+        default="out/model_artifacts",
+        help="Directory where model artifact JSON files will be written.",
+    )
+    train_report_models_parser.add_argument(
+        "--max-driver-svt-rows",
+        type=int,
+        default=50000,
+        help="Maximum DriverSVT rows to sample for the local telemetry baseline.",
+    )
+
+    build_final_report_parser = subparsers.add_parser(
+        "build-final-report",
+        help=(
+            "Generate the KTR final report DOCX and markdown QA artifact from "
+            "template headings, manifests, and trained model artifacts."
+        ),
+    )
+    build_final_report_parser.add_argument(
+        "--template-path",
+        default="final_report_template.docx",
+        help="Path to final_report_template.docx.",
+    )
+    build_final_report_parser.add_argument(
+        "--model-artifacts-path",
+        default="out/model_artifacts/ktr_model_artifacts.json",
+        help="Path to ktr_model_artifacts.json produced by train-report-models.",
+    )
+    build_final_report_parser.add_argument(
+        "--output-path",
+        default="out/ktr_final_report.docx",
+        help="DOCX report output path.",
+    )
+    build_final_report_parser.add_argument(
+        "--markdown-path",
+        default="out/ktr_final_report.md",
+        help="Markdown QA artifact output path.",
+    )
+    build_final_report_parser.add_argument(
+        "--evidence-path",
+        default="out/ktr_report_evidence.json",
+        help="Structured evidence JSON output path.",
+    )
+    build_final_report_parser.add_argument(
+        "--team-name",
+        default="Doldurulacak",
+        help="Team name to print on the cover page.",
+    )
+    build_final_report_parser.add_argument(
+        "--team-id",
+        default="Doldurulacak",
+        help="Team ID to print on the cover page.",
+    )
+    build_final_report_parser.add_argument(
+        "--application-id",
+        default="Doldurulacak",
+        help="Application ID to print on the cover page.",
+    )
+
+    prepare_ktr_report = subparsers.add_parser(
+        "prepare-ktr-report",
+        help="Train report models and generate the KTR final report artifacts in one pass.",
+    )
+    prepare_ktr_report.add_argument("--data-root", default="data")
+    prepare_ktr_report.add_argument("--template-path", default="final_report_template.docx")
+    prepare_ktr_report.add_argument("--model-output-dir", default="out/model_artifacts")
+    prepare_ktr_report.add_argument("--output-path", default="out/ktr_final_report.docx")
+    prepare_ktr_report.add_argument("--markdown-path", default="out/ktr_final_report.md")
+    prepare_ktr_report.add_argument("--evidence-path", default="out/ktr_report_evidence.json")
+    prepare_ktr_report.add_argument("--team-name", default="Doldurulacak")
+    prepare_ktr_report.add_argument("--team-id", default="Doldurulacak")
+    prepare_ktr_report.add_argument("--application-id", default="Doldurulacak")
+    prepare_ktr_report.add_argument("--max-driver-svt-rows", type=int, default=50000)
 
     run_scenarios = subparsers.add_parser(
         "run-scenarios",
@@ -376,6 +465,77 @@ def _validate_ftr_output(result_path: str) -> int:
     return 0
 
 
+def _train_report_models(
+    data_root: str, output_dir: str, max_driver_svt_rows: int
+) -> int:
+    bundle = train_report_models(
+        data_root=data_root,
+        output_dir=output_dir,
+        max_driver_svt_rows=max_driver_svt_rows,
+    )
+    bundle_path = Path(output_dir) / "ktr_model_artifacts.json"
+    print(f"model_artifacts_path={bundle_path}")
+    print(f"model_count={len(bundle.models)}")
+    for model in bundle.models:
+        print(
+            f"- {model.model_id}: samples={model.sample_count} "
+            f"artifact={model.artifact_path}"
+        )
+    return 0
+
+
+def _build_final_report(
+    template_path: str,
+    model_artifacts_path: str,
+    output_path: str,
+    markdown_path: str,
+    evidence_path: str,
+    team_name: str,
+    team_id: str,
+    application_id: str,
+) -> int:
+    result = build_final_report(
+        template_path=template_path,
+        model_artifacts_path=model_artifacts_path,
+        output_path=output_path,
+        markdown_path=markdown_path,
+        evidence_path=evidence_path,
+        team_name=team_name,
+        team_id=team_id,
+        application_id=application_id,
+    )
+    print(f"docx_path={result.docx_path}")
+    print(f"markdown_path={result.markdown_path}")
+    print(f"evidence_path={result.evidence_path}")
+    print(f"model_count={result.model_count}")
+    return 0
+
+
+def _prepare_ktr_report(args: argparse.Namespace) -> int:
+    bundle = train_report_models(
+        data_root=args.data_root,
+        output_dir=args.model_output_dir,
+        max_driver_svt_rows=args.max_driver_svt_rows,
+    )
+    model_artifacts_path = Path(args.model_output_dir) / "ktr_model_artifacts.json"
+    result = build_final_report(
+        template_path=args.template_path,
+        model_artifacts_path=model_artifacts_path,
+        output_path=args.output_path,
+        markdown_path=args.markdown_path,
+        evidence_path=args.evidence_path,
+        team_name=args.team_name,
+        team_id=args.team_id,
+        application_id=args.application_id,
+    )
+    print(f"model_artifacts_path={model_artifacts_path}")
+    print(f"docx_path={result.docx_path}")
+    print(f"markdown_path={result.markdown_path}")
+    print(f"evidence_path={result.evidence_path}")
+    print(f"model_count={len(bundle.models)}")
+    return 0
+
+
 def _run_scenarios(
     scenario_path: str, output_path: str, policy_path: str | None
 ) -> int:
@@ -439,6 +599,25 @@ def main() -> int:
         )
     if args.command == "validate-ftr-output":
         return _validate_ftr_output(args.result_path)
+    if args.command == "train-report-models":
+        return _train_report_models(
+            args.data_root,
+            args.output_dir,
+            args.max_driver_svt_rows,
+        )
+    if args.command == "build-final-report":
+        return _build_final_report(
+            args.template_path,
+            args.model_artifacts_path,
+            args.output_path,
+            args.markdown_path,
+            args.evidence_path,
+            args.team_name,
+            args.team_id,
+            args.application_id,
+        )
+    if args.command == "prepare-ktr-report":
+        return _prepare_ktr_report(args)
     if args.command == "run-scenarios":
         return _run_scenarios(args.scenario_path, args.output_path, args.policy_path)
     if args.command == "export-scenario-report":

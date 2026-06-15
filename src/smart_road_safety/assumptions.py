@@ -105,25 +105,40 @@ ASSUMPTIONS: tuple[AssumptionRecord, ...] = (
     ),
     AssumptionRecord(
         assumption_id="DS-010",
-        domain="TOGG trigger",
+        domain="target-vehicle scope",
         statement=(
-            "TOGG/target-vehicle approach is a primary competition trigger for QoD; "
-            "driver-behavior-only datasets are insufficient for the full yarışma scope."
+            "TOGG/target-vehicle approach remains a primary visual use case, but "
+            "the current KTR final report must discuss it as vehicle, plate, and "
+            "video analysis rather than a QoD trigger story."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Verified from şartname purpose and QoD scenario wording.",
-        impact_surface=("trigger policy", "detection logic", "model roadmap"),
+        verify_when_dataset_arrives=(
+            "Updated from the 2026-06-15 user scope change removing QoD from KTR report focus."
+        ),
+        impact_surface=("detection logic", "model roadmap", "report wording"),
+    ),
+    AssumptionRecord(
+        assumption_id="DS-011",
+        domain="final-report scope",
+        statement=(
+            "QoD and telecom API integration remain support/demo code paths, but "
+            "they must be excluded from generated KTR final-report content for this milestone."
+        ),
+        confidence="high",
+        verify_when_dataset_arrives="Update only if the user explicitly re-adds QoD to the final-report scope.",
+        impact_surface=("reporting", "generated DOCX", "markdown exports"),
     ),
     AssumptionRecord(
         assumption_id="DS-012",
-        domain="QoD policy",
+        domain="report evidence",
         statement=(
-            "QoD should be requested only when TOGG approach, plate readability, "
-            "driver-risk, or in-cabin detail creates observable benefit."
+            "The KTR report evidence must center on FTR output compliance, dataset "
+            "construction, trained model artifacts, model metrics, FPS/runtime readiness, "
+            "and source-code traceability."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Verified from şartname QoD scoring description; calibrate live later.",
-        impact_surface=("network orchestration", "simulation", "report"),
+        verify_when_dataset_arrives="Update when trained deep-learning weights and official evaluator outputs are available.",
+        impact_surface=("training", "evaluation", "report generation"),
     ),
     AssumptionRecord(
         assumption_id="DS-013",
@@ -138,14 +153,27 @@ ASSUMPTIONS: tuple[AssumptionRecord, ...] = (
     ),
     AssumptionRecord(
         assumption_id="DS-014",
-        domain="QoD API integration",
+        domain="report generator",
         statement=(
-            "Real credentials are unavailable; mocks remain isolated while design "
-            "tracks CAMARA/Open Gateway temporary QoS-session semantics."
+            "The report generator must produce a final_report_template.docx-aligned "
+            "DOCX and a markdown QA artifact from repo-grounded evidence without "
+            "inventing unavailable model results."
         ),
         confidence="high",
-        verify_when_dataset_arrives="Update when Turkcell credentials/base URL/QoS profile names are granted.",
-        impact_surface=("API client", "orchestration"),
+        verify_when_dataset_arrives="Verify with DOCX text extraction and generated artifact checks.",
+        impact_surface=("reporting", "tests", "manual QA"),
+    ),
+    AssumptionRecord(
+        assumption_id="DS-015",
+        domain="evaluation focus",
+        statement=(
+            "Final/KTR evaluation for this milestone must emphasize AI accuracy, "
+            "precision for FTR labels, dataset balance, model-training evidence, "
+            "runtime/FPS readiness, and report quality."
+        ),
+        confidence="high",
+        verify_when_dataset_arrives="Updated from user scope change removing QoD from KTR report.",
+        impact_surface=("roadmap prioritization", "KTR sections"),
     ),
     AssumptionRecord(
         assumption_id="OR-002",

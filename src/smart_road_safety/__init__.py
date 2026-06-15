@@ -61,8 +61,10 @@ from .orchestration import (
 )
 from .local_api import create_local_api_server, run_local_api_server
 from .manifest import AdaptationGap, DatasetManifest, compare_manifest_to_assumptions
+from .modeling import ReportModelArtifact, ReportModelBundle, train_report_models
 from .policy import QodPolicy, load_default_qod_policy
 from .qod import QodDecision, SceneSignal, evaluate_qod_need
+from .reporting import FinalReportBuildResult, build_final_report
 
 __all__ = [
     "ASSUMPTIONS",
@@ -85,6 +87,7 @@ __all__ = [
     "ExpectedWorkflowOutcome",
     "FrameAnalysis",
     "FtrCompetitionResult",
+    "FinalReportBuildResult",
     "IngestionPlan",
     "MobileSessionBootstrapRequest",
     "MobileSessionBootstrapResult",
@@ -103,6 +106,8 @@ __all__ = [
     "QodActivationResult",
     "QodDecision",
     "QodPolicy",
+    "ReportModelArtifact",
+    "ReportModelBundle",
     "RuleBasedSceneAnalyzer",
     "SceneAnalyzer",
     "ScenarioDefinition",
@@ -117,6 +122,7 @@ __all__ = [
     "create_local_api_server",
     "build_adapter_from_manifest",
     "build_ftr_result_from_analysis",
+    "build_final_report",
     "build_qod_activation_request",
     "compare_manifest_to_assumptions",
     "evaluate_qod_need",
@@ -126,6 +132,7 @@ __all__ = [
     "run_analysis_session",
     "run_scenario_suite",
     "run_local_api_server",
+    "train_report_models",
     "validate_ftr_result_payload",
     "write_ftr_result",
 ]
