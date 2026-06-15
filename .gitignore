@@ -14,3 +14,5 @@ data/datasets/**
 !data/datasets/*/manifest.json
 out/
 .env
+*.pt
+data/test_clip.mp4
