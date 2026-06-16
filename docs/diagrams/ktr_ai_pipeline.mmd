@@ -1,11 +1,21 @@
 flowchart TD
-    A["/app/data/input/video.mp4"] --> B["Video ingest & frame sampling"]
-    B --> C["Vehicle / plate / object detector\nYOLO11 primary, RT-DETR ablation"]
-    B --> D["Driver action recognizer\nVideoMAE / SlowFast family"]
-    B --> E["Track and motion analysis\nByteTrack + geometry"]
-    C --> F["Plate OCR and Turkish regex normalization"]
-    D --> G["FTR label mapping"]
-    E --> G
-    F --> H["FTR schema validator"]
-    G --> H
-    H --> I["/app/data/output/results.json"]
+    A["FTR video girdisi\n/app/data/input/*.mp4"] --> B["OpenCV video okuma\n1 FPS örnekleme + üst veri"]
+    B --> C["YOLO11x algılayıcı\naraç / kişi / telefon / bilgisayar"]
+    C --> D["Araç kırpımı"]
+    D --> E["K-Means baskın renk\nFTR renk paleti"]
+    D --> F["EasyOCR plaka okuma\nTürk plaka regex doğrulaması"]
+    D --> G["EfficientNet-B0 araç tipi\nağırlık yoksa COCO yedek eşlemesi"]
+    C --> H["Sürücü/yolcu kırpımı\nkişi çakışması + ön cam yedek bölgesi"]
+    H --> I["EfficientNet-B2 veya MobileNetV3\nsürücü eylemi sınıflandırıcı"]
+    H --> J["Canny + Hough çizgi yöntemi\nemniyet kemeri ihlali başlangıç modeli"]
+    C --> K["Kabin geometrisi\nön/arka yolcu bölgeleri"]
+    C --> L["Nesne eşleme\ntelefon->teknocan, dizüstü->bilgisayar"]
+    E --> M["Zamansal oylama ve yumuşatma\n3 saniye olay tekilleştirme"]
+    F --> M
+    G --> M
+    I --> M
+    J --> M
+    K --> M
+    L --> M
+    M --> N["FTR şema doğrulama\nbirebir anahtarlar, etiketler, güven skoru"]
+    N --> O["results.json\n/app/data/output/results.json"]

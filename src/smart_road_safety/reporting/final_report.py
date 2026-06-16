@@ -48,17 +48,22 @@ DATASET_MANIFESTS: tuple[str, ...] = (
 
 MERMAID_DIAGRAM_IMAGES: tuple[tuple[str, str, str], ...] = (
     (
-        "Şekil 1. KTR yapay zekâ çıkarım hattı",
+        "Şekil 1. Uçtan uca yapay zekâ çıkarım hattı",
         "docs/diagrams/ktr_ai_pipeline.mmd",
         "docs/diagrams/rendered/ktr_ai_pipeline.png",
     ),
     (
-        "Şekil 2. FTR doğrulama ve results.json üretim akışı",
+        "Şekil 2. FTR doğrulama ve sonuç üretim akışı",
         "docs/diagrams/ftr_validation_flow.mmd",
         "docs/diagrams/rendered/ftr_validation_flow.png",
     ),
     (
-        "Şekil 3. Rapor kanıt izi ve kaynak bağları",
+        "Şekil 3. Model eğitimi ve ağırlık yönetimi akışı",
+        "docs/diagrams/model_training_weights_flow.mmd",
+        "docs/diagrams/rendered/model_training_weights_flow.png",
+    ),
+    (
+        "Şekil 4. Rapor kanıt izi ve kaynak bağları",
         "docs/diagrams/report_evidence_trace.mmd",
         "docs/diagrams/rendered/report_evidence_trace.png",
     ),
@@ -66,69 +71,72 @@ MERMAID_DIAGRAM_IMAGES: tuple[tuple[str, str, str], ...] = (
 
 CODE_SNIPPET_IMAGES: tuple[tuple[str, str, str], ...] = (
     (
-        "Ek A.1 - FTR exact etiket ve çıktı sözleşmesi",
-        "src/smart_road_safety/competition/ftr.py",
-        "docs/report_assets/code_snippets/ftr_contract.png",
+        "Ek A.1. Model ağırlık yükleme mantığı",
+        "src/smart_road_safety/analysis/model_inference.py",
+        "docs/report_assets/code_snippets_v3/model_agirlik_yukleme.png",
     ),
     (
-        "Ek A.2 - Rapor modeli eğitim girişi",
-        "src/smart_road_safety/modeling/report_models.py",
-        "docs/report_assets/code_snippets/report_training.png",
+        "Ek A.2. Tek kare analiz mantığı",
+        "src/smart_road_safety/analysis/model_inference.py",
+        "docs/report_assets/code_snippets_v3/kare_analizi.png",
     ),
     (
-        "Ek A.3 - Final rapor üretim kanıt zinciri",
-        "src/smart_road_safety/reporting/final_report.py",
-        "docs/report_assets/code_snippets/report_builder.png",
+        "Ek A.3. Sürücü olayı üretim mantığı",
+        "src/smart_road_safety/analysis/model_inference.py",
+        "docs/report_assets/code_snippets_v3/surucu_olaylari.png",
     ),
     (
-        "Ek A.4 - Docker/FTR çalışma sınırı",
+        "Ek A.4. Video örnekleme ve tekilleştirme mantığı",
         "main.py",
-        "docs/report_assets/code_snippets/docker_entrypoint.png",
+        "docs/report_assets/code_snippets_v3/video_tekillestirme.png",
     ),
 )
 
 MODEL_SELECTION_ROWS: tuple[tuple[str, str, str], ...] = (
     (
-        "Araç, plaka ve nesne algılama",
-        "YOLO11n/s birincil; RT-DETR doğruluk ablation adayı",
-        "Tek geçişli gerçek zamanlı çıkarım ve T4 bütçesinde basit export hattı.",
+        "Araç, kişi ve kabin nesnesi algılama",
+        "YOLO11x çalışma zamanı; YOLO11s eğitim hattı",
+        "Tek geçişli algılama ile araç, kişi, telefon ve bilgisayar adayları aynı kare üzerinden çıkarılır.",
+    ),
+    (
+        "Araç rengi ve gövde tipi",
+        "K-Means FTR renk paleti + EfficientNet-B0 araç tipi sınıflandırıcısı",
+        "Açık kaynak ağırlık yoksa COCO sınıf eşlemesi kontrollü yedek yol olarak çalışır; sahte üst veri üretilmez.",
     ),
     (
         "Plaka okuma",
-        "YOLO plaka kırpımı + PaddleOCR tabanlı OCR + FTR regex sonrası işleme",
-        "Plaka metni exact-match gerektirdiği için görüntü modeli kadar format validasyonu da kritik.",
+        "Araç kırpımı alt bölgesi + EasyOCR + Türk plaka regex doğrulaması",
+        "Birebir plaka çıktısı için OCR sonucu biçim doğrulamasından geçmeden kabul edilmez.",
     ),
     (
-        "Şoför eylemleri",
-        "VideoMAE/SlowFast temporal başlık + State Farm/DMD ön eğitim desteği",
-        "Telefon, sigara, su içme, esneme ve bakış yönü tek kare yerine zaman penceresiyle ayrılır.",
+        "Şoför eylemleri ve emniyet kemeri",
+        "EfficientNet-B2/MobileNetV3 sınıflandırıcı + Canny/Hough çizgi sezgisel yöntemi",
+        "State Farm/DMD destekli sınıflandırıcı davranışları üretir; emniyet kemeri başlangıç modeli geometrik kanıt verir.",
     ),
     (
-        "Hız ve slalom",
-        "ByteTrack izleme + kamera geometrisi/homography + DriverSVT telemetry ablation",
-        "Şartname hız/risk kanıtı istediği için hız FTR JSON dışında iç metrik ve rapor kanıtı olarak tutulur.",
+        "Yolcu ve zamansal olay mantığı",
+        "Kabin bölge geometrisi + 3 saniye tekilleştirme/yumuşatma + DriverSVT ayrıştırma",
+        "Tekrarlı karelerden gelen olaylar tekil tespitlere indirilir; hız/risk şartname hedefi iç metrik olarak izlenir.",
     ),
 )
 
-REFERENCE_ROWS: tuple[tuple[str, str], ...] = (
-    (
-        "FTR Teslim Dokümanı",
-        "FTR Aşaması Teslim Dokümantasyonu: exact JSON şeması, ASCII etiketler, Docker giriş/çıkış yolu.",
-    ),
-    (
-        "Yarışma Şartnamesi",
-        "2026 5G ve Yapay Zekâ ile Akıllı Yol Güvenliği şartnamesi: hedef aileleri, rapor ve gizlilik ilkeleri.",
-    ),
-    ("Rapor Şablonu", "final_report_template.docx: Final Tasarım Raporu bölüm ve format yönergesi."),
-    ("Ön Tasarım Raporu", "Yerel ön tasarım PDF'i: ton, açıklık, tablo ve şekil anlatım dili için stil referansı."),
-    ("State Farm", "State Farm Distracted Driver Detection veri seti, driver_imgs_list.csv."),
-    ("DMD", "Driver Monitoring Dataset distraction/drowsiness OpenLABEL anotasyonları."),
-    ("DriverSVT", "Smartphone-Measured Vehicle Telemetry Data for Driver State Identification."),
-    ("YOLO11", "Ultralytics YOLO11 model dokümantasyonu."),
-    ("PaddleOCR", "PaddleOCR OCR toolkit dokümantasyonu."),
-    ("MMAction2", "OpenMMLab video action recognition model zoo."),
-    ("ByteTrack", "FoundationVision ByteTrack multi-object tracking implementation."),
+REFERENCE_ITEMS: tuple[str, ...] = (
+    "FTR Aşaması Teslim Dokümanı",
+    "2026 Yarışma Şartnamesi",
+    "Final rapor şablonu",
+    "Ön Tasarım Raporu",
+    "State Farm Distracted Driver veri seti",
+    "Driver Monitoring Dataset",
+    "DriverSVT veri seti",
+    "Ultralytics YOLO11 — https://docs.ultralytics.com/models/yolo11/",
+    "EasyOCR — https://github.com/JaidedAI/EasyOCR",
+    "PyTorch ve TorchVision — https://docs.pytorch.org/vision/",
+    "OpenCV — https://docs.opencv.org/",
+    "Hugging Face Hub — https://huggingface.co/docs/huggingface_hub",
+    "EfficientNet — https://arxiv.org/abs/1905.11946",
+    "MobileNetV3 — https://arxiv.org/abs/1905.02244",
 )
+
 
 
 def build_final_report(
@@ -239,18 +247,18 @@ def _dataset_rows() -> list[dict[str, str]]:
         manifest = DatasetManifest.from_path(path)
         rows.append(
             {
-                "dataset": str(manifest.extra_fields.get("dataset_name", path.stem)),
-                "unit": manifest.sample_unit,
-                "format": manifest.annotation_format,
-                "targets": ", ".join(manifest.targets),
-                "ftr_families": ", ".join(
+                "veri_seti": str(manifest.extra_fields.get("dataset_name", path.stem)),
+                "birim": manifest.sample_unit,
+                "bicim": manifest.annotation_format,
+                "hedefler": ", ".join(manifest.targets),
+                "ftr_aileleri": ", ".join(
                     str(value)
                     for value in manifest.extra_fields.get(
                         "ftr_output_families_covered", []
                     )
                 )
                 or "destek/gap",
-                "repo_path": manifest_path,
+                "repo_yolu": manifest_path,
             }
         )
     return rows
@@ -269,7 +277,7 @@ def _gap_rows() -> list[dict[str, str]]:
             message, action = _turkish_gap(gap.message, gap.action)
             rows.append(
                 {
-                    "dataset": str(manifest.extra_fields.get("dataset_name", path.stem)),
+                    "veri_seti": str(manifest.extra_fields.get("dataset_name", path.stem)),
                     "gap": message,
                     "action": action,
                 }
@@ -280,10 +288,10 @@ def _gap_rows() -> list[dict[str, str]]:
 def _turkish_gap(message: str, action: str) -> tuple[str, str]:
     if "plate text" in message:
         return (
-            "Exact plaka metni etiketi yok.",
+            "Birebir plaka metni etiketi yok.",
             (
-                "Plaka OCR veri seti/adapteri veya manuel Türk plaka anotasyonu "
-                "eklenene kadar plate exact-match metriği iddia edilmemeli."
+                "Plaka OCR veri seti/adaptörü veya manuel Türk plaka anotasyonu "
+                "eklenene kadar birebir plaka eşleşme metriği iddia edilmemeli."
             ),
         )
     if "FTR output family" in message:
@@ -304,11 +312,11 @@ def _model_rows(bundle: ReportModelBundle) -> list[dict[str, str]]:
         rows.append(
             {
                 "model": model.model_id,
-                "family": model.model_family,
-                "final_architecture": model.selected_final_architecture,
-                "samples": str(model.sample_count),
-                "split": model.split_strategy,
-                "artifact": model.artifact_path,
+                "aile": model.model_family,
+                "final_mimari": model.selected_final_architecture,
+                "ornek": str(model.sample_count),
+                "bolme": model.split_strategy,
+                "kanıt dosyası": model.artifact_path,
             }
         )
     return rows
@@ -321,9 +329,9 @@ def _metrics_rows(bundle: ReportModelBundle) -> list[dict[str, str]]:
         rows.append(
             {
                 "model": model.model_id,
-                "accuracy": _metric(metrics, "validation_accuracy", "session_prior_accuracy"),
-                "precision": _metric(metrics, "macro_precision"),
-                "recall": _metric(metrics, "macro_recall"),
+                "dogruluk": _metric(metrics, "validation_accuracy", "session_prior_accuracy"),
+                "kesinlik": _metric(metrics, "macro_precision"),
+                "duyarlilik": _metric(metrics, "macro_recall"),
                 "f1": _metric(metrics, "macro_f1"),
                 "n": _metric(metrics, "validation_samples", "sessions"),
             }
@@ -343,11 +351,11 @@ def _metric(metrics: dict[str, float], *names: str) -> str:
 
 def _ftr_schema_rows() -> list[dict[str, str]]:
     rows = [
-        {"field": "arac_bilgisi.tip", "allowed": ", ".join(VEHICLE_TYPES)},
-        {"field": "arac_bilgisi.renk", "allowed": ", ".join(VEHICLE_COLORS)},
+        {"alan": "arac_bilgisi.tip", "izin_verilen": ", ".join(VEHICLE_TYPES)},
+        {"alan": "arac_bilgisi.renk", "izin_verilen": ", ".join(VEHICLE_COLORS)},
     ]
     for category, labels in DETECTION_LABELS_BY_CATEGORY.items():
-        rows.append({"field": f"tespitler.{category}", "allowed": ", ".join(labels)})
+        rows.append({"alan": f"tespitler.{category}", "izin_verilen": ", ".join(labels)})
     return rows
 
 
@@ -355,18 +363,18 @@ def _repo_trace_rows(bundle: ReportModelBundle) -> list[dict[str, str]]:
     paths = {
         "FTR şema doğrulama": "src/smart_road_safety/competition/ftr.py",
         "Docker/FTR giriş noktası": "main.py",
-        "Dataset manifest kontrolü": "src/smart_road_safety/manifest.py",
-        "Dataset adapterleri": "src/smart_road_safety/data/real_adapters.py",
+        "Veri seti manifest kontrolü": "src/smart_road_safety/manifest.py",
+        "Veri seti adaptörleri": "src/smart_road_safety/data/real_adapters.py",
         "Rapor modeli eğitimi": "src/smart_road_safety/modeling/report_models.py",
         "Rapor üretimi": "src/smart_road_safety/reporting/final_report.py",
         "DOCX yazıcı": "src/smart_road_safety/reporting/docx.py",
-        "Mermaid kaynakları": "docs/diagrams/*.mmd",
+        "Render edilmiş diyagramlar": "rapor içinde görsel olarak kullanılır",
         "Görsel kod ekleri": "docs/report_assets/code_snippets/*.png",
     }
     for model in bundle.models:
         for path in model.repo_paths:
             paths.setdefault(f"Model kanıtı: {model.model_id}", path)
-    return [{"purpose": key, "path": value} for key, value in paths.items()]
+    return [{"amac": key, "kanit": value} for key, value in paths.items()]
 
 
 def _read_report_images(specs: tuple[tuple[str, str, str], ...]) -> tuple[ReportImage, ...]:
@@ -426,9 +434,9 @@ def _section_blocks(
         DocxBlock("paragraph", _project_summary()),
         DocxBlock("heading", "2. VERİSETİ OLUŞTURULMASI"),
         DocxBlock("paragraph", _dataset_text()),
-        DocxBlock("table", rows=_table_rows(dataset_rows, ["dataset", "unit", "format", "ftr_families"])),
+        DocxBlock("table", rows=_table_rows(dataset_rows, ["veri_seti", "birim", "bicim", "ftr_aileleri"])),
         DocxBlock("paragraph", "Eksik aileler ve kapatma aksiyonları aşağıdaki tabloda izlenir."),
-        DocxBlock("table", rows=_table_rows(gap_rows[:10], ["dataset", "gap", "action"])),
+        DocxBlock("table", rows=_table_rows(gap_rows[:10], ["veri_seti", "bosluk", "aksiyon"])),
         DocxBlock("heading", "3. YAPAY ZEKÂ ÇÖZÜMÜ"),
         DocxBlock("heading", "3.1. Problemin Analizi", level=2),
         DocxBlock("paragraph", _problem_analysis_text()),
@@ -436,51 +444,52 @@ def _section_blocks(
         DocxBlock("paragraph", _architecture_text()),
     ]
     for diagram in diagrams:
-        blocks.append(DocxBlock("caption", f"{diagram.title} — kaynak: {diagram.source_path}"))
         blocks.append(DocxBlock("image", diagram.image_path))
+        blocks.append(DocxBlock("caption", diagram.title))
     blocks.extend(
         [
-            DocxBlock("table", rows=_table_rows(repo_rows, ["purpose", "path"])),
+            DocxBlock("table", rows=_table_rows(repo_rows, ["amac", "kanit"])),
             DocxBlock("heading", "3.3. Çözüm Detayları", level=2),
             DocxBlock("paragraph", _solution_details_text()),
             DocxBlock("table", rows=MODEL_SELECTION_ROWS),
-            DocxBlock("paragraph", "FTR çıktı ailesi aşağıdaki exact değerlerle sınırlandırılmıştır."),
-            DocxBlock("table", rows=_table_rows(ftr_rows, ["field", "allowed"])),
+            DocxBlock("paragraph", "FTR çıktı ailesi aşağıdaki birebir değerlerle sınırlandırılmıştır."),
+            DocxBlock("table", rows=_table_rows(ftr_rows, ["alan", "izin_verilen"])),
             DocxBlock("heading", "4. ÇÖZÜMÜN SINANMASI"),
             DocxBlock("paragraph", _testing_text()),
-            DocxBlock("table", rows=_table_rows(model_rows, ["model", "family", "samples", "artifact"])),
-            DocxBlock("table", rows=_table_rows(metrics_rows, ["model", "accuracy", "precision", "recall", "f1", "n"])),
+            DocxBlock("table", rows=_table_rows(model_rows, ["model", "aile", "ornek", "kanıt dosyası"])),
+            DocxBlock("table", rows=_table_rows(metrics_rows, ["model", "dogruluk", "kesinlik", "duyarlilik", "f1", "n"])),
             DocxBlock("heading", "5. KAYNAKÇA"),
-            DocxBlock("table", rows=REFERENCE_ROWS),
+            *(DocxBlock("numbered", f"{index}. {item}") for index, item in enumerate(REFERENCE_ITEMS, start=1)),
             DocxBlock("page_break"),
             DocxBlock("heading", "EK A. GÖRSEL KOD REFERANSLARI"),
             DocxBlock("paragraph", _appendix_intro_text()),
         ]
     )
     for snippet in snippets:
-        blocks.append(DocxBlock("caption", f"{snippet.title} — kaynak: {snippet.source_path}"))
         blocks.append(DocxBlock("image", snippet.image_path))
+        blocks.append(DocxBlock("caption", snippet.title))
     return blocks
 
 
 def _project_summary() -> str:
     return (
-        "QoDe final tasarım hattı, FTR dokümanının zorunlu results.json sözleşmesini merkeze alan "
-        "modüler bir video analiz sistemidir. Ham video girişi; veri seti adapterleri, model eğitim "
-        "kanıtları, FTR etiket eşleme katmanı ve çıktı doğrulayıcı üzerinden izlenebilir bir yarışma "
-        "çıktısına dönüştürülür. Bu KTR sürümü, şebeke kalite artırımı anlatısını rapor kapsamı dışına "
-        "alarak yapay zekâ modeli, veri seti kapsamı, Docker çıktı sözleşmesi ve repo kaynak kodu "
-        "kanıtına odaklanır. Raporun her tablo, diyagram ve ek görseli doğrudan repository içindeki "
-        "dosyalara bağlanmıştır."
+        "QoDe final tasarımı, trafikte güvenliği artırmak için araç içi ve araç dışı video akışlarını "
+        "çok görevli yapay zekâ bileşenleriyle analiz eden modüler bir sistemdir. Ham video; araç, plaka, "
+        "araç içi nesne, yolcu konumu ve sürücü davranışı bulgularına ayrıştırılır; her bulgu zaman bilgisi "
+        "ve güven skoru ile doğrulanmış sonuç çıktısına dönüştürülür. Bu KTR sürümünde odak, QoD yerine "
+        "açık kaynak veri setleriyle desteklenen model hattı, tekrar üretilebilir ağırlık yönetimi, Docker "
+        "üzerinde çalışabilen çıkarım akışı ve repo kanıtlarıyla izlenebilen değerlendirme düzenidir. "
+        "Böylece çözüm, hangi model bileşeninin hangi kararı ürettiği ve hangi çıktının otomatik "
+        "doğrulandığı izlenebilen uçtan uca bir prototip olarak sunulur."
     )
 
 
 def _dataset_text() -> str:
     return (
         "Veri hattı tek bir veri setine bağımlı değildir. State Farm görüntüleri şoför eylemleri için, "
-        "DMD OpenLABEL videoları temporal kabin davranışları için, DriverSVT telemetry satırları hız/risk "
-        "ablation kanıtı için, üç yerel video ise FTR JSON smoke doğrulaması için kullanılır. Bölmeler "
-        "sızıntıyı azaltmak amacıyla subject/session/user seviyesinde ele alınır. Mevcut açık kaynak "
+        "DMD OpenLABEL videoları zamansal kabin davranışları için, DriverSVT telemetri satırları hız/risk "
+        "ayrıştırma kanıtı için, üç yerel video ise FTR JSON hızlı doğrulaması için kullanılır. Bölmeler "
+        "sızıntıyı azaltmak amacıyla kişi/oturum/kullanıcı seviyesinde ele alınır. Mevcut açık kaynak "
         "veriler; telefon, su içme, esneme, sigara ve dikkat dağınıklığı gibi eylemleri destekler; plaka "
         "metni, araç renk/gövde tipi, yolcu konumu ve özel nesne sınıfları için ise ek FTR hizalı anotasyon "
         "gerekir."
@@ -491,9 +500,9 @@ def _problem_analysis_text() -> str:
     return (
         "Temel zorluklar; plakanın küçük görüntü alanı kaplaması, hareket bulanıklığı, far/parlama, kabin "
         "yansıması, el-nesne oklüzyonu, yolcu/nesne etiketlerinin seyrekliği ve slalom gibi olayların tek "
-        "kareyle değil zaman penceresiyle anlaşılmasıdır. FTR şeması ayrıca Türkçe karakter içermeyen exact "
+        "kareyle değil zaman penceresiyle anlaşılmasıdır. FTR şeması ayrıca Türkçe karakter içermeyen birebir "
         "etiketler, normalize plaka regex'i ve her olay için zaman damgası ister. Bu nedenle çözüm, algılama, "
-        "OCR, temporal eylem tanıma, hareket izleme ve şema doğrulamayı ayrı fakat denetlenebilir parçalara "
+        "OCR, zamansal eylem tanıma, hareket izleme ve şema doğrulamayı ayrı fakat denetlenebilir parçalara "
         "ayırır."
     )
 
@@ -501,32 +510,34 @@ def _problem_analysis_text() -> str:
 def _architecture_text() -> str:
     return (
         "Mimari akış şu bileşenlerden oluşur: video girişi, manifest destekli veri doğrulama, model çıkarım "
-        "katmanı, FTR label mapping, schema validation ve results.json yazımı. Repo içinde competition/ftr.py "
-        "exact şemayı korur; modeling/report_models.py eğitim kanıtı üretir; reporting/final_report.py bu "
-        "kanıtları final_report_template.docx başlıklarına yerleştirir. Mermaid kaynakları repoda tutulur; "
-        "raporda ise bu kaynakların render edilmiş görselleri kullanılır."
+        "katmanı, FTR etiket eşleme, şema doğrulama ve results.json yazımı. Repo içinde competition/ftr.py "
+        "birebir şemayı korur; modeling/report_models.py eğitim kanıtı üretir; reporting/final_report.py bu "
+        "kanıtları final_report_template.docx başlıklarına yerleştirir. Diyagram kaynakları repoda tutulur; "
+        "raporda ise yalnızca render edilmiş görseller kullanılır."
     )
 
 
 def _solution_details_text() -> str:
     return (
-        "Seçilen final mimarisi modülerdir: YOLO11 küçük/orta modelleri araç, plaka ve nesne algılama için "
-        "birincil adaydır; RT-DETR doğruluk ablation için tutulur. Plaka metni YOLO ile kırpılıp PaddleOCR "
-        "ile okunur ve FTR Türk plaka regex'iyle temizlenir. Şoför eylemleri için VideoMAE/SlowFast tarzı "
-        "temporal ağlar, State Farm ve DMD destek verisiyle eğitilir. Hız ve slalom için ByteTrack izleri, "
-        "kamera geometrisi ve DriverSVT telemetry ablation hattı birlikte kullanılır. Repo bugünkü durumda "
-        "hafif, tekrar üretilebilir baseline artefact'ler üretir; deep model ağırlıkları aynı kanıt formatına "
-        "eklenecek sonraki katmandır."
+        "Seçilen final mimarisi görev bazlıdır. YOLO11x çalışma zamanı modeli araç, kişi, telefon ve bilgisayar "
+        "adaylarını üretir; YOLO11s eğitim hattı FTR'ye özgü ek anotasyonlar geldiğinde aynı ailede ince ayar "
+        "edilebilir. Araç kırpımı K-Means renk paletine, EasyOCR plaka okuma ve Türk plaka regex doğrulamasına, "
+        "EfficientNet-B0 araç tipi sınıflandırıcısına aktarılır. Sürücü bölgesi kişi çakışması veya ön cam "
+        "yedek bölgesi ile çıkarılır; EfficientNet-B2/MobileNetV3 kontrol noktaları davranışı, Canny/Hough sezgisel yöntemi "
+        "emniyet kemeri ihlalini, kabin geometrisi ise yolcu konumlarını üretir. main.py olayları 3 saniyelik "
+        "yumuşatma ile tekilleştirir ve competition/ftr.py geçmeden sonuç dosyası yazmaz. Ağırlıklar git'e "
+        "konmadan Hugging Face tabanlı indirme/yükleme akışıyla yönetilir."
     )
 
 
 def _testing_text() -> str:
     return (
-        "Bu aşamada rapora giren metrikler, yerel olarak tekrar üretilebilir baseline eğitimlerinden ve FTR "
-        "şema doğrulama komutlarından gelir. Ölçümler; veri bölme mantığı, etiket kapsamı, sınıf-prior veya "
-        "centroid tabanlı baseline doğruluğu ve JSON sözleşmesi geçerliliğini kanıtlar. Deep-learning ağırlıkları "
-        "eklendiğinde aynı tabloya mAP, OCR exact-match, temporal F1, FPS ve Docker çalışma süresi ölçümleri "
-        "eklenecektir."
+        "Test kanıtı dört seviyede tutulur: veri manifest/adaptör kontrolleri, tekrar üretilebilir rapor-model "
+        "kanıt dosyaları, FTR şema doğrulaması ve Docker giriş/çıkış sınırı. Mevcut model raporu State Farm, DMD "
+        "ve DriverSVT kaynaklarının bölme mantığını ve sınıf kapsamını ölçer; çalışma zamanı tarafında YOLO/OCR/"
+        "sınıflandırıcı ağırlıkları varsa gerçek çıkarım yapılır, yoksa sistem sessiz yer tutucu üretmek yerine "
+        "kontrollü hata veya açık yedek yol davranışı gösterir. Derin model testleri genişletildiğinde aynı kanıt "
+        "tablosuna mAP, OCR birebir eşleşme, zamansal F1, FPS ve Docker çalışma süresi eklenir."
     )
 
 
@@ -563,10 +574,10 @@ def _render_markdown(
         "## 2. VERİSETİ OLUŞTURULMASI",
         _dataset_text(),
         "",
-        _markdown_table(dataset_rows, ["dataset", "unit", "format", "ftr_families"]),
+        _markdown_table(dataset_rows, ["veri_seti", "birim", "bicim", "ftr_aileleri"]),
         "",
         "### Veri boşlukları ve kapatma planı",
-        _markdown_table(gap_rows[:10], ["dataset", "gap", "action"]),
+        _markdown_table(gap_rows[:10], ["veri_seti", "bosluk", "aksiyon"]),
         "",
         "## 3. YAPAY ZEKÂ ÇÖZÜMÜ",
         "",
@@ -578,37 +589,34 @@ def _render_markdown(
         "",
     ]
     for diagram in diagrams:
-        lines.extend([f"#### {diagram.title}", f"Kaynak: `{diagram.source_path}`", f"![{diagram.title}]({diagram.image_path})", ""])
+        lines.extend([f"![{diagram.title}]({diagram.image_path})", f"{diagram.title}", ""])
     lines.extend(
         [
-            _markdown_table(repo_rows, ["purpose", "path"]),
+            _markdown_table(repo_rows, ["amac", "kanit"]),
             "",
             "### 3.3. Çözüm Detayları",
             _solution_details_text(),
             "",
             _markdown_table(
                 [
-                    {"task": row[0], "model": row[1], "rationale": row[2]}
+                    {"gorev": row[0], "model": row[1], "gerekce": row[2]}
                     for row in MODEL_SELECTION_ROWS
                 ],
-                ["task", "model", "rationale"],
+                ["gorev", "model", "gerekce"],
             ),
             "",
             "#### FTR çıktı alanları",
-            _markdown_table(ftr_rows, ["field", "allowed"]),
+            _markdown_table(ftr_rows, ["alan", "izin_verilen"]),
             "",
             "## 4. ÇÖZÜMÜN SINANMASI",
             _testing_text(),
             "",
-            _markdown_table(model_rows, ["model", "family", "samples", "artifact"]),
+            _markdown_table(model_rows, ["model", "aile", "ornek", "kanıt dosyası"]),
             "",
-            _markdown_table(metrics_rows, ["model", "accuracy", "precision", "recall", "f1", "n"]),
+            _markdown_table(metrics_rows, ["model", "dogruluk", "kesinlik", "duyarlilik", "f1", "n"]),
             "",
             "## 5. KAYNAKÇA",
-            _markdown_table(
-                [{"source": row[0], "detail": row[1]} for row in REFERENCE_ROWS],
-                ["source", "detail"],
-            ),
+            "\n".join(f"{index}. {item}" for index, item in enumerate(REFERENCE_ITEMS, start=1)),
             "",
             "## EK A. GÖRSEL KOD REFERANSLARI",
             _appendix_intro_text(),
@@ -616,7 +624,7 @@ def _render_markdown(
         ]
     )
     for snippet in snippets:
-        lines.extend([f"### {snippet.title}", f"Kaynak: `{snippet.source_path}`", f"![{snippet.title}]({snippet.image_path})", ""])
+        lines.extend([f"![{snippet.title}]({snippet.image_path})", f"{snippet.title}", ""])
     return "\n".join(lines)
 
 

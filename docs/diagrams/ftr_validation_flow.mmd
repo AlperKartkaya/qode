@@ -1,13 +1,20 @@
 sequenceDiagram
-    participant CLI as CLI / main.py
-    participant Analyzer as Analysis Boundary
-    participant Bridge as FTR Bridge
-    participant Validator as Schema Validator
-    participant Output as results.json
-    CLI->>Analyzer: run_analysis_session(request)
-    Analyzer-->>CLI: AnalysisResult with risk label and evidence notes
-    CLI->>Bridge: build_ftr_result_from_analysis(...)
-    Bridge->>Bridge: normalize plate and map labels
-    Bridge->>Validator: FtrCompetitionResult.from_dict(payload)
-    Validator-->>Bridge: exact keys, labels, confidence, timestamp checks
-    Bridge->>Output: write_ftr_result(...)
+    autonumber
+    participant Docker as Docker başlangıcı
+    participant Ana as main.py
+    participant Motor as Sahne Analiz Motoru
+    participant Modeller as YOLO/OCR/Sınıflandırıcılar
+    participant FTR as FTR sözleşmesi
+    participant Cikti as results.json
+    Docker->>Ana: /app/data/input ve /app/data/output ile başlat
+    Ana->>Ana: tek ve boş olmayan MP4 dosyasını zorunlu kıl
+    Ana->>Motor: yapılandırılmış ağırlıklarla motoru kur
+    Motor->>Modeller: YOLO11x, sürücü ağırlığı, araç ağırlığı, EasyOCR yükle
+    loop örneklenen kareler
+        Ana->>Motor: analyze_frame(kare, zaman)
+        Motor-->>Ana: araç bilgisi + olay adayları
+    end
+    Ana->>Ana: araç tipi/renk/plaka için oyla ve olayları tekilleştir
+    Ana->>FTR: VehicleInfo + DetectionEvent nesnelerini gönder
+    FTR->>FTR: etiket, ASCII anahtar, güven skoru, zaman ve plaka regex kontrolü
+    FTR->>Cikti: /app/data/output/results.json yaz

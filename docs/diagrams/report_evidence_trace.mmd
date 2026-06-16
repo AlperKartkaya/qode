@@ -1,8 +1,9 @@
 flowchart LR
-    A["Dataset manifests"] --> D["Report evidence JSON"]
-    B["Trained report model artifacts"] --> D
-    C["FTR source-of-truth schema"] --> D
-    D --> E["Markdown QA artifact"]
-    D --> F["ktr_v1.docx"]
-    G["Repo source snippets"] --> F
-    H["Mermaid architecture files"] --> F
+    A["Kaynak dokümanlar\nFTR teslim + 2026 şartname + şablon"] --> E["KTR rapor iddiaları"]
+    B["Repo uygulaması\nmain.py + analiz + eğitim + yarışma sözleşmesi"] --> E
+    C["Veri seti manifestleri\nState Farm, DMD, DriverSVT, yerel videolar"] --> F["Rapor model kanıtları\ndoğrulama metrikleri + sınırlar"]
+    D["Model ağırlık akışı\neğitim scriptleri + Hugging Face indirme/yükleme"] --> F
+    F --> E
+    G["Render edilmiş mimari diyagramları"] --> E
+    H["Görsel kod ekleri"] --> E
+    E --> I["ktr_v4.docx\nformatı korunmuş final rapor taslağı"]

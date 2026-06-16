@@ -23,15 +23,29 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Tüm ağırlıklar burada hazırlanır → konteyner tamamen offline çalışır.
 
 # 1. YOLO11x — Ultralytics public model
-RUN python3 -c "\
-import ssl; ssl._create_default_https_context = ssl._create_unverified_context; \
-from ultralytics import YOLO; \
-import shutil, pathlib; \
-YOLO('yolo11x.pt'); \
-cache = pathlib.Path.home() / '.config' / 'Ultralytics' / 'yolo11x.pt'; \
-dst = pathlib.Path('/app/weights/yolo11x.pt'); \
-if cache.exists(): shutil.copy(cache, dst); \
-print('[OK] yolo11x.pt ready at', dst)"
+RUN python3 <<'PY'
+import pathlib
+import shutil
+import ssl
+
+from ultralytics import YOLO
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+YOLO("yolo11x.pt")
+dst = pathlib.Path("/app/weights/yolo11x.pt")
+candidates = (
+    pathlib.Path("yolo11x.pt"),
+    pathlib.Path.home() / ".config" / "Ultralytics" / "yolo11x.pt",
+)
+for candidate in candidates:
+    if candidate.exists():
+        shutil.copy(candidate, dst)
+        break
+if not dst.exists():
+    raise FileNotFoundError("yolo11x.pt could not be found after Ultralytics download")
+print("[OK] yolo11x.pt ready at", dst)
+PY
 
 # 2. EasyOCR dil modelleri (tr + en) — build aşamasında önbellek
 RUN python3 -c "import easyocr; easyocr.Reader(['tr', 'en'], gpu=False); print('[OK] EasyOCR models ready.')" || true
@@ -40,18 +54,25 @@ RUN python3 -c "import easyocr; easyocr.Reader(['tr', 'en'], gpu=False); print('
 #    Build argümanı: docker build --build-arg HF_TOKEN=hf_xxxx .
 ARG HF_TOKEN=""
 
-RUN python3 -c "\
-import os; \
-from huggingface_hub import hf_hub_download; \
-token = os.environ.get('HF_TOKEN', '$HF_TOKEN') or None; \
-repo = 'QoDe-5G/qode-models'; \
-for fname in ['driver_classifier.pt', 'vehicle_type_classifier.pt']: \
-    try: \
-        p = hf_hub_download(repo_id=repo, filename=fname, local_dir='/app/weights/', token=token); \
-        print(f'[OK] {fname} ready at {p}'); \
-    except Exception as e: \
-        print(f'[WARN] {fname} could not be downloaded: {e}'); \
-" || true
+RUN python3 <<'PY'
+import os
+
+from huggingface_hub import hf_hub_download
+
+token = os.environ.get("HF_TOKEN", "$HF_TOKEN") or None
+repo = "QoDe-5G/qode-models"
+for fname in ("driver_classifier.pt", "vehicle_type_classifier.pt"):
+    try:
+        path = hf_hub_download(
+            repo_id=repo,
+            filename=fname,
+            local_dir="/app/weights/",
+            token=token,
+        )
+        print(f"[OK] {fname} ready at {path}")
+    except Exception as exc:
+        print(f"[WARN] {fname} could not be downloaded: {exc}")
+PY
 
 # Kaynak kod
 COPY src/ /app/src/

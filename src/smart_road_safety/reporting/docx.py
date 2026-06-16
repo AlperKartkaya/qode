@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 EMU_PER_DXA = 635
-CONTENT_WIDTH_DXA = 9070
+CONTENT_WIDTH_DXA = 9071
 MAX_IMAGE_WIDTH_DXA = 8500
 
 
@@ -105,15 +105,40 @@ def _block_xml(block: DocxBlock, image_map: dict[str, dict[str, str]]) -> str:
     if block.kind == "subtitle":
         return _paragraph_xml(block.text, "Subtitle")
     if block.kind == "caption":
-        return _paragraph_xml(block.text, "Caption")
+        return _caption_xml(block.text)
     if block.kind == "image":
         return _image_xml(block.text, image_map)
     if block.kind == "bullet":
         return _paragraph_xml("• " + block.text, "Normal")
+    if block.kind == "numbered":
+        return _numbered_paragraph_xml(block.text)
     if block.kind == "table":
         return _table_xml(block.rows)
     return _paragraph_xml(block.text, "Normal")
 
+
+
+def _caption_xml(text: str) -> str:
+    match = __import__("re").match(r"^(Şekil \d+\.|Ek A\.\d+\.)\s*(.*)$", text)
+    if match:
+        first = _run_xml(match.group(1), bold=True)
+        rest = _run_xml(" " + match.group(2), bold=False) if match.group(2) else ""
+        runs = first + rest
+    else:
+        runs = _run_xml(text)
+    return (
+        '<w:p><w:pPr><w:pStyle w:val="Caption"/><w:jc w:val="center"/>'
+        '<w:spacing w:before="40" w:after="120"/></w:pPr>'
+        f"{runs}</w:p>"
+    )
+
+
+def _numbered_paragraph_xml(text: str) -> str:
+    return (
+        '<w:p><w:pPr><w:pStyle w:val="Normal"/>'
+        '<w:ind w:left="360" w:hanging="360"/><w:spacing w:after="80"/></w:pPr>'
+        f"{_run_xml(text)}</w:p>"
+    )
 
 def _paragraph_xml(text: str, style: str) -> str:
     parts = text.split("\n")
@@ -125,8 +150,9 @@ def _paragraph_xml(text: str, style: str) -> str:
     return f'<w:p><w:pPr><w:pStyle w:val="{style}"/></w:pPr>{"".join(runs)}</w:p>'
 
 
-def _run_xml(text: str) -> str:
-    return f"<w:r><w:t xml:space=\"preserve\">{html.escape(text)}</w:t></w:r>"
+def _run_xml(text: str, *, bold: bool = False) -> str:
+    rpr = "<w:rPr><w:b/></w:rPr>" if bold else ""
+    return f"<w:r>{rpr}<w:t xml:space=\"preserve\">{html.escape(text)}</w:t></w:r>"
 
 
 def _image_xml(path_text: str, image_map: dict[str, dict[str, str]]) -> str:
@@ -178,6 +204,14 @@ def _png_dimensions(path: Path) -> tuple[int, int]:
     return width, height
 
 
+
+def _table_cell_paragraph_xml(text: str, is_header: bool) -> str:
+    style = "TableHeader" if is_header else "Normal"
+    return (
+        f'<w:p><w:pPr><w:pStyle w:val="{style}"/><w:jc w:val="center"/></w:pPr>'
+        f'{_run_xml(text)}</w:p>'
+    )
+
 def _table_xml(rows: tuple[tuple[str, ...], ...]) -> str:
     if not rows:
         return ""
@@ -193,16 +227,16 @@ def _table_xml(rows: tuple[tuple[str, ...], ...]) -> str:
             cell = row[column_index] if column_index < len(row) else ""
             fill = '<w:shd w:fill="D9EAF7"/>' if row_index == 0 else ""
             cells.append(
-                "<w:tc><w:tcPr>"
+                '<w:tc><w:tcPr><w:vAlign w:val="center"/>'
                 f'<w:tcW w:w="{cell_width}" w:type="dxa"/>{fill}'
                 "</w:tcPr>"
-                f"{_paragraph_xml(cell, 'TableHeader' if row_index == 0 else 'Normal')}"
+                f"{_table_cell_paragraph_xml(cell, row_index == 0)}"
                 "</w:tc>"
             )
         row_xml.append(f"<w:tr>{''.join(cells)}</w:tr>")
     borders = (
         f'<w:tblPr><w:tblW w:w="{CONTENT_WIDTH_DXA}" w:type="dxa"/>'
-        '<w:tblInd w:w="0" w:type="dxa"/>'
+        '<w:jc w:val="center"/><w:tblInd w:w="0" w:type="dxa"/>'
         '<w:tblCellMar><w:top w:w="80" w:type="dxa"/><w:left w:w="120" w:type="dxa"/>'
         '<w:bottom w:w="80" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tblCellMar>'
         "<w:tblBorders>"

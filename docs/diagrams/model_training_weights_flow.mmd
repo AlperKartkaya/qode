@@ -1,0 +1,16 @@
+flowchart TD
+    A["Açık kaynak destek veri setleri"] --> B["Manifest ve adaptör kontrolleri"]
+    B --> C["State Farm ön işleme\nsubject bazlı bölme"]
+    B --> D["DMD/DriverSVT eşleme\noturum/kullanıcı farkındalıklı kanıt"]
+    B --> E["Araç kırpımları ve sentetik plakalar\nözenli veri artırma"]
+    C --> F["Sürücü sınıflandırıcı eğitimi\nEfficientNet-B2 başlığı"]
+    E --> G["Araç tipi sınıflandırıcı\nEfficientNet-B0 başlığı"]
+    E --> H["YOLO FTR algılama eğitimi\nözel YAML + YOLO11s"]
+    F --> I["data/weights/driver_classifier.pt"]
+    G --> J["data/weights/vehicle_type_classifier.pt"]
+    H --> K["YOLO algılayıcı ağırlıkları"]
+    I --> L["Hugging Face ağırlık deposu"]
+    J --> L
+    K --> L
+    L --> M["download_weights.sh\nyerel ve Docker sağlama"]
+    M --> N["Çalışma zamanı çıkarım motoru"]
