@@ -67,7 +67,7 @@ def make_weighted_sampler(dataset: datasets.ImageFolder) -> WeightedRandomSample
 
 
 def train_model(
-    data_dir: str = "data/datasets/vehicle_types",
+    data_dir: str = "data/datasets/qode-vehicle-types",
     epochs: int = 20,
     batch_size: int = 32,
     lr: float = 3e-4,
@@ -103,6 +103,7 @@ def train_model(
         transforms.RandomRotation(8),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        transforms.RandomErasing(p=0.3),
     ])
     val_tf = transforms.Compose([
         transforms.Resize(256),
@@ -127,7 +128,10 @@ def train_model(
     print("[VehicleTrain] Loading EfficientNet-B0 (ImageNet pretrained)…")
     model = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.DEFAULT)
     in_features = model.classifier[1].in_features
-    model.classifier[1] = nn.Linear(in_features, num_classes)
+    model.classifier = nn.Sequential(
+        nn.Dropout(p=0.5, inplace=True),
+        nn.Linear(in_features, num_classes)
+    )
     model = model.to(device)
 
     # Freeze backbone for warm-up
@@ -152,7 +156,7 @@ def train_model(
             for param in model.features.parameters():
                 param.requires_grad = True
             optimizer = optim.AdamW([
-                {"params": model.features.parameters(), "lr": lr * 0.1},
+                {"params": model.features.parameters(), "lr": lr * 0.05},
                 {"params": model.classifier.parameters(), "lr": lr},
             ], weight_decay=1e-4)
             scheduler = optim.lr_scheduler.CosineAnnealingLR(
@@ -194,7 +198,7 @@ def train_model(
 if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser(description="Train EfficientNet-B0 vehicle type classifier")
-    p.add_argument("--data-dir",      default="data/datasets/vehicle_types")
+    p.add_argument("--data-dir",      default="data/datasets/qode-vehicle-types")
     p.add_argument("--epochs",        type=int,   default=20)
     p.add_argument("--batch-size",    type=int,   default=32)
     p.add_argument("--lr",            type=float, default=3e-4)

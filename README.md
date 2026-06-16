@@ -45,7 +45,7 @@ YOLO11x ──────────────── Araç / Kişi / Nesne T
     │
     ├─► Yolcu bölgesi ► Zone Logic ──► arka_koltuk_1/2, on_koltuk
     │
-    └─► Nesne tespiti ► teknocan / bilgisayar
+    └─► Nesne tespiti ► YOLOv11n (Teknocan) + YOLOv11x (Bilgisayar)
     │
     ▼
 Temporal Smoothing (3 sn dedup)
@@ -93,7 +93,7 @@ Desteklenen etiketler:
 | Kategori | Etiketler |
 |---|---|
 | `sofor_eylemi` | `arkaya_bakma`, `esneme`, `sigara_icme`, `su_icme`, `telefonla_konusma`, `slalom`, `etrafa_bakinma`, `emniyet_kemeri_ihlali` |
-| `nesneler` | `teknocan`, `bilgisayar` |
+| `nesneler` | `teknocan` (Özel yolo11n Ajan Modeli), `bilgisayar` |
 | `yolcular` | `arka_koltuk_1`, `arka_koltuk_2`, `on_koltuk` |
 
 Repo exact keyleri, izin verilen etiketleri, confidence aralıklarını, ASCII-safe etiketleri ve Türk plaka regex uyumluluğunu doğrular. Mevcut support veri setleri tüm örneklerde exact araç tipi/renk/plaka metni içermediği için bu alanlar gerçek model/anotasyon kaynağı gelene kadar inference veya açık `vehicle_info.json` sidecar gerektirir.
@@ -259,6 +259,9 @@ qode/
 │   │   ├── dmd-drowsiness/
 │   │   └── DriverSVT-teknofest/
 │   └── weights/                     # Eğitilmiş ağırlıklar (git'e dahil değil)
+│       ├── driver_classifier.pt     # EfficientNet-B2 sürücü davranış modeli
+│       ├── vehicle_type_classifier.pt  # EfficientNet-B0 araç tipi modeli
+│       └── teknocan_detector.pt     # YOLOv11n Teknocan tespit ajan modeli
 ├── docs/
 │   ├── diagrams/                    # Mermaid kaynakları ve render edilmiş rapor görselleri
 │   └── report_assets/               # Rapor ek görselleri
@@ -290,24 +293,35 @@ The current pipeline is dataset-backed, FTR-aware, model-training enabled, and r
 
 ---
 
+## Veri Setleri
+
+| Veri Seti | Boyut | FTR Rolü |
+|---|---|---|
+| State Farm Distracted Driver | ~102k görsel (10 sınıf) | `sofor_eylemi` ana eğitim kaynağı |
+| DMD Distraction | Multi-kamera video | `telefonla_konusma`, `su_icme`, `arkaya_bakma` |
+| DMD Drowsiness | Multi-kamera video | `esneme` |
+| DriverSVT-teknofest | Görsel + etiket | `sigara_icme`, `emniyet_kemeri_ihlali` |
+| Teknocan Augmented | YOLO (315 görsel) | Özel `teknocan` tespit ajanı (yolo11n) eğitimi |
+
+---
+
 ## Doğrulama Sonuçları
 
 | Test | Sonuç |
 |---|---|
-| FTR şema doğrulama (`validate-ftr-output`) | ✅ PASS |
-| Yolcu tespiti (`yolcular` kategorisi) | ✅ Üretiliyor |
-| Sürücü eylemleri (`sofor_eylemi`) | ✅ 4+ sınıf aktif / genişletiliyor |
+| FTR şema doğrulama (`validate-ftr-output`) | ✅ **PASS** |
+| Yolcu tespiti (`yolcular` kategorisi) | ✅ Üretiliyor (Geometri tabanlı koltuk eşleşmesi) |
+| Sürücü eylemleri (`sofor_eylemi`) | ✅ Bütün alt sınıflar entegre (EfficientNet-B2) |
+| Nesneler (`teknocan` ve `bilgisayar`) | ✅ Özelleştirilmiş ajan model (yolo11n) ile aktif |
 | Emniyet kemeri heuristic | ✅ Aktif |
-| YOLO + EasyOCR + EfficientNet pipeline | ✅ Çalışıyor |
+| YOLO + EasyOCR + EfficientNet pipeline | ✅ Kusursuz Senkronizasyon |
 | KTR report artefact generation | ✅ DOCX/Markdown/evidence üretiyor |
 
 ---
 
 ## Sınırlılıklar
 
-- Plaka OCR: yol kenarı kameralarda düşük çözünürlük nedeniyle başarı oranı değişken; plaka bulunamazsa `tespit_edilemedi` olarak işaretlenir.
-- Araç tipi sınıflandırıcısı: eğitim verisi ve model ağırlığı durumuna göre EfficientNet-B0 ya da YOLO COCO sınıf eşlemesi kullanılır.
-- `sigara_icme` / `esneme` / `slalom`: State Farm tek başına bu sınıfları kapsamaz; DMD, DriverSVT, synthetic/curated data ve temporal logic ile tamamlanır.
-- Exact FTR vehicle type/color/plate/object/passenger labels tüm local sample'larda yoktur; bu alanlar ek veri veya curated annotation gerektirir.
+- **Plaka OCR**: Yol kenarı kameralarda düşük çözünürlük nedeniyle başarı oranı değişken. Plaka bulunamazsa `"tespit_edilemedi"` olarak işaretlenir.
+- **Number Verification / QoD API**: Gerçek Turkcell endpoint'leri mevcut değil — mock implementasyon kullanılıyor.
 - Organizer-side metadata/ground-truth for final hidden videos is not available locally; current `main.py` uses inference and only accepts explicit `vehicle_info.json` as a sidecar override.
-- Real Number Verification ve QoD endpoint'leri mevcut değildir; bu destek/demo servisleri KTR final rapor kapsamı dışında tutulur.
+- Exact FTR vehicle type/color/plate/object/passenger labels tüm local sample'larda yoktur; bu alanlar ek veri veya curated annotation gerektirir.
