@@ -27,6 +27,8 @@ def process_video(video_path: Path):
     plate_votes = {}
     raw_events = []
     
+    vehicle_x_centers = []
+    
     frame_count = 0
     # Process 1 frame every 1 second
     frames_to_skip = int(fps)
@@ -45,6 +47,15 @@ def process_video(video_path: Path):
                 vehicle_types.append(str(analysis["vehicle_type"]))
                 vehicle_colors.append(str(analysis["vehicle_color"]))
                 vehicle_scores.append(float(analysis["vehicle_confidence"]))
+                
+                # Slalom takibi için X merkezini kaydet
+                vbox = analysis.get("vehicle_box")
+                if vbox:
+                    x1, y1, x2, y2 = vbox
+                    vehicle_x_centers.append((x1 + x2) / 2.0)
+                else:
+                    vehicle_x_centers.append(vehicle_x_centers[-1] if vehicle_x_centers else 0)
+
                 plate = analysis.get("plate_text")
                 if isinstance(plate, str) and plate.strip():
                     plate_votes[plate] = plate_votes.get(plate, 0) + 1
@@ -57,6 +68,31 @@ def process_video(video_path: Path):
         
     cap.release()
     
+    # ── Slalom (Tehlikeli Şerit Değiştirme) Analizi ──
+    if len(vehicle_x_centers) >= 3:
+        smoothed = [sum(vehicle_x_centers[i:i+3])/len(vehicle_x_centers[i:i+3]) for i in range(len(vehicle_x_centers)-2)]
+        directions = []
+        current_dir = 0
+        for i in range(1, len(smoothed)):
+            diff = smoothed[i] - smoothed[i-1]
+            if diff > 5: # Sağa kaydı
+                if current_dir != 1:
+                    directions.append(1)
+                    current_dir = 1
+            elif diff < -5: # Sola kaydı
+                if current_dir != -1:
+                    directions.append(-1)
+                    current_dir = -1
+        
+        # Eğer en az 2 yön değişimi varsa (Örn: Sol -> Sağ) slalom yapıyordur
+        if len(directions) >= 2:
+            raw_events.append({
+                "zaman_saniye": 0.0,
+                "kategori": "sofor_eylemi",
+                "etiket": "slalom",
+                "confidence_score": 0.95
+            })
+
     events = _deduplicate_events(raw_events)
     vehicle_info = _build_inferred_vehicle_info(vehicle_types, vehicle_colors, vehicle_scores, plate_votes)
     

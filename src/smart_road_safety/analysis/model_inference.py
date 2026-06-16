@@ -107,28 +107,19 @@ def extract_plate_text(crop: np.ndarray) -> Optional[str]:
     if ocr is None or crop is None or crop.size == 0:
         return None
     try:
-        # OCR Optimizasyonu (Grayscale + Thresholding)
-        gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+        # Plaka çok küçükse EasyOCR okuyamayabilir, o yüzden boyutu 2 katına çıkarıp netleştiriyoruz
+        resized_crop = cv2.resize(crop, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
         
-        # Gürültüyü azaltmak için hafif bir bulanıklaştırma
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-        
-        # Uyarlamalı (Adaptive) eşikleme ile siyah-beyaza çevirme
-        thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-        
-        # EasyOCR'a hem orijinali hem de işlenmiş hali vererek şansımızı artıralım
-        # Ama şimdilik sadece thresh'i okumak yeterli olabilir. Alternatif olarak ikisini de okuyabiliriz.
-        # Biz grayscale halini verelim, EasyOCR gri resimlerde daha iyi çalışır.
-        
-        results = ocr.readtext(gray)
+        # Önce büyütülmüş resmi dene
+        results = ocr.readtext(resized_crop)
         for _bbox, text, _conf in results:
             cleaned = re.sub(r"[^A-Za-z0-9]", "", text).upper()
             if PLATE_PATTERN.fullmatch(cleaned):
                 return cleaned
                 
-        # Eğer gri resimden bulamazsa siyah-beyazdan (thresh) denesin
-        results_thresh = ocr.readtext(thresh)
-        for _bbox, text, _conf in results_thresh:
+        # Bulamazsa orijinali dene
+        results_color = ocr.readtext(crop)
+        for _bbox, text, _conf in results_color:
             cleaned = re.sub(r"[^A-Za-z0-9]", "", text).upper()
             if PLATE_PATTERN.fullmatch(cleaned):
                 return cleaned
@@ -513,6 +504,7 @@ class SceneAnalysisEngine:
         if best_vehicle_box is not None:
             result["vehicle_detected"] = True
             result["vehicle_confidence"] = best_vehicle_conf
+            result["vehicle_box"] = best_vehicle_box.tolist()
 
             x1, y1, x2, y2 = best_vehicle_box
             x1, y1 = max(0, x1), max(0, y1)
@@ -582,10 +574,33 @@ class SceneAnalysisEngine:
                 if wx2 > wx1 and wy2 > wy1:
                     driver_crop = frame[wy1:wy2, wx1:wx2]
 
+            # Check for phone usage via YOLO bounding boxes (deterministic override)
+            yolo_phone_detected = False
+            if driver_box_used is not None:
+                dx1, dy1, dx2, dy2 = driver_box_used
+                for pbox, pconf in phone_boxes:
+                    px1, py1, px2, py2 = pbox
+                    # Check for intersection between phone and driver person box
+                    ix1 = max(dx1, px1); iy1 = max(dy1, py1)
+                    ix2 = min(dx2, px2); iy2 = min(dy2, py2)
+                    if ix2 > ix1 and iy2 > iy1:
+                        yolo_phone_detected = True
+                        break
+
             # Driver behaviour classification
-            result["driver_events"].extend(
-                self._classify_driver_action(driver_crop, timestamp_seconds)
-            )
+            action_events = self._classify_driver_action(driver_crop, timestamp_seconds)
+            
+            # Eğer YOLO elinde telefon gördüyse, görüntü sınıflandırıcısının yanılması (esneme/sigara) engellenir.
+            if yolo_phone_detected:
+                action_events = [e for e in action_events if e["etiket"] not in ["telefonla_konusma", "esneme", "sigara_icme", "su_icme", "safe_driving"]]
+                action_events.append({
+                    "zaman_saniye": timestamp_seconds,
+                    "kategori": "sofor_eylemi",
+                    "etiket": "telefonla_konusma",
+                    "confidence_score": 0.99
+                })
+
+            result["driver_events"].extend(action_events)
 
             # Seatbelt violation heuristic (run on driver crop)
             result["driver_events"].extend(
