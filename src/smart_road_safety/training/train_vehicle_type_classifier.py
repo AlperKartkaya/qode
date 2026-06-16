@@ -194,7 +194,7 @@ def train_model(
 if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser(description="Train EfficientNet-B0 vehicle type classifier")
-    p.add_argument("--data-dir",      default="data/datasets/vehicle_types")
+    p.add_argument("--data-dir",      default="data/datasets/qode-vehicle-types")
     p.add_argument("--epochs",        type=int,   default=20)
     p.add_argument("--batch-size",    type=int,   default=32)
     p.add_argument("--lr",            type=float, default=3e-4)
