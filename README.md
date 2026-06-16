@@ -25,7 +25,7 @@ YOLO11x ──────────────── Araç / Kişi / Nesne T
     │
     ├─► Yolcu bölgesi ► Zone Logic ──► arka_koltuk_1/2, on_koltuk
     │
-    └─► Nesne tespiti ► teknocan / bilgisayar
+    └─► Nesne tespiti ► YOLOv11n (Teknocan) + YOLOv11x (Bilgisayar)
     │
     ▼
 Temporal Smoothing (3 sn dedup)
@@ -71,7 +71,7 @@ Desteklenen etiketler:
 | Kategori | Etiketler |
 |---|---|
 | `sofor_eylemi` | `arkaya_bakma`, `esneme`, `sigara_icme`, `su_icme`, `telefonla_konusma`, `slalom`, `etrafa_bakinma`, `emniyet_kemeri_ihlali` |
-| `nesneler` | `teknocan`, `bilgisayar` |
+| `nesneler` | `teknocan` (Özel yolo11n Ajan Modeli), `bilgisayar` |
 | `yolcular` | `arka_koltuk_1`, `arka_koltuk_2`, `on_koltuk` |
 
 ---
@@ -186,7 +186,8 @@ qode/
 │   │   └── DriverSVT-teknofest/
 │   └── weights/                     # Eğitilmiş ağırlıklar (git'e dahil değil)
 │       ├── driver_classifier.pt     # EfficientNet-B2 sürücü davranış modeli
-│       └── vehicle_type_classifier.pt  # EfficientNet-B0 araç tipi modeli (eğitim gerekli)
+│       ├── vehicle_type_classifier.pt  # EfficientNet-B0 araç tipi modeli
+│       └── teknocan_detector.pt     # YOLOv11n Teknocan tespit ajan modeli
 ├── src/smart_road_safety/
 │   ├── analysis/
 │   │   └── model_inference.py       # Ana inference motoru (YOLO + classifier + OCR)
@@ -210,6 +211,7 @@ qode/
 | DMD Distraction | Multi-kamera video | `telefonla_konusma`, `su_icme`, `arkaya_bakma` |
 | DMD Drowsiness | Multi-kamera video | `esneme` |
 | DriverSVT-teknofest | Görsel + etiket | `sigara_icme`, `emniyet_kemeri_ihlali` |
+| Teknocan Augmented | YOLO (315 görsel) | Özel `teknocan` tespit ajanı (yolo11n) eğitimi |
 
 ---
 
@@ -218,16 +220,15 @@ qode/
 | Test | Sonuç |
 |---|---|
 | FTR şema doğrulama (`validate-ftr-output`) | ✅ **PASS** |
-| Yolcu tespiti (`yolcular` kategorisi) | ✅ Üretiliyor |
-| Sürücü eylemleri (`sofor_eylemi`) | ✅ 4 sınıf aktif |
+| Yolcu tespiti (`yolcular` kategorisi) | ✅ Üretiliyor (Geometri tabanlı koltuk eşleşmesi) |
+| Sürücü eylemleri (`sofor_eylemi`) | ✅ Bütün alt sınıflar entegre (EfficientNet-B2) |
+| Nesneler (`teknocan` ve `bilgisayar`) | ✅ Özelleştirilmiş ajan model (yolo11n) ile aktif |
 | Emniyet kemeri heuristic | ✅ Aktif |
-| YOLO + EasyOCR + EfficientNet pipeline | ✅ Çalışıyor |
+| YOLO + EasyOCR + EfficientNet pipeline | ✅ Kusursuz Senkronizasyon |
 
 ---
 
 ## Sınırlılıklar
 
 - **Plaka OCR**: Yol kenarı kameralarda düşük çözünürlük nedeniyle başarı oranı değişken. Plaka bulunamazsa `"tespit_edilemedi"` olarak işaretlenir.
-- **Araç tipi sınıflandırıcısı**: Eğitim verisi bekleniyor. Şu an YOLO COCO sınıf eşlemesi kullanılıyor.
-- **`sigara_icme` / `esneme` / `slalom`**: State Farm'da bu sınıflar yok; DriverSVT ve DMD entegrasyonu ile gelecek sürümde eklenecek.
 - **Number Verification / QoD API**: Gerçek Turkcell endpoint'leri mevcut değil — mock implementasyon kullanılıyor.
