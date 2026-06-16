@@ -48,15 +48,24 @@ if __name__ == "__main__":
         
     login(token=hf_token)
     
-    # ── 1. Upload Clean / Processed Datasets ──
+    # ── 1. Upload Preprocessed Datasets (ImageFolder) ──
+    # Driver behaviors
     driver_dir = "data/datasets/qode-driver-behaviors"
     if Path(driver_dir).exists():
         upload_dataset(driver_dir, "QoDe-5G/qode-driver-behaviors")
         
+    # Vehicle types
     vehicle_dir = "data/datasets/qode-vehicle-types"
     if Path(vehicle_dir).exists():
         upload_dataset(vehicle_dir, "QoDe-5G/qode-vehicle-types")
+        
+    # Teknocan (YOLO format uploaded as raw repo or dataset)
+    teknocan_dir = "data/datasets/teknocan_augmented"
+    if Path(teknocan_dir).exists():
+        # Since teknocan is YOLO format (not ImageFolder), we upload it directly as a raw folder
+        upload_raw_folder(teknocan_dir, "QoDe-5G/qode-teknocan")
 
     print("\n[HF] Yükleme tamamlandı! Veri setleri:")
     print("- https://huggingface.co/datasets/QoDe-5G/qode-driver-behaviors")
     print("- https://huggingface.co/datasets/QoDe-5G/qode-vehicle-types")
+    print("- https://huggingface.co/datasets/QoDe-5G/qode-teknocan")

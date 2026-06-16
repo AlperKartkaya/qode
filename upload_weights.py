@@ -22,6 +22,7 @@ HF_REPO = "QoDe-5G/qode-models"
 WEIGHTS_TO_UPLOAD = [
     ("data/weights/driver_classifier.pt",       "driver_classifier.pt"),
     ("data/weights/vehicle_type_classifier.pt", "vehicle_type_classifier.pt"),
+    ("data/weights/teknocan_detector.pt",       "teknocan_detector.pt"),
 ]
 
 MODEL_CARD = """\
@@ -133,7 +134,6 @@ def upload():
     for local_path, repo_filename in WEIGHTS_TO_UPLOAD:
         p = Path(local_path)
         if not p.exists():
-            size_mb = p.stat().st_size / 1e6 if p.exists() else 0
             print(f"[SKIP] {local_path} bulunamadı — eğitim yapılmamış olabilir.")
             continue
 
