@@ -48,8 +48,11 @@ TEKNOFEST 2026 — 5G ve Yapay Zekâ ile Akıllı Yol Güvenliği Yarışması
 
 | Dosya | Mimari | Görev | Sınıflar |
 |---|---|---|---|
-| `driver_classifier.pt` | EfficientNet-B2 | Sürücü davranışı sınıflandırma | arkaya_bakma, etrafa_bakinma, su_icme, telefonla_konusma |
+| `driver_classifier.pt` | EfficientNet-B2 | Sürücü davranışı sınıflandırma | arkaya_bakma, etrafa_bakinma, su_icme, telefonla_konusma, sigara_icme |
 | `vehicle_type_classifier.pt` | EfficientNet-B0 | Araç tipi sınıflandırma | sedan, suv, hatchback, pickup, minibus, panelvan, kamyon |
+| `teknocan_detector.pt` | YOLOv11n | Teknocan Maskot Tespiti | teknocan |
+
+> **Not:** Sistemin kalbindeki ana YOLOv11x modeli ayrıca tüm genel araçları, insanları, plakaları, yolcu bölgelerini ve kabin içi **bilgisayar (laptop/tv)** nesnesini FTR şartnamesine uygun şekilde tespit etmektedir. K-Means ve EasyOCR algoritmaları da araç renkleri ve plaka okuma için sisteme entegre edilmiştir.
 
 ## Kullanım
 
