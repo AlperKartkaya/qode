@@ -155,6 +155,7 @@ class SceneAnalysisEngine:
         yolo_model_name: str = "yolo11x.pt",
         driver_model_path: str = "data/weights/driver_classifier.pt",
         vehicle_type_model_path: str = "data/weights/vehicle_type_classifier.pt",
+        teknocan_model_path: str = "data/weights/teknocan_detector.pt",
     ):
         # ── Device ───────────────────────────────────────────────────────────
         if torch.cuda.is_available():
@@ -177,6 +178,17 @@ class SceneAnalysisEngine:
                 print(f"[Engine] YOLO load failed: {e}")
         else:
             print(f"[Engine] YOLO weights not found ({yolo_model_name}). Detection skipped.")
+
+        # ── Teknocan YOLO ─────────────────────────────────────────────────────
+        self.teknocan_yolo = None
+        tekno_path = _resolve_weights(teknocan_model_path, f"/app/weights/teknocan_detector.pt")
+        if tekno_path:
+            try:
+                from ultralytics import YOLO
+                self.teknocan_yolo = YOLO(str(tekno_path))
+                print(f"[Engine] Teknocan YOLO loaded: {tekno_path}")
+            except Exception as e:
+                print(f"[Engine] Teknocan YOLO load failed: {e}")
 
         # ── Driver behaviour classifier ───────────────────────────────────────
         self.driver_classifier = None
@@ -543,15 +555,23 @@ class SceneAnalysisEngine:
                 )
             )
 
-        # ── Cabin object detections (anywhere in frame) ───────────────────────
-        for _pbox, pconf in phone_boxes:
-            result["driver_events"].append({
-                "zaman_saniye": timestamp_seconds,
-                "kategori": "nesneler",
-                "etiket": "teknocan",
-                "confidence_score": round(pconf, 4),
-            })
+            # ── Teknocan detection inside vehicle ─────────────────────────────
+            if self.teknocan_yolo is not None and vehicle_crop.size > 0:
+                try:
+                    t_out = self.teknocan_yolo(vehicle_crop, verbose=False)[0]
+                    for box in t_out.boxes:
+                        t_conf = float(box.conf[0].item())
+                        if t_conf > 0.4:  # Threshold to avoid false positives
+                            result["driver_events"].append({
+                                "zaman_saniye": timestamp_seconds,
+                                "kategori": "nesneler",
+                                "etiket": "teknocan",
+                                "confidence_score": round(t_conf, 4),
+                            })
+                except Exception as e:
+                    print(f"Teknocan detection error: {e}")
 
+        # ── Cabin object detections (anywhere in frame) ───────────────────────
         for _lbox, lconf in laptop_boxes:
             result["driver_events"].append({
                 "zaman_saniye": timestamp_seconds,
