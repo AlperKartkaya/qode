@@ -21,3 +21,5 @@ out/
 #   yolo11x.pt  = 113 MB (> GitHub 100 MB limit)
 #   driver_classifier.pt = 6 MB (kept local, uploaded to Hugging Face for portability)
 *.pt
+
+logs/

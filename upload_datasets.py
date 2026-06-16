@@ -57,15 +57,6 @@ if __name__ == "__main__":
     if Path(vehicle_dir).exists():
         upload_dataset(vehicle_dir, "QoDe-5G/qode-vehicle-types")
 
-    # ── 2. Upload Raw Datasets (Just in Case) ──
-    raw_datasets = {
-        "data/datasets/advance-driver-monitoring-smartcity12": "QoDe-5G/raw-advance-driver-monitoring",
-        "data/datasets/car-classification-iHasibi": "QoDe-5G/raw-car-classification-iHasibi",
-        "data/datasets/vehicle-classification-marquis03": "QoDe-5G/raw-vehicle-classification-marquis03",
-        "data/datasets/vehicle-type": "QoDe-5G/raw-vehicle-type",
-    }
-    
-    for local_path, repo_name in raw_datasets.items():
-        if Path(local_path).exists():
-            upload_raw_folder(local_path, repo_name)
-
+    print("\n[HF] Yükleme tamamlandı! Veri setleri:")
+    print("- https://huggingface.co/datasets/QoDe-5G/qode-driver-behaviors")
+    print("- https://huggingface.co/datasets/QoDe-5G/qode-vehicle-types")
