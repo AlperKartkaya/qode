@@ -10,10 +10,8 @@ build/
 # Keep large video files and raw datasets out of git
 data/video_*.mp4
 data/test_clip.mp4
-data/datasets/**
-!data/datasets/
-!data/datasets/*/
-!data/datasets/*/manifest.json
+data/test-videos/
+data/datasets/
 out/
 .env
 # Model weights are downloaded automatically during Docker build (see Dockerfile).
@@ -25,3 +23,5 @@ out/
 logs/
 
 runs/
+
+data/training_data/

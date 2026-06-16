@@ -104,14 +104,35 @@ def classify_vehicle_colour(crop: np.ndarray) -> str:
 def extract_plate_text(crop: np.ndarray) -> Optional[str]:
     """Run EasyOCR on the crop; return a valid Turkish plate string or None."""
     ocr = get_ocr_engine()
-    if ocr is None:
+    if ocr is None or crop is None or crop.size == 0:
         return None
     try:
-        results = ocr.readtext(crop)
+        # OCR Optimizasyonu (Grayscale + Thresholding)
+        gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+        
+        # Gürültüyü azaltmak için hafif bir bulanıklaştırma
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+        
+        # Uyarlamalı (Adaptive) eşikleme ile siyah-beyaza çevirme
+        thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+        
+        # EasyOCR'a hem orijinali hem de işlenmiş hali vererek şansımızı artıralım
+        # Ama şimdilik sadece thresh'i okumak yeterli olabilir. Alternatif olarak ikisini de okuyabiliriz.
+        # Biz grayscale halini verelim, EasyOCR gri resimlerde daha iyi çalışır.
+        
+        results = ocr.readtext(gray)
         for _bbox, text, _conf in results:
             cleaned = re.sub(r"[^A-Za-z0-9]", "", text).upper()
             if PLATE_PATTERN.fullmatch(cleaned):
                 return cleaned
+                
+        # Eğer gri resimden bulamazsa siyah-beyazdan (thresh) denesin
+        results_thresh = ocr.readtext(thresh)
+        for _bbox, text, _conf in results_thresh:
+            cleaned = re.sub(r"[^A-Za-z0-9]", "", text).upper()
+            if PLATE_PATTERN.fullmatch(cleaned):
+                return cleaned
+
     except Exception as e:
         print(f"OCR error: {e}")
     return None
@@ -397,6 +418,7 @@ class SceneAnalysisEngine:
 
         detected_seats: set[str] = set()
         events: list[dict] = []
+        rear_seat_counter = 1
 
         for pbox in person_boxes:
             px1, py1, px2, py2 = pbox
@@ -410,20 +432,22 @@ class SceneAnalysisEngine:
             cx = (px1 + px2) // 2
             cy = (py1 + py2) // 2
 
-            in_front_half = cy < front_rear_split
+            # Calculate relative area to infer depth (rear seat passengers appear smaller)
+            person_area = (px2 - px1) * (py2 - py1)
+            vehicle_area = vw * vh
+            is_rear_seat = (person_area / (vehicle_area + 1e-5)) < 0.12
 
-            if in_front_half:
+            if not is_rear_seat:
                 if cx > centre_col_x2:
                     seat = "on_koltuk"   # Front-right passenger
-                # Front-left is the driver — don't label as passenger
-            else:
-                # Rear cabin
-                if cx < centre_col_x2:
-                    seat = "arka_koltuk_1"
                 else:
-                    seat = "arka_koltuk_2"
+                    continue  # Front-left is the driver — don't label as passenger
+            else:
+                # Rear cabin: dynamically assign arka_koltuk_1, arka_koltuk_2, etc.
+                seat = f"arka_koltuk_{rear_seat_counter}"
+                rear_seat_counter += 1
 
-            if seat not in detected_seats:
+            if seat.startswith("arka_koltuk") or seat not in detected_seats:
                 detected_seats.add(seat)
                 events.append({
                     "zaman_saniye": timestamp,
@@ -502,11 +526,33 @@ class SceneAnalysisEngine:
             # Dominant colour via K-Means
             result["vehicle_color"] = classify_vehicle_colour(vehicle_crop)
 
-            # Plate OCR on lower 60% of vehicle crop
+            # Plate OCR
             if vehicle_crop.size > 0:
-                vh2, vw2 = vehicle_crop.shape[:2]
-                lower = vehicle_crop[int(vh2 * 0.40):, :]
-                plate = extract_plate_text(lower)
+                plate_img = None
+                # Eğer plaka modeli varsa, onu kullanarak plakanın tam yerini bul
+                if getattr(self, 'plate_detector', None) is not None:
+                    plate_results = self.plate_detector(vehicle_crop, verbose=False)
+                    if len(plate_results) > 0 and len(plate_results[0].boxes) > 0:
+                        # En yüksek confidence'lı plakayı al
+                        boxes = plate_results[0].boxes
+                        best_plate = max(boxes, key=lambda x: x.conf[0].item())
+                        px1, py1, px2, py2 = map(int, best_plate.xyxy[0].tolist())
+                        
+                        # Plakayı hafifçe genişlet (margin) harfler kesilmesin
+                        margin = 5
+                        px1 = max(0, px1 - margin)
+                        py1 = max(0, py1 - margin)
+                        px2 = min(vehicle_crop.shape[1], px2 + margin)
+                        py2 = min(vehicle_crop.shape[0], py2 + margin)
+                        
+                        plate_img = vehicle_crop[py1:py2, px1:px2]
+                
+                # Eğer plaka modeli yoksa veya bulamadıysa, eski (ilkel) yönteme dön (Alt %40)
+                if plate_img is None or plate_img.size == 0:
+                    vh2, vw2 = vehicle_crop.shape[:2]
+                    plate_img = vehicle_crop[int(vh2 * 0.40):, :]
+
+                plate = extract_plate_text(plate_img)
                 if plate:
                     result["plate_text"] = plate
 
