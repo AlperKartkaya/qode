@@ -2,13 +2,14 @@
 train_classifier.py — Driver Behaviour Classifier Training
 
 Model: EfficientNet-B2 (torchvision pretrained on ImageNet)
-Data:  data/datasets/processed_state_farm/  (train/ val/ subfolders)
-       Run preprocess_state_farm.py first to prepare the dataset.
+Data:  data/datasets/qode-driver-behaviors/  (train/ val/ subfolders)
+       Run build_datasets.py first to prepare the dataset.
 
 Features:
   • Progressive layer unfreezing (feature extractor frozen for first N epochs)
   • CosineAnnealingLR scheduler for stable convergence
   • WeightedRandomSampler to handle class imbalance
+  • WindshieldTransform augmentation for outer-camera domain adaptation
   • Saves best validation-accuracy checkpoint to data/weights/driver_classifier.pt
 """
 
@@ -24,6 +25,8 @@ from torchvision import datasets, transforms, models
 from pathlib import Path
 from collections import Counter
 from tqdm import tqdm
+
+from smart_road_safety.training.windshield_transform import WindshieldTransform
 
 
 def make_weighted_sampler(dataset: datasets.ImageFolder) -> WeightedRandomSampler:
@@ -74,12 +77,16 @@ def train_model(
         )
         return
 
-    # ── Transforms ────────────────────────────────────────────────────────────
+    # ── Transforms ─────────────────────────────────────────────────────────────
+    # WindshieldTransform simulates the outer-camera-through-glass view.
+    # Applied with 50% probability to teach the model to handle both clear
+    # (inner-camera) and degraded (outer-camera) inputs.
     train_tf = transforms.Compose([
         transforms.RandomResizedCrop(288, scale=(0.7, 1.0)),
         transforms.RandomHorizontalFlip(),
         transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2, hue=0.05),
         transforms.RandomRotation(10),
+        transforms.RandomApply([WindshieldTransform()], p=0.5),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ])

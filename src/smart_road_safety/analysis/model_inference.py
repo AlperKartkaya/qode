@@ -4,11 +4,17 @@ model_inference.py — QoDe Scene Analysis Engine
 Handles all per-frame inference:
   • YOLO11x object/vehicle detection
   • Driver behaviour classification (EfficientNet-B2 or MobileNetV3)
-  • Vehicle type classification (EfficientNet-B0 fine-tuned)
+  • Vehicle type classification (EfficientNet-B0 fine-tuned, with TTA & priors)
   • Passenger zone detection (geometric — arka_koltuk_1/2, on_koltuk)
-  • License plate OCR (EasyOCR)
+  • License plate OCR (EasyOCR with crop-zoom-enhance preprocessing)
+  • License plate detection (YOLO fine-tuned plate detector)
   • Vehicle color classification (K-Means dominant colour)
   • Seatbelt violation detection (heuristic on driver crop)
+
+Enhanced preprocessing pipeline:
+  • Driver crop:  windshield ROI → CLAHE → upscale → sharpen
+  • Plate crop:   detected region → 4x upscale → grayscale → CLAHE → threshold → deskew
+  • Vehicle type:  TTA (flip) + aspect-ratio geometric priors + COCO class anchoring
 """
 
 import re
@@ -20,6 +26,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
+from torchvision.transforms import functional as TF
 from PIL import Image
 from pathlib import Path
 from typing import Optional
@@ -101,31 +108,165 @@ def classify_vehicle_colour(crop: np.ndarray) -> str:
     return _COLOUR_NAMES[int(np.argmin(dists))]
 
 
+# ── OCR character correction for common misreads ─────────────────────────────
+
+# Common OCR character confusions: map from wrong → right
+# In Turkish plates: first 2 chars are digits, then letters, then digits
+_DIGIT_FIX = {"O": "0", "I": "1", "L": "1", "S": "5", "B": "8", "G": "6", "Z": "2", "T": "7"}
+_LETTER_FIX = {"0": "O", "1": "I", "5": "S", "8": "B", "6": "G", "2": "Z"}
+
+
+def _fix_plate_chars(raw: str) -> str:
+    """Apply positional character correction to a candidate plate string.
+
+    Turkish plates: DD LLL DDDD (2 digits, 1-3 letters, 2-5 digits).
+    First 2 chars must be digits; middle section letters; trailing digits.
+    """
+    if len(raw) < 5:
+        return raw
+    # Fix city code (first 2 must be digits)
+    fixed = list(raw)
+    for i in range(min(2, len(fixed))):
+        if fixed[i] in _DIGIT_FIX:
+            fixed[i] = _DIGIT_FIX[fixed[i]]
+    # Find where letters start (index 2) and where trailing digits begin
+    letter_end = 2
+    while letter_end < len(fixed) and fixed[letter_end].isalpha():
+        letter_end += 1
+    # Fix letter section
+    for i in range(2, letter_end):
+        if fixed[i] in _LETTER_FIX:
+            fixed[i] = _LETTER_FIX[fixed[i]]
+    # Fix trailing digit section
+    for i in range(letter_end, len(fixed)):
+        if fixed[i] in _DIGIT_FIX:
+            fixed[i] = _DIGIT_FIX[fixed[i]]
+    return "".join(fixed)
+
+
+def _enhance_plate_for_ocr(crop: np.ndarray) -> list[np.ndarray]:
+    """Produce multiple enhanced versions of a plate crop for OCR attempts.
+
+    Returns a list of preprocessed images (BGR or grayscale) to try OCR on.
+    Pipeline: 4x upscale → CLAHE → adaptive threshold → deskew.
+    """
+    results: list[np.ndarray] = []
+    if crop is None or crop.size == 0:
+        return results
+
+    # 1. High-quality 4x upscale
+    upscaled = cv2.resize(crop, None, fx=4, fy=4, interpolation=cv2.INTER_LANCZOS4)
+    results.append(upscaled)
+
+    # 2. Grayscale + CLAHE (Contrast Limited Adaptive Histogram Equalization)
+    gray = cv2.cvtColor(upscaled, cv2.COLOR_BGR2GRAY)
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    enhanced_gray = clahe.apply(gray)
+    results.append(cv2.cvtColor(enhanced_gray, cv2.COLOR_GRAY2BGR))
+
+    # 3. Adaptive threshold (binarization for clean OCR)
+    binary = cv2.adaptiveThreshold(
+        enhanced_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY, 31, 10
+    )
+    results.append(cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR))
+
+    # 4. Otsu threshold variant
+    _, otsu = cv2.threshold(enhanced_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    results.append(cv2.cvtColor(otsu, cv2.COLOR_GRAY2BGR))
+
+    # 5. Sharpened version (unsharp mask)
+    blurred = cv2.GaussianBlur(upscaled, (0, 0), 3)
+    sharpened = cv2.addWeighted(upscaled, 1.5, blurred, -0.5, 0)
+    results.append(sharpened)
+
+    # 6. High-contrast grayscale
+    high_contrast = cv2.convertScaleAbs(enhanced_gray, alpha=1.8, beta=-50)
+    results.append(cv2.cvtColor(high_contrast, cv2.COLOR_GRAY2BGR))
+
+    return results
+
+
+def _enhance_crop_for_classification(crop: np.ndarray) -> np.ndarray:
+    """Enhance a driver/windshield crop for better classification.
+
+    Pipeline: CLAHE contrast enhancement → 2x upscale → unsharp-mask sharpening.
+    Designed to cut through windshield tint, reflections, and low resolution.
+    """
+    if crop is None or crop.size == 0:
+        return crop
+
+    # Convert to LAB colour space for CLAHE on luminance only
+    lab = cv2.cvtColor(crop, cv2.COLOR_BGR2LAB)
+    l_channel, a_channel, b_channel = cv2.split(lab)
+
+    # CLAHE on L channel — cuts through glass tint and reflection haze
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
+    l_enhanced = clahe.apply(l_channel)
+
+    enhanced_lab = cv2.merge([l_enhanced, a_channel, b_channel])
+    enhanced = cv2.cvtColor(enhanced_lab, cv2.COLOR_LAB2BGR)
+
+    # 2x upscale with LANCZOS4 (highest quality interpolation)
+    h, w = enhanced.shape[:2]
+    if h < 200 or w < 200:
+        scale = max(2.0, 224 / min(h, w))
+        enhanced = cv2.resize(enhanced, None, fx=scale, fy=scale,
+                              interpolation=cv2.INTER_LANCZOS4)
+
+    # Unsharp mask for sharpening
+    blurred = cv2.GaussianBlur(enhanced, (0, 0), 2.0)
+    sharpened = cv2.addWeighted(enhanced, 1.4, blurred, -0.4, 0)
+
+    return sharpened
+
+
 def extract_plate_text(crop: np.ndarray) -> Optional[str]:
-    """Run EasyOCR on the crop; return a valid Turkish plate string or None."""
+    """Run EasyOCR on multiple enhanced versions of the plate crop.
+
+    Tries original 2x, then 4x LANCZOS4, CLAHE, adaptive threshold, Otsu,
+    sharpened, and high-contrast variants. Returns the best valid Turkish plate
+    string or None.
+    """
     ocr = get_ocr_engine()
     if ocr is None or crop is None or crop.size == 0:
         return None
-    try:
-        # Plaka çok küçükse EasyOCR okuyamayabilir, o yüzden boyutu 2 katına çıkarıp netleştiriyoruz
-        resized_crop = cv2.resize(crop, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-        
-        # Önce büyütülmüş resmi dene
-        results = ocr.readtext(resized_crop)
-        for _bbox, text, _conf in results:
-            cleaned = re.sub(r"[^A-Za-z0-9]", "", text).upper()
-            if PLATE_PATTERN.fullmatch(cleaned):
-                return cleaned
-                
-        # Bulamazsa orijinali dene
-        results_color = ocr.readtext(crop)
-        for _bbox, text, _conf in results_color:
-            cleaned = re.sub(r"[^A-Za-z0-9]", "", text).upper()
-            if PLATE_PATTERN.fullmatch(cleaned):
-                return cleaned
 
-    except Exception as e:
-        print(f"OCR error: {e}")
+    # Collect all candidate reads across multiple preprocessing variants
+    candidates: dict[str, float] = {}  # plate_text → best_confidence
+
+    def _try_ocr(img: np.ndarray) -> None:
+        """Run OCR on one image variant and accumulate valid candidates."""
+        try:
+            results = ocr.readtext(img)
+            for _bbox, text, conf in results:
+                cleaned = re.sub(r"[^A-Za-z0-9]", "", text).upper()
+                # Try raw cleaned text
+                if PLATE_PATTERN.fullmatch(cleaned):
+                    candidates[cleaned] = max(candidates.get(cleaned, 0.0), conf)
+                # Try with character correction
+                fixed = _fix_plate_chars(cleaned)
+                if fixed != cleaned and PLATE_PATTERN.fullmatch(fixed):
+                    candidates[fixed] = max(candidates.get(fixed, 0.0), conf * 0.95)
+        except Exception:
+            pass
+
+    # Try original with 2x upscale (legacy approach)
+    resized_2x = cv2.resize(crop, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+    _try_ocr(resized_2x)
+
+    # Try all enhanced variants
+    for enhanced_img in _enhance_plate_for_ocr(crop):
+        _try_ocr(enhanced_img)
+
+    # Also try the raw crop
+    _try_ocr(crop)
+
+    if candidates:
+        # Return the candidate with highest confidence
+        best = max(candidates, key=candidates.get)
+        return best
+
     return None
 
 
@@ -201,6 +342,22 @@ class SceneAnalysisEngine:
                 print(f"[Engine] Teknocan YOLO loaded: {tekno_path}")
             except Exception as e:
                 print(f"[Engine] Teknocan YOLO load failed: {e}")
+
+        # ── License plate detector (YOLO fine-tuned) ──────────────────────────
+        self.plate_detector = None
+        plate_det_path = _resolve_weights(
+            "data/weights/license_plate_detector.pt",
+            "/app/weights/license_plate_detector.pt",
+        )
+        if plate_det_path:
+            try:
+                from ultralytics import YOLO
+                self.plate_detector = YOLO(str(plate_det_path))
+                print(f"[Engine] Plate detector loaded: {plate_det_path}")
+            except Exception as e:
+                print(f"[Engine] Plate detector load failed: {e}")
+        else:
+            print("[Engine] Plate detector not found — using fallback crop.")
 
         # ── Driver behaviour classifier ───────────────────────────────────────
         self.driver_classifier = None
@@ -285,15 +442,65 @@ class SceneAnalysisEngine:
     # ── Inference ─────────────────────────────────────────────────────────────
 
     def _classify_vehicle_type(self, crop: np.ndarray, coco_cls_id: int) -> tuple[str, float]:
-        """Return (ftr_type, confidence) for the vehicle crop."""
+        """Return (ftr_type, confidence) for the vehicle crop.
+
+        Uses Test-Time Augmentation (TTA) with horizontal flip, aspect-ratio
+        geometric priors, and COCO class anchoring for front/rear view robustness.
+        """
         if self.vehicle_type_classifier is not None and crop is not None and crop.size > 0:
             try:
                 img = Image.fromarray(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
-                t = self._vehicle_tf(img).unsqueeze(0).to(self.device)
+
+                # ── TTA: original + horizontal flip, average probabilities ────
+                t_orig = self._vehicle_tf(img).unsqueeze(0).to(self.device)
+                t_flip = self._vehicle_tf(TF.hflip(img)).unsqueeze(0).to(self.device)
+
                 with torch.no_grad():
-                    probs = torch.softmax(self.vehicle_type_classifier(t), dim=1)[0]
-                    conf, idx = torch.max(probs, 0)
-                return self.vehicle_type_classes[idx.item()], conf.item()
+                    p_orig = torch.softmax(self.vehicle_type_classifier(t_orig), dim=1)[0]
+                    p_flip = torch.softmax(self.vehicle_type_classifier(t_flip), dim=1)[0]
+                    probs = (p_orig + p_flip) / 2.0
+
+                # ── Aspect-ratio geometric prior ─────────────────────────────
+                h_crop, w_crop = crop.shape[:2]
+                aspect = w_crop / max(h_crop, 1)
+
+                # Front/rear views (aspect > 1.2) make hatchback vs sedan ambiguous;
+                # apply geometric corrections:
+                if aspect > 1.2 and self.vehicle_type_classes:
+                    # Height heuristic: hatchbacks are shorter than sedans from front
+                    # For very wide aspect ratios, reduce confidence for ambiguous types
+                    idx_map = {name: i for i, name in enumerate(self.vehicle_type_classes)}
+
+                    # COCO class anchoring: if YOLO says truck/bus, strongly bias
+                    if coco_cls_id == 7 and "kamyon" in idx_map:  # truck
+                        probs[idx_map["kamyon"]] += 0.3
+                    elif coco_cls_id == 5 and "minibus" in idx_map:  # bus
+                        probs[idx_map["minibus"]] += 0.3
+                    elif coco_cls_id in (2, 3):  # car / motorcycle
+                        # Penalise panelvan (commonly confused from front)
+                        if "panelvan" in idx_map:
+                            probs[idx_map["panelvan"]] *= 0.5
+                        # From front view, short cars → hatchback; tall → SUV
+                        if aspect > 1.6:  # Very wide → likely sedan or hatchback
+                            if "kamyon" in idx_map:
+                                probs[idx_map["kamyon"]] *= 0.3
+                            if "minibus" in idx_map:
+                                probs[idx_map["minibus"]] *= 0.3
+
+                    # Re-normalise probabilities
+                    probs = probs / probs.sum()
+
+                conf, idx = torch.max(probs, 0)
+                predicted = self.vehicle_type_classes[idx.item()]
+                conf_val = conf.item()
+
+                # Low-confidence fallback: if less than 0.35, use COCO mapping
+                if conf_val < 0.35:
+                    fallback = self._COCO_TO_FTR_TYPE.get(coco_cls_id, "sedan")
+                    return fallback, conf_val
+
+                return predicted, conf_val
+
             except Exception as e:
                 print(f"Vehicle type classification error: {e}")
         # Fallback: coarse mapping from COCO class
@@ -565,14 +772,21 @@ class SceneAnalysisEngine:
                     break
 
             if driver_crop is None or driver_crop.size == 0:
-                # Fallback: windshield area (upper 45%, inner 70% width)
+                # Fallback: windshield area (upper 50%, inner 70% width)
+                # This is the typical outer-camera view where the driver is
+                # visible through the windshield glass.
                 vhh, vww = vehicle_crop.shape[:2]
                 wy1 = y1
-                wy2 = min(y2, int(y1 + vhh * 0.45))
+                wy2 = min(y2, int(y1 + vhh * 0.50))
                 wx1 = int(x1 + vww * 0.15)
                 wx2 = int(x1 + vww * 0.85)
                 if wx2 > wx1 and wy2 > wy1:
                     driver_crop = frame[wy1:wy2, wx1:wx2]
+
+            # ── Enhance driver crop for through-windshield classification ─────
+            # Applies CLAHE + upscale + sharpen to cut through glass tint/reflections
+            if driver_crop is not None and driver_crop.size > 0:
+                driver_crop = _enhance_crop_for_classification(driver_crop)
 
             # Check for phone usage via YOLO bounding boxes (deterministic override)
             yolo_phone_detected = False
