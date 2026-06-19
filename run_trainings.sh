@@ -51,17 +51,19 @@ echo ""
 echo "================================================================"
 echo " [1/2] Sürücü Davranışları Modeli Eğitiliyor..."
 echo "        Model: EfficientNet-B2"
-echo "        Augmentation: WindshieldTransform (%50 olasılık)"
-echo "        Epochs: 25 (5 frozen + 20 fine-tune)"
+echo "        Augmentation: RandAugment + Label Smoothing"
+echo "        (Windshield efekti zaten datasette var, tekrar uygulanmaz)"
+echo "        Epochs: max 30 (early stopping patience=7)"
 echo "================================================================"
 echo "Driver Model Başlangıç: $(date)" | tee -a logs/training_summary.txt
 echo "Driver Model Start: $(date)" > logs/driver_training.log
 
 PYTHONPATH=src python3 -m smart_road_safety.training.train_classifier \
-    --epochs 25 \
+    --epochs 30 \
     --batch-size 32 \
     --lr 0.0003 \
     --freeze-epochs 5 \
+    --patience 7 \
     2>&1 | tee -a logs/driver_training.log
 
 echo "Driver Model Bitiş: $(date)" | tee -a logs/training_summary.txt
@@ -77,12 +79,12 @@ echo "================================================================"
 echo "Vehicle Model Başlangıç: $(date)" | tee -a logs/training_summary.txt
 echo "Vehicle Model Start: $(date)" > logs/vehicle_training.log
 
-PYTHONPATH=src python3 -m smart_road_safety.training.train_vehicle_type_classifier \
-    --epochs 20 \
-    --batch-size 32 \
-    --lr 0.0003 \
-    --freeze-epochs 5 \
-    2>&1 | tee -a logs/vehicle_training.log
+# PYTHONPATH=src python3 -m smart_road_safety.training.train_vehicle_type_classifier \
+#    --epochs 20 \
+#    --batch-size 32 \
+#    --lr 0.0003 \
+#    --freeze-epochs 5 \
+#    2>&1 | tee -a logs/vehicle_training.log
 
 echo "Vehicle Model Bitiş: $(date)" | tee -a logs/training_summary.txt
 echo "[2/2] Araç Modeli Eğitimi TAMAMLANDI." | tee -a logs/training_summary.txt

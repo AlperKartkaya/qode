@@ -5,11 +5,18 @@ Model: EfficientNet-B2 (torchvision pretrained on ImageNet)
 Data:  data/datasets/qode-driver-behaviors/  (train/ val/ subfolders)
        Run build_datasets.py first to prepare the dataset.
 
+NOTE: The dataset images already contain windshield simulation effects
+      (applied during build_datasets.py preprocessing). Do NOT apply
+      WindshieldTransform again at training time — double application
+      creates unrealistically degraded images and causes catastrophic
+      overfitting (train 99% / val 40%).
+
 Features:
   • Progressive layer unfreezing (feature extractor frozen for first N epochs)
   • CosineAnnealingLR scheduler for stable convergence
   • WeightedRandomSampler to handle class imbalance
-  • WindshieldTransform augmentation for outer-camera domain adaptation
+  • Label smoothing (0.1) for better generalisation
+  • Early stopping with configurable patience
   • Saves best validation-accuracy checkpoint to data/weights/driver_classifier.pt
 """
 
@@ -25,8 +32,6 @@ from torchvision import datasets, transforms, models
 from pathlib import Path
 from collections import Counter
 from tqdm import tqdm
-
-from smart_road_safety.training.windshield_transform import WindshieldTransform
 
 
 def make_weighted_sampler(dataset: datasets.ImageFolder) -> WeightedRandomSampler:
@@ -47,6 +52,7 @@ def train_model(
     batch_size: int = 32,
     lr: float = 3e-4,
     freeze_epochs: int = 5,
+    patience: int = 7,
 ):
     """
     Args:
@@ -55,6 +61,7 @@ def train_model(
         lr: Initial learning rate for the classifier head.
         freeze_epochs: Number of epochs to keep the feature extractor frozen
                        before progressive unfreezing.
+        patience: Early stopping patience (epochs without val improvement).
     """
     # ── Device ────────────────────────────────────────────────────────────────
     if torch.cuda.is_available():
@@ -78,17 +85,20 @@ def train_model(
         return
 
     # ── Transforms ─────────────────────────────────────────────────────────────
-    # WindshieldTransform simulates the outer-camera-through-glass view.
-    # Applied with 50% probability to teach the model to handle both clear
-    # (inner-camera) and degraded (outer-camera) inputs.
+    # NOTE: WindshieldTransform is NOT applied here because the dataset images
+    # already have windshield effects baked in (from build_datasets.py).
+    # Applying it again would create double degradation → catastrophic overfitting.
+    #
+    # RandAugment provides strong, varied augmentation that generalises well.
     train_tf = transforms.Compose([
-        transforms.RandomResizedCrop(288, scale=(0.7, 1.0)),
+        transforms.RandomResizedCrop(288, scale=(0.6, 1.0)),
         transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2, hue=0.05),
-        transforms.RandomRotation(10),
-        transforms.RandomApply([WindshieldTransform()], p=0.5),
+        transforms.RandAugment(num_ops=2, magnitude=9),
+        transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.3, hue=0.05),
+        transforms.RandomRotation(15),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        transforms.RandomErasing(p=0.25),
     ])
     val_tf = transforms.Compose([
         transforms.Resize(320),
@@ -127,9 +137,12 @@ def train_model(
     print("[Train] Loading EfficientNet-B2 (ImageNet pretrained)…")
     model = models.efficientnet_b2(weights=models.EfficientNet_B2_Weights.DEFAULT)
 
-    # Replace classifier head for our number of classes
+    # Replace classifier head with dropout + linear for our number of classes
     in_features = model.classifier[1].in_features
-    model.classifier[1] = nn.Linear(in_features, num_classes)
+    model.classifier = nn.Sequential(
+        nn.Dropout(p=0.5, inplace=True),
+        nn.Linear(in_features, num_classes),
+    )
     model = model.to(device)
 
     # ── Freeze feature extractor for warm-up phase ───────────────────────────
@@ -140,10 +153,11 @@ def train_model(
     # Only optimise the classifier head initially
     optimizer = optim.AdamW(
         filter(lambda p: p.requires_grad, model.parameters()),
-        lr=lr, weight_decay=1e-4,
+        lr=lr, weight_decay=1e-3,
     )
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-6)
-    criterion = nn.CrossEntropyLoss()
+    # Label smoothing prevents overconfident predictions → better generalisation
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
     weights_dir = Path("data/weights")
     weights_dir.mkdir(parents=True, exist_ok=True)
@@ -152,17 +166,20 @@ def train_model(
 
     # ── Training loop ─────────────────────────────────────────────────────────
     print("\n[Train] ── Starting Training ──")
+    epochs_without_improvement = 0
+
     for epoch in range(epochs):
         # Progressive unfreezing: unfreeze all layers after freeze_epochs
         if epoch == freeze_epochs:
             print(f"[Train] Epoch {epoch+1}: Unfreezing full feature extractor.")
             for param in model.features.parameters():
                 param.requires_grad = True
-            # Re-create optimizer with full param set + lower LR for feature layers
+            # Re-create optimizer with full param set + VERY low LR for features
+            # to avoid destroying pretrained representations
             optimizer = optim.AdamW([
-                {"params": model.features.parameters(), "lr": lr * 0.1},
-                {"params": model.classifier.parameters(), "lr": lr},
-            ], weight_decay=1e-4)
+                {"params": model.features.parameters(), "lr": lr * 0.01},
+                {"params": model.classifier.parameters(), "lr": lr * 0.5},
+            ], weight_decay=1e-3)
             scheduler = optim.lr_scheduler.CosineAnnealingLR(
                 optimizer, T_max=epochs - freeze_epochs, eta_min=1e-6
             )
@@ -188,6 +205,8 @@ def train_model(
                     loss = criterion(outputs, labels)
                     if phase == "train":
                         loss.backward()
+                        # Gradient clipping to prevent exploding gradients
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                         optimizer.step()
 
                 running_loss    += loss.item() * inputs.size(0)
@@ -197,16 +216,25 @@ def train_model(
             epoch_acc  = running_correct / len(dataset)
             print(f"  {phase.capitalize():5s}  Loss: {epoch_loss:.4f}  Acc: {epoch_acc:.4f}")
 
-            if phase == "val" and epoch_acc > best_acc:
-                best_acc = epoch_acc
-                torch.save({
-                    "model_state_dict":   model.state_dict(),
-                    "class_names":        class_names,
-                    "model_architecture": "efficientnet_b2",
-                    "val_accuracy":       best_acc,
-                    "epoch":              epoch + 1,
-                }, best_model_path)
-                print(f"  ✓ New best model saved → {best_model_path}  (Acc={best_acc:.4f})")
+            if phase == "val":
+                if epoch_acc > best_acc:
+                    best_acc = epoch_acc
+                    epochs_without_improvement = 0
+                    torch.save({
+                        "model_state_dict":   model.state_dict(),
+                        "class_names":        class_names,
+                        "model_architecture": "efficientnet_b2",
+                        "val_accuracy":       best_acc,
+                        "epoch":              epoch + 1,
+                    }, best_model_path)
+                    print(f"  ✓ New best model saved → {best_model_path}  (Acc={best_acc:.4f})")
+                else:
+                    epochs_without_improvement += 1
+                    if epochs_without_improvement >= patience:
+                        print(f"\n[Train] Early stopping: no improvement for {patience} epochs.")
+                        print(f"[Train] ── Complete ──  Best Val Acc: {best_acc:.4f}")
+                        print(f"[Train] Weights: {best_model_path.resolve()}")
+                        return
 
         scheduler.step()
 
@@ -217,10 +245,11 @@ def train_model(
 if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser(description="Train EfficientNet-B2 driver behaviour classifier")
-    p.add_argument("--epochs",        type=int,   default=20,  help="Total training epochs")
+    p.add_argument("--epochs",        type=int,   default=30,  help="Total training epochs")
     p.add_argument("--batch-size",    type=int,   default=32,  help="Mini-batch size")
     p.add_argument("--lr",            type=float, default=3e-4, help="Initial learning rate")
     p.add_argument("--freeze-epochs", type=int,   default=5,   help="Epochs to keep backbone frozen")
+    p.add_argument("--patience",      type=int,   default=7,   help="Early stopping patience")
     args = p.parse_args()
 
     train_model(
@@ -228,4 +257,5 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         lr=args.lr,
         freeze_epochs=args.freeze_epochs,
+        patience=args.patience,
     )
