@@ -5,7 +5,7 @@ from huggingface_hub import HfApi
 # Repoyu QoDe-5G organizasyonunda oluşturuyoruz
 REPO_ID = "QoDe-5G/qode-models"
 WEIGHTS_DIR = Path("data/weights")
-MODELS_TO_UPLOAD = ["license_plate_detector.pt", "driver_classifier.pt"]
+MODELS_TO_UPLOAD = ["license_plate_detector.pt", "driver_classifier.pt", "vehicle_type_classifier.pt"]
 
 def upload_to_hf():
     api = HfApi()

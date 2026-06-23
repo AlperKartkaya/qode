@@ -25,10 +25,20 @@ This repository contains the fine-tuned computer vision models used in the **QoD
    - **Architecture:** EfficientNet-B2
    - **Purpose:** Classifies driver behavior inside the cabin (e.g., smoking, yawning, seatbelt usage).
    - **Training Data:** State Farm Distracted Driver Detection + custom smoking dataset (~10,000 images).
+   - **Performance:** 85.05% validation accuracy (86.82% Macro F1-Score).
 
-3. **`vehicle_type_classifier.pt`** *(If applicable)*
+3. **`vehicle_type_classifier.pt`**
    - **Architecture:** EfficientNet-B0
    - **Purpose:** Fine-grained vehicle classification (Sedan, SUV, Hatchback, etc.).
+   - **Training Data:** Marquis Vehicle Classification + custom vehicle images (~5,000 images).
+   - **Performance:** 92.0% validation accuracy (92.0% Macro F1-Score).
+
+
+4. **`teknocan_detector.pt`**
+   - **Architecture:** YOLOv11 Nano
+   - **Purpose:** Detects the custom Teknocan object.
+   - **Training Data:** Augmented Teknocan dataset.
+   - **Performance:** 99.5% mAP50 on validation set.
 
 ## Usage
 

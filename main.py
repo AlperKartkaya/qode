@@ -60,7 +60,7 @@ def main() -> int:
         arac_bilgisi=vehicle_info,
         tespitler=tuple(events),
     )
-    target = write_ftr_result(ftr_result, output_dir / "sonuc.json")
+    target = write_ftr_result(ftr_result, output_dir / "results.json")
     print(f"results_path={target}")
     print(
         "[QoDe] Vehicle: "
