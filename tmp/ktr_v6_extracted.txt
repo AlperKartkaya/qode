@@ -1,0 +1,148 @@
+
+34290010299705G & YAPAY ZEKÂ İLE AKILLI YOL GÜVENLİĞİ YARIŞMASI FİNAL TASARIM RAPORU
+
+
+
+
+Takım Adı: QoDe
+Takım ID: 886046
+Başvuru ID: 4865671
+ 
+005G & YAPAY ZEKÂ İLE AKILLI YOL GÜVENLİĞİ YARIŞMASI FİNAL TASARIM RAPORU
+
+
+
+
+Takım Adı: QoDe
+Takım ID: 886046
+Başvuru ID: 4865671
+ 
+-885825-190500center927163500
+
+İÇİNDEKİLER
+ TOC \o "1-3" \h \z \u 
+1.PROJE ÖZETİ (5 PUAN) PAGEREF _Toc231484143 \h 3
+2.VERİSETİ OLUŞTURULMASI (20 PUAN) PAGEREF _Toc231484144 \h 3
+3.YAPAY ZEKÂ ÇÖZÜMÜ (50 PUAN) PAGEREF _Toc231484145 \h 3
+3.1.Problemin Analizi (15 Puan) PAGEREF _Toc231484146 \h 3
+3.2.Çözüm Mimarisi (15 Puan) PAGEREF _Toc231484147 \h 3
+3.3.Çözüm Detayları (20 Puan) PAGEREF _Toc231484148 \h 3
+4.ÇÖZÜMÜN SINANMASI (20 PUAN) PAGEREF _Toc231484149 \h 3
+5.KAYNAKÇA (5 PUAN) PAGEREF _Toc231484150 \h 3
+
+
+
+PROJE ÖZETİ 
+QoDe projesi, yol kenarı veya araç içi kameradan gelen tek video akışını analiz ederek aracın tipini, rengini, plakasını ve kabin içi güvenlik olaylarını FTR sözleşmesine uygun bir JSON çıktısına dönüştüren modüler bir yapay zekâ sistemidir. Sistem; araç, kişi ve nesne adaylarını algılayan YOLO tabanlı katman; sürücü davranışı ve araç tipi için sınıflandırıcı başlıkları; plaka için algılama/OCR/regex doğrulama; renk için baskın renk kümeleme; yolcu konumu ve emniyet kemeri için geometrik/örüntü tabanlı mantık bileşenlerinden oluşur.
+FTR teslim dokümanı, değerlendirme çıktısının tam anahtar ve etiket eşleşmesiyle üretilmesini istediği için bu projede final sınır, iç orkestrasyon çıktısı değil, video_id, arac_bilgisi ve tespitler alanlarından oluşan results.json dosyasıdır. Kod tarafında main.py tek MP4 girdisini okur, sahne analiz motorunu çalıştırır, olayları zamana göre tekilleştirir ve competition/ftr.py doğrulamasından geçmeyen etiketleri sonuç dosyasına yazmaz.
+VERİSETİ OLUŞTURULMASI 
+Projedeki veri hattı tek bir kaynağa bağlı kalmadan, farklı senaryolara ve hedeflere hizmet eden çeşitli veri setlerinin birleştirilmesiyle oluşturulmuştur. Modelin (YOLO) tüm görevleri başarıyla gerçekleştirebilmesi amacıyla aşağıdaki kaynaklar, önişleme adımları ve teknikler kullanılmıştır:
+Sürücü Eylemi, Yorgunluk ve Yolcu Analizi: Kaggle State Farm Distracted Driver, DMD Distraction ve DMD Drowsiness veri setleri, OpenLABEL anotasyonlarıyla entegre edilmiştir. Tüm dikkati dağılmış sürücü (distraction driver) ve arka yolcu incelemelerinde doğruluğu artırmak adına araç camları kırpılarak (crop) ayrıştırılmış ve bu görüntüler windshield simulator (ön cam simülatörü) filtrelerinden geçirilerek gerçeğe yakın simülasyonlar elde edilmiştir.
+Araç Tipi ve Rengi Tanıma: Roboflow Universe üzerinden açık kaynaklı olarak temin edilen; sedan, SUV, hatchback, pickup, minibüs, panelvan ve kamyon görsellerini içeren kırpılmış veri setleri sisteme dahil edilmiştir. Renkler için ise K-means metodu ile renk sınıflarına benzerlik oranlarına göre tespit yapılmıştır.
+Özel Nesne (Teknocan ve Bilgisayar) Eğitimi: Google Görseller'den toplanan "Teknocan" görselleri; araç içi simülasyon teknikleriyle (Motion Blur, Gaussian Blur, Random Brightness Contrast ve Tinted Window/Hue yansımaları) zenginleştirilerek (augmentation) eğitilmiştir. Bilgisayar için ise YOLO'nun hazır veri setinde bulunan varsayılan laptop nesne tespit sınıfı doğrudan entegre edilerek kullanılmıştır.
+Plaka Tespiti: Plaka yerini bulma amacıyla "Turkish Licence Plate Dataset" veri seti, OCR ve filtreleme teknikleri ile birleştirilmiştir.
+Oluşturulan her veri kümesi manifest.json veya YAML dosyasıyla kayıt altına alınmış olup, Rapor hedef ailelerine göre veri kapsamları, önişleme katkıları ve eksiklikleri (boşlukları) aşağıdaki tabloda detaylandırılmıştır.
+Veri Kaynağı
+	Birimi
+	KTR/FTR katkısı
+	Sınır / aksiyon
+	State Farm Distracted Driver
+	etiketli görüntü karesi
+	telefon, su içme, etrafa bakınma ve arkaya bakma destek sınıfları
+	plaka, yolcu ve özel nesne etiketi yok
+	DMD Dikkat Dağınıklığı / Yorgunluk
+	video oturumu + OpenLABEL
+	zamansal kabin davranışı, teelfona bakma, su ime, esneme/yorgunluk, etrafa bakınma ve el-nesne eylemi desteği
+	küçük yerel örneklerde oturum sayısı sınırlı
+	Turkish Licence Plate Dataset
+	Etiketli görüntü
+	Plaka yeri tespiti, tespit edilen plakaya OCR ile okunması
+	Yarışma çekim açısına tam uygun değil
+	Roboflow Universe
+	Etiketlenmiş kırpılmaya hazır görüntüler
+	Araba tiplerine göre çeşitli setler kullanılarak tespit yapılması
+	Yarışma çekim açısına tam uygun değil
+	Tablo 1. Kullanılan veri kaynaklarının KTR/FTR sürecine katkıları ve sınırlılıkları
+Veri artırma ve dengeleme
+Proje eğitim dizinlerinde araç tipi ve özel nesne başlıkları için sınıf odaklı YAML yapısı vardır. data/custom_dataset.yaml FTR araç tiplerini, plaka, Teknocan, bilgisayar ve yolcu koltuk sınıflarını tek YOLO eğitim sözlüğünde toplar. Teknocan veri seti ayrı bir data.yaml ile teknocan sınıfını taşır; plaka veri seti ise plaka sınıfına odaklanır. Eğitim tarafındaki artırma betikleri, cam yansıması, hareket bulanıklığı ve parlaklık değişimleri gibi FTR videosunda beklenen bozulmaları simüle etmek için tutulmuştur.
+YAPAY ZEKÂ ÇÖZÜMÜ 
+3.1.Problemin Analizi 
+Bu yarışma problemi klasik araç tespitinden daha zordur; model hem dış araç bilgisini hem de cam arkasındaki kabin davranışlarını aynı video içinde yorumlamak zorundadır. Başlıca zorluklar; far ve cam parlaması, hareket bulanıklığı, plakanın küçük piksel alanı kaplaması, sürücü elinin telefon/su şişesiyle kısa süreli örtüşmesi, yolcu konumlarının perspektife göre değişmesi ve slalom gibi olayların tek kareden değil zaman penceresinden anlaşılmasıdır.
+Çözüm bu nedenle önce kare örnekleme ve aday tespitine, sonra görev bazlı uzman başlıklara ayrılmıştır. Araç bilgisi per-video özet olarak oylanırken davranışlar zaman_saniye bilgisiyle olay listesine yazılır. Etiketler FTR dokümanındaki ASCII-safe değerlerle sınırlandırılır; Türkçe karakterli veya desteklenmeyen iç etiketlerin competition çıktısına sızması engellenir.
+3.2.Çözüm Mimarisi 
+
+Şekil 1. Video girişinden FTR `results.json` çıktısına kadar çalışan analiz mimarisi.
+Mimari Docker giriş noktası ile başlar: değerlendirme sırasında video /app/data/input/video.mp4 yolundan okunur ve sonuç /app/data/output/results.json yoluna yazılır. SceneAnalysisEngine, YOLO11x ile araç, kişi, telefon ve bilgisayar adaylarını üretir. Araç kırpımı K-Means renk sınıflandırma, plaka algılama/OCR ve araç tipi sınıflandırıcısına; sürücü/yolcu kırpımı davranış sınıflandırıcısı, yolcu bölge mantığı ve emniyet kemeri sezgisel yöntemine gönderilir. Son aşamada olaylar 3 saniyelik pencereyle tekilleştirilir.
+
+Şekil 2. Kod düzeyinde Docker başlangıcı, `main.py`, sahne motoru ve FTR sözleşmesi arasındaki çağrı akışı.
+3.3.Çözüm Detayları 
+Çalışma zamanı modelleri data/weights/ altında tutulur. Mevcut klasörde sürücü davranış sınıflandırıcısı, araç tipi sınıflandırıcısı, plaka algılayıcı ve Teknocan algılayıcı ağırlıkları bulunmaktadır. Git deposuna büyük ağırlıklar işlenmediği için download_weights.sh ve eğitim betikleri, yerel/Docker kurulumda ağırlık yönetimini tekrar üretilebilir hale getirir.
+Bileşen
+	Yöntem
+	Araç/kişi/nesne adayları
+	YOLO11x çalışma zamanı, YOLO11s/YAML eğitim hattı
+	Araç tipi
+	EfficientNet-B0 sınıflandırıcı; ağırlık: vehicle_type_classifier.pt
+	Araç rengi
+	Merkez kırpım + K-Means k=3 + FTR renk paletine en yakın merkez
+	Plaka
+	YOLO plaka kırpımı + EasyOCR tr/en + Türk plaka regex normalizasyonu
+	Sürücü eylemi
+	EfficientNet-B2/MobileNetV3 davranış sınıflandırıcısı
+	Yolcular / kemer
+	Kabin geometri mantığı ve Canny/Hough çizgi sezgisi
+	FTR sözleşmesi
+	ASCII-safe etiket ve güven skoru doğrulaması
+	Tablo 2. Alt görevler için kullanılan model ve yöntemlerin projedeki karşılıkları
+ÇÖZÜMÜN SINANMASI 
+Test yaklaşımı dört katmana ayrılmıştır: veri manifest/adaptör kontrolleri, model kanıt artefactleri, FTR şema doğrulaması ve Docker giriş/çıkış sınırı. Bu ayrım, gerçek model performansı ile destek veri kapsamını birbirine karıştırmadan raporlamayı sağlar.
+
+Şekil 3. Veri setlerinden eğitim artefactlerine ve çalışma zamanı ağırlıklarına uzanan kanıt akışı.
+Rapor-model metrikleri
+Model
+	Mimari
+	Görev / Amaç
+	Doğruluk (Accuracy / mAP)
+	F1-Skoru (Macro)
+	license_plate_detector.pt
+	YOLOv11 Nano
+	Plaka Tespiti
+	%98.5 (mAP)
+	-
+	driver_classifier.pt
+	EfficientNet-B2
+	Sürücü Davranışı (Sigara, Esneme, Kemer vb.)
+	%85.05 (Accuracy)
+	%86.82
+	vehicle_type_classifier.pt
+	EfficientNet-B0
+	İnce Detaylı Araç Tipi (Sedan, SUV vb.)
+	%92.00 (Accuracy)
+	%92.00
+	teknocan_detector.pt
+	YOLOv11 Nano
+	Özel Nesne (Teknocan) Tespiti
+	%99.5 (mAP50)
+	
+	Tablo 3. Başlangıç model kanıtları ve raporlanan doğrulama metrikleri
+Bu tablodaki değerler, QoDe-5G projesi kapsamında ince ayar (fine-tune) yapılmış nihai bilgisayarlı görü modellerinin doğrulama seti (validation set) üzerindeki resmi performans skorlarıdır. İlgili model ağırlıkları, Docker imajının derlenmesi sürecinde doğrudan HuggingFace Hub üzerinden çekilmekte ve ana depodaki model_inference.py motoru ile entegre bir şekilde koşturulmaktadır.
+Sınırlar ve Alan Farkı (Domain Gap):
+Sürücü davranışlarını sınıflandıran model, öncelikle araç içi konsol (dashboard) kameralarından alınan veri setleri (State Farm vd.) üzerinde eğitilmiştir. Bu durum, modellerin köprü üzeri gibi yüksek ve uzak açılı kameralardan alınan, ön cam yansıması (windshield reflection) içeren görüntülerde (özellikle cep telefonu gibi küçük nesnelerde) başarımının etkilenmesine yol açabilmektedir. Bu açı ve mesafe kaynaklı alan farkını (domain gap) dengelemek amacıyla, sistem mimarisinde YOLO sınırlayıcı kutu (bounding box) kesişimleri bir geri dönüş (fallback) mekanizması olarak yapılandırılmıştır.
+KAYNAKÇA 
+Proje ve Yarışma Dokümanları:
+QoDe Takımı. (2026). T3 Vakfı ve TEKNOFEST 5G ve Yapay Zekâ ile Akıllı Yol Güvenliği Yarışması Ön Tasarım Raporu.
+T3 Vakfı ve TEKNOFEST. (2026). 5G ve Yapay Zekâ ile Akıllı Yol Güvenliği Yarışması Şartnamesi.
+T3 Vakfı ve TEKNOFEST. (2026). 5G ve Yapay Zekâ ile Akıllı Yol Güvenliği Yarışması FTR Aşaması Teslim Dokümanı.
+Akademik Yayınlar (Makaleler ve Bildiriler):
+Buslaev, A., Iglovikov, V. I., Khvedchenya, E., Parinov, A., Druzhinin, M., & Kalinin, A. A. (2020). Albumentations: Fast and Flexible Image Augmentations. Information, 11(2), 125.
+Kashevnik, A., Lashkov, I., Ponomarev, A., Teslya, N., & Gurtov, A. (2022). DriverSVT: Smartphone-Measured Vehicle Telemetry Data for Driver State Identification. Data, 7(12), 181.
+Ortega, J. D., Kose, N., Cañas, P., Chao, M. A., Unnervik, A., Nieto, M., Otaegui, O., & Salgado, L. (2020). DMD: A Large-Scale Multi-modal Driver Monitoring Dataset for Attention and Alertness Analysis. Computer Vision – ECCV 2020 Workshops.
+Tan, M., & Le, Q. V. (2019). EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks. Proceedings of the 36th International Conference on Machine Learning (ICML), PMLR 97, 6105-6114.
+Veri Setleri:
+Özel Teknocan Maskot Veri Seti. (Google Images üzerinden özel olarak toplanmış, manuel etiketlenmiş ve çoğaltılmıştır).
+State Farm. (2016). State Farm Distracted Driver Detection Dataset. Kaggle. Erişim adresi: https://www.kaggle.com/c/state-farm-distracted-driver-detection (Erişim tarihi: 15.06.2026).
+Vicomtech. (2024). Driver Monitoring Dataset (DMD) - A Large-Scale Multi-Modal Dataset for Driver Monitoring (Distraction & Drowsiness). Erişim adresi: https://dmd.vicomtech.org/ (Erişim tarihi: 15.06.2026).
+Yazılım, Kütüphane ve Teknolojik Kaynaklar:
+Jaided AI. (2020). EasyOCR: Ready-to-use OCR with 80+ supported languages. GitHub Repository ve Dokümantasyonu. Erişim adresi: https://github.com/JaidedAI/EasyOCR ve https://www.jaided.ai/easyocr/ (Erişim tarihi: 12.06.2026).
+Ultralytics (Jocher, G., vd.). (2024). Ultralytics YOLO11 / YOLOv11. GitHub Repository ve Dokümantasyonu. Erişim adresi: https://github.com/ultralytics/ultralytics ve https://docs.ultralytics.com/models/yolo11/ (Erişim tarihi: 12.06.2026).
+Vicomtech. (2024). DMD Driver Monitoring Dataset GitHub Repository. Erişim adresi: https://github.com/Vicomtech/DMD-Driver-Monitoring-Dataset (Erişim tarihi: 15.06.2026).
