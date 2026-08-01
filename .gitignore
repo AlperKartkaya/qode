@@ -25,3 +25,6 @@ logs/
 runs/
 
 data/training_data/
+
+data/input/
+data/output/
