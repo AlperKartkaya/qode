@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Ensure you replace this with the actual backend IP address if running on a physical device.
 // For Android emulator, use 10.0.2.2. For physical devices, use your Mac's IP (e.g. 192.168.1.35)
-export const BASE_URL = 'http://192.168.1.35:8000';
+export const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.35:8000';
 
 export const api = axios.create({
   baseURL: BASE_URL,
