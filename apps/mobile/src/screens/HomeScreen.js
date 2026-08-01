@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useLayoutEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, RefreshControl, SafeAreaView, TouchableOpacity, Platform } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useVideoPlayer } from 'expo-video';
 import * as DocumentPicker from 'expo-document-picker';
 import { createQoDSession, uploadVideo, runAI } from '../utils/api';
@@ -114,9 +115,14 @@ export default function HomeScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView 
+      <KeyboardAwareScrollView 
+        style={{ flex: 1 }}
         contentContainerStyle={styles.container}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4338CA']} />}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        extraHeight={225}
+        extraScrollHeight={225}
       >
         <SessionCard phoneNumber={phoneNumber} />
 
@@ -135,7 +141,7 @@ export default function HomeScreen({ route, navigation }) {
           onClearVideo={() => setVideoUri(null)}
           onUpload={handleUploadAndRunAI} 
         />
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

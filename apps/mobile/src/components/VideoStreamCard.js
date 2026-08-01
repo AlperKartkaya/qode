@@ -38,13 +38,22 @@ export default function VideoStreamCard({ videoUri, uploading, player, isQodActi
       {!videoUri ? (
         <View>
           {sourceType === 'YouTube' && (
-            <TextInput
-              style={styles.youtubeInput}
-              placeholder="YouTube URL'sini buraya yapıştırın"
-              placeholderTextColor="#9CA3AF"
-              value={youtubeLink}
-              onChangeText={setYoutubeLink}
-            />
+            <View style={styles.youtubeInputContainer}>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.youtubeInput}
+                  placeholder="YouTube URL'sini buraya yapıştırın"
+                  placeholderTextColor="#9CA3AF"
+                  value={youtubeLink}
+                  onChangeText={setYoutubeLink}
+                />
+                {youtubeLink.length > 0 && (
+                  <TouchableOpacity style={styles.youtubeClearIcon} onPress={() => setYoutubeLink('')}>
+                    <Ionicons name="close-circle" size={24} color="#6B7280" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
           )}
           
           <TouchableOpacity 
@@ -107,7 +116,10 @@ const styles = StyleSheet.create({
   sourceBtnActive: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 1, elevation: 1 },
   sourceText: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
   sourceTextActive: { color: '#4338CA' },
-  youtubeInput: { backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 16, height: 56, marginBottom: 12, fontSize: 15, color: '#111827' },
+  youtubeInputContainer: { marginBottom: 12 },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, height: 56 },
+  youtubeInput: { flex: 1, paddingHorizontal: 16, fontSize: 15, color: '#111827', height: '100%' },
+  youtubeClearIcon: { padding: 12, justifyContent: 'center', alignItems: 'center' },
   secondaryButton: { backgroundColor: '#EEF2FF', height: 56, borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#C7D2FE' },
   secondaryButtonText: { color: '#4338CA', fontSize: 16, fontWeight: '600' },
   primaryButton: { backgroundColor: '#10B981', height: 56, borderRadius: 12, justifyContent: 'center', alignItems: 'center', shadowColor: '#10B981', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },

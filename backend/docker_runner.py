@@ -20,10 +20,15 @@ def run_inference_container():
     
     print(f"Running docker container {settings.docker_image_name}")
     try:
+        # Determine if we should request GPU
+        use_gpu = os.environ.get('USE_GPU', 'False').lower() == 'true'
+        device_requests = [docker.types.DeviceRequest(count=-1, capabilities=[['gpu']])] if use_gpu else []
+        
+        print(f"Starting container with GPU: {use_gpu}")
         container = client.containers.run(
             settings.docker_image_name,
             detach=True,
-            device_requests=[docker.types.DeviceRequest(count=-1, capabilities=[['gpu']])],
+            device_requests=device_requests,
             volumes={
                 input_dir: {'bind': '/app/data/input', 'mode': 'ro'},
                 output_dir: {'bind': '/app/data/output', 'mode': 'rw'}
