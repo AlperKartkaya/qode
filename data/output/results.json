@@ -1,0 +1,1 @@
+{"arac_bilgisi": {"tip": "Sedan (Docker)", "plaka": "34DOCKER123", "renk": "Siyah", "confidence_score": 0.99}, "tespitler": [{"zaman_saniye": 1, "kategori": "Risk", "etiket": "Emniyet Kemeri Yok (Docker)", "confidence_score": 0.9}, {"zaman_saniye": 4, "kategori": "Dikkat", "etiket": "Telefona Bak\u0131yor (Docker)", "confidence_score": 0.85}]}
