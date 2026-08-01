@@ -1,0 +1,363 @@
+{
+  "info": {
+    "_postman_id": "b5d7c2c9-6904-4c7e-abb9-4813a5a3fd7e",
+    "name": "Turkcell Open Gateway Documentation Teknofest",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "8365013"
+  },
+  "item": [
+    {
+      "name": "Authorization (OIDC)",
+      "item": [
+        {
+          "name": "Authorization Code Flow",
+          "item": [
+            {
+              "name": "1st Authorization request",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 302) {",
+                      "    const locationHeader = pm.response.headers.get(\"location\")",
+                      "    const url = new URL(locationHeader)",
+                      "    const codeValue = url.searchParams.get(\"code\")",
+                      "",
+                      "    if (codeValue) {",
+                      "        console.log(\"authorization_code\", codeValue);",
+                      "        pm.environment.set(\"authorization_code\", codeValue)",
+                      "    } else {",
+                      "        throw new Error(\"Error occured! Check Location header for details.\");",
+                      "    }",
+                      "} else {",
+                      "    throw new Error(\"Response Code is not 302!\");",
+                      "}",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "protocolProfileBehavior": {
+                "followRedirects": false
+              },
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{api-gateway-url}}/oauth2/authorize?response_type=code&redirect_uri={{application-backend-callback-url}}&client_id={{application-client-id}}&state=realState&scope=openid dpv:RequestedServiceProvision%23quality-on-demand:sessions:create dpv:FraudPreventionAndDetection%23number-verification:verify",
+                  "host": [
+                    "{{api-gateway-url}}"
+                  ],
+                  "path": [
+                    "oauth2",
+                    "authorize"
+                  ],
+                  "query": [
+                    {
+                      "key": "response_type",
+                      "value": "code",
+                      "description": "Must be set to code."
+                    },
+                    {
+                      "key": "redirect_uri",
+                      "value": "{{application-backend-callback-url}}",
+                      "description": "The callback URL of your backend server."
+                    },
+                    {
+                      "key": "client_id",
+                      "value": "{{application-client-id}}",
+                      "description": "The unique identifier assigned to your application during registration."
+                    },
+                    {
+                      "key": "state",
+                      "value": "realState",
+                      "description": "Anything that needs to be shared between your front and back ends will be included in the redirect to your redirect_uri"
+                    },
+                    {
+                      "key": "scope",
+                      "value": "openid dpv:RequestedServiceProvision%23quality-on-demand:sessions:create dpv:FraudPreventionAndDetection%23number-verification:verify",
+                      "description": "Space-separated list of permissions. For Number Verification, use openid dpv:FraudPreventionAndDetection#number-verification:verify."
+                    }
+                  ]
+                },
+                "description": "This is the 1st request of the Auth Code flow.\n\nBefore building the request, verify the correct API-specific scope required by the target service in the **Service APIs** documentation. For example, the Number Verification API requires the following scope:\n\n`dpv:FraudPreventionAndDetection#number-verification:verify`\n\n##### Request Parameters\n\nThe `openid` scope is mandatory for all OIDC authorization requests and must always be included in the `scope` parameter.\n\nIf additional API scopes are required, they must be added to the same `scope` parameter and separated by spaces.\n\n**Example:**\n\n```\nopenid dpv:FraudPreventionAndDetection#number-verification:verify\n\n ```\n\n##### **Testing the Authorization Request**\n\nSending it from Postman just won't work, since the client must follow redirections until reaching the `redirect_uri`. In order to test it, copy the URL resolved with your values and paste it in your browser running on the end-user's device.\n\nYou will need to publish an HTTP server to listen for the `redirect_uri` where the code will be redirected to."
+              },
+              "response": []
+            },
+            {
+              "name": "2nd Get access token with client secret",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = JSON.parse(pm.response.text());",
+                      "pm.environment.set(\"access_token\", jsonData.access_token);"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "basic",
+                  "basic": [
+                    {
+                      "key": "password",
+                      "value": "{{application-client-secret}}",
+                      "type": "string"
+                    },
+                    {
+                      "key": "username",
+                      "value": "{{application-client-id}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "urlencoded",
+                  "urlencoded": [
+                    {
+                      "key": "grant_type",
+                      "value": "authorization_code",
+                      "description": "Fixed value for this authentication method",
+                      "type": "text"
+                    },
+                    {
+                      "key": "code",
+                      "value": "{{authorization_code}}",
+                      "description": "The one obtained at the redirect_uri provided to /authorize",
+                      "type": "text"
+                    },
+                    {
+                      "key": "redirect_uri",
+                      "value": "{{application-backend-callback-url}}",
+                      "description": "You will take de authorization code at this endpoint from the code parameter in the query string",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{api-gateway-url}}/oauth2/token",
+                  "host": [
+                    "{{api-gateway-url}}"
+                  ],
+                  "path": [
+                    "oauth2",
+                    "token"
+                  ]
+                },
+                "description": "This is the 2nd request of the Auth Code flow.\n\nThis request is supposed to be performed from your backend, from where you publish your `redirect_uri` listening for the code requested in the 1st step.\n\nIn case the purpose used in the 1st step needed end-user consent, it will redirect such first request to the proper consent capture web page previous to the redirect to your redirect_uri."
+              },
+              "response": []
+            }
+          ]
+        }
+      ],
+      "description": "This section describes the authorization flows that can be used to access CAMARA APIs:\n\n- Authorization code flow (Frontend flow) - Used to obtain a Three-Legged Access Token from the Authorization Server and initiated from the Consumption Device"
+    },
+    {
+      "name": "Service APIs",
+      "item": [
+        {
+          "name": "Number Verification",
+          "item": [
+            {
+              "name": "v1.0.0",
+              "item": [
+                {
+                  "name": "Number Verification verify",
+                  "request": {
+                    "method": "POST",
+                    "header": [],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"phoneNumber\": \"+905390000020\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{api-gateway-url}}/number-verification/v1/verify",
+                      "host": [
+                        "{{api-gateway-url}}"
+                      ],
+                      "path": [
+                        "number-verification",
+                        "v1",
+                        "verify"
+                      ]
+                    },
+                    "description": "Use the frontend Auth Code flow in the Authorization folder to get an access_token, with the following purpose:\n\n`dpv:FraudPreventionAndDetection#number-verification:verify`"
+                  },
+                  "response": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Quality on Demand",
+          "item": [
+            {
+              "name": "v1.1.0",
+              "item": [
+                {
+                  "name": "QoD session",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "var jsonData = JSON.parse(pm.response.text());",
+                          "pm.environment.set(\"qod_session_id\", jsonData.sessionId);"
+                        ],
+                        "type": "text/javascript",
+                        "packages": {},
+                        "requests": {}
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "x-correlator",
+                        "value": "test-correlation-id",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"duration\": 60,\n    \"applicationServer\": {\n        \"ipv4Address\": \"0.0.0.0/0\"\n    },\n    \"qosProfile\": \"teknofest2026\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{api-gateway-url}}/quality-on-demand/v1/sessions",
+                      "host": [
+                        "{{api-gateway-url}}"
+                      ],
+                      "path": [
+                        "quality-on-demand",
+                        "v1",
+                        "sessions"
+                      ]
+                    },
+                    "description": "Create QoS Session to manage latency/throughput priorities\n\nUse any of the flows in the Authorization folder to get an access_token, with the following purpose:\n\n`dpv:RequestedServiceProvision#quality-on-demand:sessions:create`"
+                  },
+                  "response": []
+                }
+              ]
+            }
+          ],
+          "description": "This API requires the API consumer to identify a device as the subject of the API as follows:\n\n- When a three-legged access token is used however, this optional identifier MUST NOT be provided, as the subject will be uniquely identified from the access token."
+        }
+      ],
+      "description": "Turkcell Open Gateway",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{access_token}}",
+            "type": "string"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "api-gateway-url",
+      "value": ""
+    },
+    {
+      "key": "application-backend-callback-url",
+      "value": ""
+    },
+    {
+      "key": "application-client-id",
+      "value": ""
+    },
+    {
+      "key": "application-client-secret",
+      "value": ""
+    }
+  ]
+}
