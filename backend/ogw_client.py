@@ -1,7 +1,7 @@
 import base64
 import httpx
 from typing import Optional, Dict, Any
-from .config import settings
+from config import settings
 
 class OGWClient:
     def __init__(self):

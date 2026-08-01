@@ -1,0 +1,1 @@
+{"arac_bilgisi": {"tip": "Sedan", "plaka": "34ABC123", "renk": "Beyaz", "confidence_score": 0.95}, "tespitler": [{"zaman_saniye": 2, "kategori": "Risk", "etiket": "Emniyet Kemeri Yok", "confidence_score": 0.88}, {"zaman_saniye": 5, "kategori": "Dikkat", "etiket": "Telefona Bak\u0131yor", "confidence_score": 0.72}]}

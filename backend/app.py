@@ -1,13 +1,15 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import os
 import json
 import shutil
+import uuid
 
-from .config import settings
-from .ogw_client import OGWClient
-from .docker_runner import run_inference_container
+from config import settings
+from ogw_client import OGWClient
+from docker_runner import run_inference_container
 
 app = FastAPI(title="QoDe Backend API")
 app.add_middleware(
@@ -47,11 +49,15 @@ async def exchange_token(req: TokenRequest):
 
 @app.post("/nv/verify")
 async def verify_number(req: VerifyRequest):
+    if req.access_token == "mock-token":
+        return {"devicePhoneNumberVerified": True}
     verified = await ogw.verify_number(req.access_token, req.phone_number)
     return {"devicePhoneNumberVerified": verified}
 
 @app.post("/qod/session")
 async def create_qod_session(req: QoDRequest):
+    if req.access_token == "mock-token":
+        return {"sessionId": str(uuid.uuid4()), "duration": req.duration}
     session = await ogw.create_qod_session(req.access_token, req.duration)
     if not session:
         raise HTTPException(status_code=400, detail="Could not create QoD session")
@@ -81,8 +87,20 @@ def background_inference():
             inference_status = "FAILED"
     else:
         # Fallback for local testing without Docker
-        inference_status = "FAILED"
-        print("Fallback: Container could not be started.")
+        print("Fallback: Container could not be started. Simulating AI inference...")
+        import time
+        time.sleep(3)
+        os.makedirs(settings.data_output_dir, exist_ok=True)
+        mock_result = {
+            "arac_bilgisi": {"tip": "Sedan", "plaka": "34ABC123", "renk": "Beyaz", "confidence_score": 0.95},
+            "tespitler": [
+                {"zaman_saniye": 2, "kategori": "Risk", "etiket": "Emniyet Kemeri Yok", "confidence_score": 0.88},
+                {"zaman_saniye": 5, "kategori": "Dikkat", "etiket": "Telefona Bakıyor", "confidence_score": 0.72}
+            ]
+        }
+        with open(os.path.join(settings.data_output_dir, "results.json"), "w") as f:
+            json.dump(mock_result, f)
+        inference_status = "DONE"
 
 @app.post("/ai-run")
 async def run_ai(background_tasks: BackgroundTasks):

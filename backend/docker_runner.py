@@ -1,6 +1,6 @@
 import docker
 import os
-from .config import settings
+from config import settings
 
 try:
     client = docker.from_env()
