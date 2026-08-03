@@ -31,7 +31,7 @@ LOCAL_OUTPUT_DIR = Path("out")
 YOLO_WEIGHTS = "yolo11x.pt"
 DRIVER_WEIGHTS = "data/weights/driver_classifier.pt"
 VEHICLE_TYPE_WEIGHTS = "data/weights/vehicle_type_classifier.pt"
-SMOOTHING_WINDOW_SECONDS = 3.0
+SMOOTHING_WINDOW_SECONDS = 5.0  # Time window to group continuous detections
 MIN_EVENT_CONFIDENCE = 0.55
 
 
@@ -67,7 +67,7 @@ def main() -> int:
         f"{vehicle_info.tip} / {vehicle_info.renk} / {vehicle_info.plaka} "
         f"(conf={vehicle_info.confidence_score:.2f})"
     )
-    print(f"[QoDe] Events: {len(events)} unique detection(s)")
+    print(f"[QoDe] Events: {len(events)} unique aggregated detection(s)")
     return 0
 
 
@@ -165,7 +165,7 @@ def _analyze_video(
         cap.release()
 
     print(f"[QoDe] Processed {processed} frame sample(s).")
-    events = _deduplicate_events(raw_events)
+    events = _deduplicate_events(raw_events, smoothing_window=SMOOTHING_WINDOW_SECONDS)
     vehicle_info = _build_inferred_vehicle_info(vehicle_types, vehicle_colors, vehicle_scores, plate_votes)
     return vehicle_info, events
 
@@ -199,18 +199,56 @@ def _vehicle_info_for_video(input_dir: Path, inferred: VehicleInfo | None) -> Ve
     )
 
 
-def _deduplicate_events(raw_events: list[dict[str, Any]]) -> list[DetectionEvent]:
-    deduplicated: list[DetectionEvent] = []
-    last_seen: dict[tuple[str, str], float] = {}
-    for event in sorted(raw_events, key=lambda value: float(value["zaman_saniye"])):
-        key = (str(event["kategori"]), str(event["etiket"]))
-        timestamp = float(event["zaman_saniye"])
-        previous = last_seen.get(key, -999.0)
-        if timestamp - previous < SMOOTHING_WINDOW_SECONDS:
-            continue
-        deduplicated.append(DetectionEvent.from_dict(event))
-        last_seen[key] = timestamp
-    return deduplicated
+def _deduplicate_events(
+    raw_events: list[dict[str, Any]], 
+    smoothing_window: float = 5.0
+) -> list[DetectionEvent]:
+    """Deduplicates and aggregates events per (category, label).
+    
+    For consecutive detections of the same event type within `smoothing_window`:
+    - Keeps the FIRST timestamp (when event episode started)
+    - Keeps the MAXIMUM confidence score observed during the episode
+    """
+    if not raw_events:
+        return []
+
+    sorted_events = sorted(raw_events, key=lambda e: float(e["zaman_saniye"]))
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = collections.defaultdict(list)
+    for ev in sorted_events:
+        key = (str(ev["kategori"]), str(ev["etiket"]))
+        grouped[key].append(ev)
+        
+    final_events: list[dict[str, Any]] = []
+    
+    for key, event_list in grouped.items():
+        clusters: list[list[dict[str, Any]]] = []
+        current_cluster: list[dict[str, Any]] = []
+        
+        for ev in event_list:
+            if not current_cluster:
+                current_cluster.append(ev)
+            else:
+                prev_time = float(current_cluster[-1]["zaman_saniye"])
+                curr_time = float(ev["zaman_saniye"])
+                if curr_time - prev_time <= smoothing_window:
+                    current_cluster.append(ev)
+                else:
+                    clusters.append(current_cluster)
+                    current_cluster = [ev]
+        if current_cluster:
+            clusters.append(current_cluster)
+            
+        for cluster in clusters:
+            first_time = float(cluster[0]["zaman_saniye"])
+            max_conf = max(float(e["confidence_score"]) for e in cluster)
+            
+            merged_event = dict(cluster[0])
+            merged_event["zaman_saniye"] = round(first_time, 1)
+            merged_event["confidence_score"] = round(max_conf, 4)
+            final_events.append(merged_event)
+
+    final_events.sort(key=lambda e: float(e["zaman_saniye"]))
+    return [DetectionEvent.from_dict(ev) for ev in final_events]
 
 
 def _mode(items: list[str]) -> str:

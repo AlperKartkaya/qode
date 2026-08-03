@@ -1,1 +1,491 @@
-{"arac_bilgisi": {"tip": "Sedan (Docker)", "plaka": "34DOCKER123", "renk": "Siyah", "confidence_score": 0.99}, "tespitler": [{"zaman_saniye": 1, "kategori": "Risk", "etiket": "Emniyet Kemeri Yok (Docker)", "confidence_score": 0.9}, {"zaman_saniye": 4, "kategori": "Dikkat", "etiket": "Telefona Bak\u0131yor (Docker)", "confidence_score": 0.85}]}
+{
+  "video_id": "video.mp4",
+  "arac_bilgisi": {
+    "tip": "panelvan",
+    "plaka": "21C0521",
+    "renk": "siyah",
+    "confidence_score": 0.9022
+  },
+  "tespitler": [
+    {
+      "zaman_saniye": 0.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9971
+    },
+    {
+      "zaman_saniye": 1.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9973
+    },
+    {
+      "zaman_saniye": 1.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 4.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9996
+    },
+    {
+      "zaman_saniye": 4.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 6.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9997
+    },
+    {
+      "zaman_saniye": 8.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 11.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9981
+    },
+    {
+      "zaman_saniye": 11.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 11.0,
+      "kategori": "yolcular",
+      "etiket": "arka_koltuk_1",
+      "confidence_score": 0.78
+    },
+    {
+      "zaman_saniye": 14.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 1.0
+    },
+    {
+      "zaman_saniye": 14.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 16.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9988
+    },
+    {
+      "zaman_saniye": 20.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9756
+    },
+    {
+      "zaman_saniye": 20.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 23.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 1.0
+    },
+    {
+      "zaman_saniye": 23.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 25.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9994
+    },
+    {
+      "zaman_saniye": 27.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 28.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9977
+    },
+    {
+      "zaman_saniye": 30.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 31.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9212
+    },
+    {
+      "zaman_saniye": 32.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.977
+    },
+    {
+      "zaman_saniye": 35.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9997
+    },
+    {
+      "zaman_saniye": 36.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 38.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9961
+    },
+    {
+      "zaman_saniye": 39.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9998
+    },
+    {
+      "zaman_saniye": 40.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 41.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9096
+    },
+    {
+      "zaman_saniye": 42.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.989
+    },
+    {
+      "zaman_saniye": 46.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9966
+    },
+    {
+      "zaman_saniye": 46.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 47.0,
+      "kategori": "yolcular",
+      "etiket": "arka_koltuk_1",
+      "confidence_score": 0.78
+    },
+    {
+      "zaman_saniye": 49.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.8654
+    },
+    {
+      "zaman_saniye": 49.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 50.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.6006
+    },
+    {
+      "zaman_saniye": 53.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 54.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9646
+    },
+    {
+      "zaman_saniye": 56.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 56.0,
+      "kategori": "yolcular",
+      "etiket": "arka_koltuk_1",
+      "confidence_score": 0.78
+    },
+    {
+      "zaman_saniye": 57.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 1.0
+    },
+    {
+      "zaman_saniye": 58.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.6432
+    },
+    {
+      "zaman_saniye": 59.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 61.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9982
+    },
+    {
+      "zaman_saniye": 62.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 64.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9825
+    },
+    {
+      "zaman_saniye": 65.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 67.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9842
+    },
+    {
+      "zaman_saniye": 69.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9299
+    },
+    {
+      "zaman_saniye": 70.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 72.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9804
+    },
+    {
+      "zaman_saniye": 73.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 75.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9967
+    },
+    {
+      "zaman_saniye": 76.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9997
+    },
+    {
+      "zaman_saniye": 78.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 82.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9916
+    },
+    {
+      "zaman_saniye": 83.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.8299
+    },
+    {
+      "zaman_saniye": 83.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 86.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9996
+    },
+    {
+      "zaman_saniye": 88.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 90.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.992
+    },
+    {
+      "zaman_saniye": 91.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.6673
+    },
+    {
+      "zaman_saniye": 91.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 94.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9799
+    },
+    {
+      "zaman_saniye": 96.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 98.0,
+      "kategori": "yolcular",
+      "etiket": "arka_koltuk_1",
+      "confidence_score": 0.78
+    },
+    {
+      "zaman_saniye": 98.0,
+      "kategori": "yolcular",
+      "etiket": "arka_koltuk_2",
+      "confidence_score": 0.78
+    },
+    {
+      "zaman_saniye": 99.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9584
+    },
+    {
+      "zaman_saniye": 99.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 100.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.7647
+    },
+    {
+      "zaman_saniye": 101.0,
+      "kategori": "yolcular",
+      "etiket": "arka_koltuk_1",
+      "confidence_score": 0.78
+    },
+    {
+      "zaman_saniye": 101.0,
+      "kategori": "yolcular",
+      "etiket": "arka_koltuk_2",
+      "confidence_score": 0.78
+    },
+    {
+      "zaman_saniye": 102.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.9475
+    },
+    {
+      "zaman_saniye": 102.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 103.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9988
+    },
+    {
+      "zaman_saniye": 105.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 1.0
+    },
+    {
+      "zaman_saniye": 105.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 109.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "emniyet_kemeri_ihlali",
+      "confidence_score": 0.62
+    },
+    {
+      "zaman_saniye": 110.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "sigara_icme",
+      "confidence_score": 0.9983
+    },
+    {
+      "zaman_saniye": 111.0,
+      "kategori": "sofor_eylemi",
+      "etiket": "esneme",
+      "confidence_score": 0.7873
+    }
+  ]
+}
