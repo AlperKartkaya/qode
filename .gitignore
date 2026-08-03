@@ -3,10 +3,24 @@ __pycache__/
 .mypy_cache/
 .venv/
 venv/
+backend/venv/
 dist/
 build/
 *.pyc
 .DS_Store
+
+# Android build artifacts & gradle
+apps/android/build/
+apps/android/app/build/
+apps/android/.gradle/
+apps/android/local.properties
+.idea/
+.vscode/
+
+# Mobile Node & Expo artifacts
+apps/mobile/node_modules/
+apps/mobile/.expo/
+
 # Keep large video files and raw datasets out of git
 data/video_*.mp4
 data/test_clip.mp4
@@ -14,6 +28,7 @@ data/test-videos/
 data/datasets/
 out/
 .env
+
 # Model weights are downloaded automatically during Docker build (see Dockerfile).
 # They are NOT tracked in git because:
 #   yolo11x.pt  = 113 MB (> GitHub 100 MB limit)
@@ -21,10 +36,8 @@ out/
 *.pt
 
 logs/
-
 runs/
 
 data/training_data/
-
 data/input/
 data/output/
