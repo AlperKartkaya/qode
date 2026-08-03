@@ -221,6 +221,53 @@ def _enhance_crop_for_classification(crop: np.ndarray) -> np.ndarray:
     return sharpened
 
 
+def preprocess_inference_frame(image: np.ndarray) -> np.ndarray:
+    """
+    Kapsamlı ön işleme (Denoise -> Anti-Glare -> Sharpening).
+    Yapay zekaya gitmeden önce zorlu koşulları temizler.
+    """
+    if image is None or image.size == 0:
+        return image
+        
+    # Görüntünün ortalama parlaklığını (Luma) ölç
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    v_channel = hsv[:, :, 2]
+    mean_brightness = np.mean(v_channel)
+    
+    processed = image.copy()
+    
+    # 1. Düşük Işık / Gece Kumlanma Giderici (Bilateral Filter)
+    if mean_brightness < 80:
+        processed = cv2.bilateralFilter(processed, d=5, sigmaColor=50, sigmaSpace=50)
+        
+    # 2. Aşırı Parlama (Anti-Glare / Gamma + CLAHE)
+    elif mean_brightness > 130:
+        gamma = 1.0 - ((mean_brightness - 130) / 255.0) * 0.5
+        gamma = max(0.4, gamma)
+        
+        inv_gamma = 1.0 / gamma
+        table = np.array([((i / 255.0) ** inv_gamma) * 255 
+                          for i in np.arange(0, 256)]).astype("uint8")
+        
+        gamma_corrected = cv2.LUT(processed, table)
+        
+        lab = cv2.cvtColor(gamma_corrected, cv2.COLOR_BGR2LAB)
+        l_channel, a, b = cv2.split(lab)
+        
+        clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
+        cl = clahe.apply(l_channel)
+        
+        merged = cv2.merge((cl, a, b))
+        processed = cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
+        
+    # 3. Hareket Bulanıklığı Giderici (Unsharp Masking)
+    # Hafif bir keskinleştirme ile kenarları ve plakaları belirginleştir
+    blurred = cv2.GaussianBlur(processed, (0, 0), 2.0)
+    final_image = cv2.addWeighted(processed, 1.2, blurred, -0.2, 0)
+    
+    return final_image
+
+
 def extract_plate_text(crop: np.ndarray) -> Optional[str]:
     """Run EasyOCR on multiple enhanced versions of the plate crop.
 
@@ -679,6 +726,9 @@ class SceneAnalysisEngine:
             return result
 
         # ── YOLO inference ────────────────────────────────────────────────────
+        # Comprehensive Preprocessing (Anti-Glare / Denoise / Sharpen)
+        frame = preprocess_inference_frame(frame)
+        
         yolo_out = self.yolo(frame, verbose=False)[0]
         boxes = yolo_out.boxes
 
