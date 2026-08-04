@@ -249,6 +249,14 @@ PYTHONPATH=src python -m smart_road_safety.cli build-ftr-output examples/analysi
   --event-time-seconds 1.5
 PYTHONPATH=src python -m smart_road_safety.cli validate-ftr-output out/results.json
 
+# Gerçek FTR GT değerlendirmesi (tolerance geliştirme parametresidir)
+PYTHONPATH=src python -m smart_road_safety.cli evaluate-ftr \
+  --prediction out/faz2/results.json \
+  --ground-truth data/final_stage/faz2/ground_truth.json \
+  --timestamp-tolerance 1.0 \
+  --output out/final_stage/faz2_metrics.json \
+  --markdown-output out/final_stage/faz2_metrics.md
+
 # KTR report model artifacts and final report generation
 PYTHONPATH=src python -m smart_road_safety.cli train-report-models --max-driver-svt-rows 50000
 PYTHONPATH=src python -m smart_road_safety.cli build-final-report \
@@ -299,6 +307,8 @@ qode/
 │   ├── competition/
 │   │   └── ftr.py                   # FTR şema doğrulama ve JSON üretimi
 │   ├── data/                        # Manifest-backed adapters and real dataset loaders
+│   ├── evaluation/                  # Scenario ve gerçek FTR GT metrikleri
+│   ├── export/                      # Scenario/FTR markdown kanıtları
 │   ├── modeling/                    # KTR report-model artifact generation
 │   ├── reporting/                   # Final report DOCX/Markdown/evidence generation
 │   └── training/                    # Dataset preprocessing and model training

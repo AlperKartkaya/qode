@@ -3,7 +3,7 @@
 - **Plan tarihi:** 1 Ağustos 2026
 - **Final:** 8–9 Ağustos 2026
 - **AI image değişiklik son tarihi:** 7 Ağustos 2026, 21:00
-- **Durum:** P0 ve P1 uygulandı; P2 öncesi review kapısında (4 Ağustos 2026)
+- **Durum:** P0–P2 uygulandı; P3 öncesi kanıt kapısında (4 Ağustos 2026)
 **Kapsam:** Faz 2 ground truth, düşük/yüksek çözünürlüklü video inference, mobil canlı demo, Open Gateway Number Verification ve Quality on Demand, backend, Docker/Web UI, değerlendirme ve final operasyonu
 
 Bu dosya final aşaması için yapılacak işlerin sırasını, bağımlılıklarını, uygulanacağı kod yüzeylerini, kabul ölçütlerini ve doğrulama komutlarını tek yerde toplar. Kod değişikliğine başlanırken ilk referans bu plan ve `assumptions.md` olacaktır. Eski `docs/ktr_implementation_plan.md` geçmiş KTR/FTR çalışmasının kaydı olarak kalır; final operasyonunun güncel planı bu dosyadır.
@@ -320,6 +320,12 @@ remote varyantlar manifest envanterinde açıkça `remote` durumundadır.
 ---
 
 ## P2 — Gerçek FTR ground-truth evaluator'ını ekle
+
+**Uygulama durumu (4 Ağustos):** Validator-first vehicle/event evaluator,
+one-to-one timestamp matching, per-label/per-family ve micro/macro metrikler,
+0.5/1/2/3 saniye sensitivity tablosu, CLI JSON çıktısı ve Markdown kanıtı
+tamamlandı. Faz 2 GT-vs-GT smoke sonucu 34 TP, 0 FP, 0 FN ve F1=1.0'dır;
+bu yalnız evaluator bütünlük kontrolüdür, model başarısı değildir.
 
 **Amaç:** Model değişikliklerini sentetik scenario skoru yerine sağlanan GT ile ölçmek.
 

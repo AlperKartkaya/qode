@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -93,7 +94,7 @@ def _require_text(value: str, field_name: str) -> str:
 
 
 def _require_score(value: float, field_name: str) -> float:
-    if not 0.0 <= value <= 1.0:
+    if not math.isfinite(value) or not 0.0 <= value <= 1.0:
         raise ValueError(f"{field_name} must be between 0.0 and 1.0.")
     return value
 
@@ -164,8 +165,8 @@ class DetectionEvent:
     confidence_score: float
 
     def __post_init__(self) -> None:
-        if self.zaman_saniye < 0:
-            raise ValueError("zaman_saniye must be non-negative.")
+        if not math.isfinite(self.zaman_saniye) or self.zaman_saniye < 0:
+            raise ValueError("zaman_saniye must be finite and non-negative.")
         kategori = _require_ascii_label(self.kategori, "kategori")
         etiket = _require_ascii_label(self.etiket, "etiket")
         allowed_labels = DETECTION_LABELS_BY_CATEGORY.get(kategori)

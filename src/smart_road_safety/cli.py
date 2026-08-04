@@ -14,8 +14,12 @@ from .competition import (
     write_ftr_result,
 )
 from .data import build_adapter_from_manifest_path
-from .evaluation import run_scenario_suite
-from .export import export_scenario_report_markdown
+from .evaluation import (
+    evaluate_ftr_files,
+    run_scenario_suite,
+    write_ftr_evaluation_report,
+)
+from .export import export_ftr_metrics_markdown, export_scenario_report_markdown
 from .integration import (
     MockNumberVerificationGateway,
     MockQualityOnDemandGateway,
@@ -168,6 +172,28 @@ def _build_parser() -> argparse.ArgumentParser:
     validate_ftr_output.add_argument(
         "result_path",
         help="Path to a results.json file.",
+    )
+
+    evaluate_ftr = subparsers.add_parser(
+        "evaluate-ftr",
+        help="Evaluate validated FTR predictions against validated ground truth.",
+    )
+    evaluate_ftr.add_argument("--prediction", required=True)
+    evaluate_ftr.add_argument("--ground-truth", required=True)
+    evaluate_ftr.add_argument(
+        "--timestamp-tolerance",
+        type=float,
+        default=1.0,
+        help=(
+            "Development event matching tolerance in seconds; this is not an "
+            "official competition rule."
+        ),
+    )
+    evaluate_ftr.add_argument("--output", required=True)
+    evaluate_ftr.add_argument(
+        "--markdown-output",
+        default=None,
+        help="Optional judge-friendly markdown report path.",
     )
 
     train_report_models_parser = subparsers.add_parser(
@@ -465,6 +491,29 @@ def _validate_ftr_output(result_path: str) -> int:
     return 0
 
 
+def _evaluate_ftr(
+    prediction_path: str,
+    ground_truth_path: str,
+    timestamp_tolerance: float,
+    output_path: str,
+    markdown_output: str | None,
+) -> int:
+    report = evaluate_ftr_files(
+        prediction_path=prediction_path,
+        ground_truth_path=ground_truth_path,
+        timestamp_tolerance_seconds=timestamp_tolerance,
+    )
+    target = write_ftr_evaluation_report(report, output_path)
+    print(f"metrics_path={target}")
+    if markdown_output is not None:
+        markdown_target = export_ftr_metrics_markdown(
+            report.to_dict(), markdown_output
+        )
+        print(f"markdown_path={markdown_target}")
+    print(json.dumps(asdict(report.events.micro), indent=2))
+    return 0
+
+
 def _train_report_models(
     data_root: str, output_dir: str, max_driver_svt_rows: int
 ) -> int:
@@ -599,6 +648,14 @@ def main() -> int:
         )
     if args.command == "validate-ftr-output":
         return _validate_ftr_output(args.result_path)
+    if args.command == "evaluate-ftr":
+        return _evaluate_ftr(
+            args.prediction,
+            args.ground_truth,
+            args.timestamp_tolerance,
+            args.output,
+            args.markdown_output,
+        )
     if args.command == "train-report-models":
         return _train_report_models(
             args.data_root,
