@@ -60,6 +60,7 @@
       "class_inspection": "ultralytics_names",
       "class_match": "exact",
       "availability": "published"
+    },
     {
       "id": "offline_ocr_bundle",
       "role": "Turkish/English plate OCR detector and recognizer tar bundle extracted to EASYOCR_MODULE_PATH",
