@@ -60,20 +60,6 @@
       "class_inspection": "ultralytics_names",
       "class_match": "exact",
       "availability": "published"
-    },
-    {
-      "id": "vehicle_color_classifier",
-      "role": "calibrated FTR vehicle color classifier",
-      "filename": "vehicle_color_classifier.pt",
-      "source": "not yet trained/published",
-      "license": "undetermined",
-      "model_version": "unavailable",
-      "sha256": null,
-      "download_url": null,
-      "expected_classes": ["beyaz", "siyah", "gri", "kirmizi", "mavi", "sari", "yesil", "turuncu", "kahverengi"],
-      "class_inspection": "torch_class_names",
-      "availability": "external-blocker"
-    },
     {
       "id": "offline_ocr_bundle",
       "role": "Turkish/English plate OCR detector and recognizer tar bundle extracted to EASYOCR_MODULE_PATH",
