@@ -30,9 +30,8 @@ interface ApiService {
 }
 
 object ApiClient {
-    // 10.0.2.2 connects Android Emulator to host Mac localhost:8000!
-    // Set to "http://34.86.94.186:8000/" for remote VM.
-    var baseUrl: String = "http://10.0.2.2:8000/"
+    // Connects Android App to the remote Teknofest Google Cloud VM Backend!
+    var baseUrl: String = "http://34.86.94.186:8000/"
 
     private fun getOkHttpClient(): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
