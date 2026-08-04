@@ -10,6 +10,9 @@ from PIL import Image
 import cv2
 import numpy as np
 
+# Prevent OpenCV from spawning extra threads that cause RAM OOM on small VMs
+cv2.setNumThreads(0)
+
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
@@ -82,7 +85,7 @@ def train_model():
     ])
 
     pytorch_dataset = HFImageDataset(hf_dataset, transform=train_transforms)
-    dataloader = DataLoader(pytorch_dataset, batch_size=16, shuffle=True)
+    dataloader = DataLoader(pytorch_dataset, batch_size=8, shuffle=True)
     
     model = models.efficientnet_b2(weights=models.EfficientNet_B2_Weights.DEFAULT)
     

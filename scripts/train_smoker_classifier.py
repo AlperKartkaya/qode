@@ -9,6 +9,9 @@ from PIL import Image
 import cv2
 import numpy as np
 
+# Prevent OpenCV from spawning extra threads that cause RAM OOM on small VMs
+cv2.setNumThreads(0)
+
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
@@ -104,7 +107,7 @@ def train_smoker_model():
     ])
 
     pytorch_dataset = HFImageDataset(dataset, transform=train_transforms)
-    dataloader = DataLoader(pytorch_dataset, batch_size=32, shuffle=True)
+    dataloader = DataLoader(pytorch_dataset, batch_size=8, shuffle=True)
     
     # We use a lightweight MobileNetV3 for fast face classification
     print("Initializing MobileNetV3 model...")
