@@ -69,7 +69,7 @@ def train_smoker_model():
         dataset = load_dataset("QoDe-5G/qode-smoker-detection", split="train")
     except Exception as e:
         print(f"Failed to load dataset: {e}")
-        return
+        sys.exit(1)
         
     print(f"Loaded {len(dataset)} images.")
     
@@ -89,7 +89,8 @@ def train_smoker_model():
                 
     if label_col is None:
         print(f"HATA: Veri setinde etiket kolonu bulunamadı! Kolonlar: {list(features.keys())}")
-        return
+        print("ÇÖZÜM: Veri setiniz HuggingFace'te oluşturulurken etiketsiz (labelsiz) yüklenmiş.")
+        sys.exit(1)
         
     classes = features[label_col].names if hasattr(features[label_col], "names") else ["not_smoking", "smoking"]
     print(f"Detected classes: {classes}")
