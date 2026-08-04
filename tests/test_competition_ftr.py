@@ -118,3 +118,22 @@ class FtrCompetitionContractTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class AtomicFtrWriteTests(unittest.TestCase):
+    def test_atomic_timeline_write_is_deterministic(self):
+        import tempfile
+        from pathlib import Path
+        from smart_road_safety.competition import (
+            DetectionEvent, VehicleInfo, build_ftr_result_from_timeline,
+            read_ftr_result, write_ftr_result_atomic,
+        )
+        vehicle = VehicleInfo("suv", "34TC8532", "siyah", 0.9)
+        events = [
+            DetectionEvent(2.0, "nesneler", "teknocan", 0.8),
+            DetectionEvent(1.0, "sofor_eylemi", "esneme", 0.7),
+        ]
+        result = build_ftr_result_from_timeline("video.mp4", vehicle, events)
+        with tempfile.TemporaryDirectory() as temp:
+            target = write_ftr_result_atomic(result, Path(temp) / "results.json")
+            self.assertEqual([e.zaman_saniye for e in read_ftr_result(target).tespitler], [1.0, 2.0])
+            self.assertFalse(any(Path(temp).glob("*.tmp")))

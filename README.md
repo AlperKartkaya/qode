@@ -99,7 +99,7 @@ Desteklenen etiketler:
 | `nesneler` | `teknocan` (Özel yolo11n Ajan Modeli), `bilgisayar` |
 | `yolcular` | `arka_koltuk_1`, `arka_koltuk_2`, `on_koltuk` |
 
-Repo exact keyleri, izin verilen etiketleri, confidence aralıklarını, ASCII-safe etiketleri ve Türk plaka regex uyumluluğunu doğrular. Mevcut support veri setleri tüm örneklerde exact araç tipi/renk/plaka metni içermediği için bu alanlar gerçek model/anotasyon kaynağı gelene kadar inference veya açık `vehicle_info.json` sidecar gerektirir.
+Repo exact keyleri, izin verilen etiketleri, confidence aralıklarını, ASCII-safe etiketleri ve Türk plaka regex uyumluluğunu doğrular. Final runtime bu alanları yalnız inference'tan üretir; `vehicle_info.json` sidecar yalnız açık development modunda kullanılabilir.
 
 ---
 
@@ -169,7 +169,9 @@ pip install -r requirements.txt
 
 ## Model Ağırlıkları
 
-Model ağırlıkları boyutları nedeniyle git'e dahil edilmez. Docker build aşamasında otomatik indirilir.
+Model ağırlıkları boyutları nedeniyle git'e dahil edilmez. `config/runtime_assets.json`
+tek envanterdir; downloader checksum ile doğrulanmış public asset'leri staging'e alır.
+Eksik/unfrozen final asset build sırasında açık hata üretir ve runtime download yapılmaz.
 
 **Yerel geliştirme için:**
 
@@ -204,17 +206,24 @@ PYTHONPATH=src python -m smart_road_safety.cli train-report-models --max-driver-
 
 ## Docker ile Çalıştırma
 
-**Önemli:** `docker build` öncesinde `data/weights/driver_classifier.pt` dosyasının mevcut olması gerekir. Bunu yukarıdaki eğitim adımlarıyla veya weight download akışıyla oluşturun.
+**Önemli:** `docker build` öncesinde manifestteki bütün final asset'ler `data/weights/`
+altında ve checksum/class mapping doğrulamasından geçmiş olmalıdır. Mevcut teslimde
+color/cabin head'leri ile frozen main-detector/OCR bundle eksik olduğundan final build
+kasıtlı olarak fail-closed davranır.
 
 ```bash
-# 1. Image oluştur (model ağırlıkları bu aşamada indirilir — timeout'a dahil değil)
-docker build -t teknofest-2026/qode:latest .
+# 1. Asset release kapısını çalıştır
+PYTHONPATH=src python -m smart_road_safety.cli check-runtime-assets \
+  --asset-root data/weights --mode final --inspect-classes
 
-# 2. Değerlendirme ortamına uygun şekilde çalıştır
-docker run --rm --gpus all \
+# 2. Image oluştur (runtime asset download yoktur)
+docker build --platform linux/amd64 -t teknofest-2026/qode-final:2026.08-p4 .
+
+# 3. Değerlendirme ortamına uygun, ağsız çalıştır
+docker run --rm --network none --gpus all \
   -v /path/to/video.mp4:/app/data/input/video.mp4 \
   -v /path/to/output:/app/data/output \
-  teknofest-2026/qode:latest
+  teknofest-2026/qode-final:2026.08-p4
 
 # Sonuç: /path/to/output/results.json
 ```
@@ -361,5 +370,5 @@ The current pipeline is dataset-backed, FTR-aware, model-training enabled, and r
 
 - **Plaka OCR**: Yol kenarı kameralarda düşük çözünürlük nedeniyle başarı oranı değişken. Plaka bulunamazsa `"tespit_edilemedi"` olarak işaretlenir.
 - **Number Verification / QoD API**: Gerçek Turkcell endpoint'leri mevcut değil — mock implementasyon kullanılıyor.
-- Organizer-side metadata/ground-truth for final hidden videos is not available locally; current `main.py` uses inference and only accepts explicit `vehicle_info.json` as a sidecar override.
+- Organizer-side metadata/ground-truth for final hidden videos is not available locally; final `main.py` only uses validated model inference and rejects metadata sidecars or fabricated vehicle values.
 - Exact FTR vehicle type/color/plate/object/passenger labels tüm local sample'larda yoktur; bu alanlar ek veri veya curated annotation gerektirir.

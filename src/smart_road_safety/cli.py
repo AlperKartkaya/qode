@@ -31,6 +31,8 @@ from .modeling import train_report_models
 from .orchestration import SessionRequest, TelecomOrchestrator
 from .policy import QodPolicy, load_default_qod_policy
 from .qod import SceneSignal, evaluate_qod_need
+from .runtime_assets import check_runtime_assets
+from .runtime_readiness import check_runtime_readiness
 from .reporting import build_final_report
 
 
@@ -43,6 +45,19 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser(
         "print-assumptions", help="Print the current coded assumption registry."
     )
+
+    check_assets = subparsers.add_parser("check-runtime-assets", help="Validate frozen model assets and class mappings.")
+    check_assets.add_argument("--manifest", default="config/runtime_assets.json")
+    check_assets.add_argument("--asset-root", default="data/weights")
+    check_assets.add_argument("--mode", choices=("final", "development"), default="final")
+    check_assets.add_argument("--inspect-classes", action="store_true")
+
+    readiness = subparsers.add_parser("check-runtime-readiness", help="Check final GPU/assets/output/schema/model warm-up readiness.")
+    readiness.add_argument("--manifest", default="config/runtime_assets.json")
+    readiness.add_argument("--asset-root", default="/app/weights")
+    readiness.add_argument("--output-dir", default="/app/data/output")
+    readiness.add_argument("--allow-cpu", action="store_true")
+    readiness.add_argument("--skip-warmup", action="store_true")
 
     check_manifest = subparsers.add_parser(
         "check-manifest", help="Check a dataset manifest against current assumptions."
@@ -354,6 +369,24 @@ def _print_assumptions() -> int:
     return 0
 
 
+def _check_runtime_assets_command(args: argparse.Namespace) -> int:
+    report = check_runtime_assets(args.manifest, args.asset_root, args.mode, args.inspect_classes)
+    print(json.dumps(report.to_dict(), indent=2))
+    return 0 if report.ready else 2
+
+
+def _check_runtime_readiness_command(args: argparse.Namespace) -> int:
+    report = check_runtime_readiness(
+        args.manifest,
+        args.asset_root,
+        args.output_dir,
+        require_gpu=not args.allow_cpu,
+        warmup=not args.skip_warmup,
+    )
+    print(json.dumps(report.to_dict(), indent=2))
+    return 0 if report.ready else 2
+
+
 def _check_manifest(manifest_path: str) -> int:
     manifest = DatasetManifest.from_path(manifest_path)
     gaps = compare_manifest_to_assumptions(manifest)
@@ -623,6 +656,10 @@ def main() -> int:
 
     if args.command == "print-assumptions":
         return _print_assumptions()
+    if args.command == "check-runtime-assets":
+        return _check_runtime_assets_command(args)
+    if args.command == "check-runtime-readiness":
+        return _check_runtime_readiness_command(args)
     if args.command == "check-manifest":
         return _check_manifest(args.manifest_path)
     if args.command == "plan-ingestion":

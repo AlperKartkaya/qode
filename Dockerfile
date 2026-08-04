@@ -1,84 +1,51 @@
-FROM nvidia/cuda:12.1.0-base-ubuntu22.04
+FROM --platform=linux/amd64 nvidia/cuda@sha256:c348da4a5ab1edae77c22efa89d6915eab7f4cf26ee2c3ca60d94e21c32d4062
 
-ENV DEBIAN_FRONTEND=noninteractive
+ARG QODE_VERSION=2026.08-p4
+ARG VCS_REF=unknown
+ARG BUILD_DATE=unknown
+LABEL org.opencontainers.image.title="QoDe Final Inference" \
+      org.opencontainers.image.version="${QODE_VERSION}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      qode.ftr.schema-version="1" \
+      qode.runtime.asset-manifest="config/runtime_assets.json"
 
-# System packages — OpenCV ve ffmpeg için gerekli
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    ffmpeg \
-    libsm6 \
-    libxext6 \
-    libgl1-mesa-glx \
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONPATH=/app/src \
+    QODE_RUNTIME_MODE=final \
+    QODE_SAMPLE_FPS=4 \
+    HF_HUB_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1 \
+    YOLO_OFFLINE=1 \
+    EASYOCR_MODULE_PATH=/app/weights/easyocr
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip ffmpeg libsm6 libxext6 libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 RUN mkdir -p /app/data/input /app/data/output /app/weights
 
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+COPY requirements-runtime.txt /app/requirements-runtime.txt
+RUN pip3 install --no-cache-dir -r /app/requirements-runtime.txt
 
-# ── Model ağırlıkları BUILD aşamasında indirilir ──────────────────────────────
-# Docker build süresi 10 dakika timeout'una dahil DEĞİLDİR.
-# Tüm ağırlıklar burada hazırlanır → konteyner tamamen offline çalışır.
-
-# 1. YOLO11x — Ultralytics public model
-RUN python3 <<'PY'
-import pathlib
-import shutil
-import ssl
-
-from ultralytics import YOLO
-
-ssl._create_default_https_context = ssl._create_unverified_context
-
-YOLO("yolo11x.pt")
-dst = pathlib.Path("/app/weights/yolo11x.pt")
-candidates = (
-    pathlib.Path("yolo11x.pt"),
-    pathlib.Path.home() / ".config" / "Ultralytics" / "yolo11x.pt",
-)
-for candidate in candidates:
-    if candidate.exists():
-        shutil.copy(candidate, dst)
-        break
-if not dst.exists():
-    raise FileNotFoundError("yolo11x.pt could not be found after Ultralytics download")
-print("[OK] yolo11x.pt ready at", dst)
-PY
-
-# 2. EasyOCR dil modelleri (tr + en) — build aşamasında önbellek
-RUN python3 -c "import easyocr; easyocr.Reader(['tr', 'en'], gpu=False); print('[OK] EasyOCR models ready.')" || true
-
-# 3. Eğitilmiş ağırlıklar — Hugging Face Hub: QoDe-5G/qode-models
-#    Build argümanı: docker build --build-arg HF_TOKEN=hf_xxxx .
-ARG HF_TOKEN=""
-
-RUN python3 <<'PY'
-import os
-
-from huggingface_hub import hf_hub_download
-
-token = os.environ.get("HF_TOKEN", "$HF_TOKEN") or None
-repo = "QoDe-5G/qode-models"
-for fname in ("driver_classifier.pt", "vehicle_type_classifier.pt"):
-    try:
-        path = hf_hub_download(
-            repo_id=repo,
-            filename=fname,
-            local_dir="/app/weights/",
-            token=token,
-        )
-        print(f"[OK] {fname} ready at {path}")
-    except Exception as exc:
-        print(f"[WARN] {fname} could not be downloaded: {exc}")
-PY
-
-# Kaynak kod
 COPY src/ /app/src/
-COPY main.py .
-COPY README.md .
+COPY config/runtime_assets.json /app/config/runtime_assets.json
+COPY config/runtime_environment.json /app/config/runtime_environment.json
+COPY data/weights/ /app/weights/
+COPY main.py /app/main.py
 
-ENV PYTHONPATH=/app/src
+# Missing, unfrozen, checksum-invalid, or class-incompatible production assets
+# deliberately make the final image build fail.
+RUN python3 -m smart_road_safety.cli check-runtime-assets \
+    --manifest /app/config/runtime_assets.json --asset-root /app/weights \
+    --mode final --inspect-classes
+RUN mkdir -p /app/weights/easyocr && \
+    tar -xf /app/weights/easyocr-tr-en.bundle -C /app/weights/easyocr
 
-CMD ["python3", "main.py"]
+HEALTHCHECK --interval=30s --timeout=20s --retries=1 \
+  CMD python3 -m smart_road_safety.cli check-runtime-readiness \
+      --manifest /app/config/runtime_assets.json --asset-root /app/weights \
+      --output-dir /app/data/output || exit 1
+
+CMD ["python3", "/app/main.py", "--mode", "final", "--input-dir", "/app/data/input", "--output-dir", "/app/data/output", "--asset-root", "/app/weights", "--asset-manifest", "/app/config/runtime_assets.json"]

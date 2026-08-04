@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "model_bundle_version": "2026.08-p3",
+  "supported_ftr_labels": {
+    "sofor_eylemi": ["arkaya_bakma", "esneme", "sigara_icme", "su_icme", "telefonla_konusma", "slalom", "etrafa_bakinma", "emniyet_kemeri_ihlali"],
+    "nesneler": ["teknocan", "bilgisayar"],
+    "yolcular": ["arka_koltuk_1", "arka_koltuk_2", "on_koltuk"]
+  },
+  "assets": [
+    {
+      "id": "main_detector",
+      "role": "vehicle/person/phone/laptop detector",
+      "filename": "yolo11x.pt",
+      "source": "https://github.com/ultralytics/assets/releases",
+      "license": "AGPL-3.0",
+      "model_version": "YOLO11x; exact release not frozen",
+      "sha256": null,
+      "download_url": null,
+      "expected_classes": ["person", "car", "motorcycle", "bus", "truck", "laptop", "cell phone"],
+      "class_inspection": "ultralytics_names",
+      "class_match": "contains",
+      "availability": "external-blocker"
+    },
+    {
+      "id": "driver_action_classifier",
+      "role": "driver action classifier",
+      "filename": "driver_classifier.pt",
+      "source": "https://huggingface.co/QoDe-5G/qode-models",
+      "license": "MIT",
+      "model_version": "HF revision 9974f608552ad7bf88a7c7e5a8da56cc767a78f4",
+      "sha256": "4d83e4d7594c62dafe659c601dfae6cb3cf9c3c58d808ba0b4af9f91a7807f08",
+      "download_url": "https://huggingface.co/QoDe-5G/qode-models/resolve/9974f608552ad7bf88a7c7e5a8da56cc767a78f4/driver_classifier.pt",
+      "expected_classes": ["arkaya_bakma", "esneme", "etrafa_bakinma", "safe_driving", "sigara_icme", "su_icme", "telefonla_konusma"],
+      "class_inspection": "torch_class_names",
+      "availability": "published"
+    },
+    {
+      "id": "vehicle_type_classifier",
+      "role": "calibrated FTR vehicle type classifier",
+      "filename": "vehicle_type_classifier.pt",
+      "source": "https://huggingface.co/QoDe-5G/qode-models",
+      "license": "MIT",
+      "model_version": "HF revision 9974f608552ad7bf88a7c7e5a8da56cc767a78f4",
+      "sha256": "56d9b714c5d7d532bd673a021066121ed8cd1ba09637bb9ff12d4e45bb548ff0",
+      "download_url": "https://huggingface.co/QoDe-5G/qode-models/resolve/9974f608552ad7bf88a7c7e5a8da56cc767a78f4/vehicle_type_classifier.pt",
+      "expected_classes": ["hatchback", "kamyon", "minibus", "panelvan", "pickup", "sedan", "suv"],
+      "class_inspection": "torch_class_names",
+      "availability": "published"
+    },
+    {
+      "id": "license_plate_detector",
+      "role": "license plate detector",
+      "filename": "license_plate_detector.pt",
+      "source": "https://huggingface.co/QoDe-5G/qode-models",
+      "license": "AGPL-3.0",
+      "model_version": "HF revision 9974f608552ad7bf88a7c7e5a8da56cc767a78f4",
+      "sha256": "4c872fd9cfe9268958c382ca8884a2e68c2170d407f4ad2accb261d13014dfa7",
+      "download_url": "https://huggingface.co/QoDe-5G/qode-models/resolve/9974f608552ad7bf88a7c7e5a8da56cc767a78f4/license_plate_detector.pt",
+      "expected_classes": ["plaka"],
+      "class_inspection": "ultralytics_names",
+      "class_match": "exact",
+      "availability": "published"
+    },
+    {
+      "id": "vehicle_color_classifier",
+      "role": "calibrated FTR vehicle color classifier",
+      "filename": "vehicle_color_classifier.pt",
+      "source": "not yet trained/published",
+      "license": "undetermined",
+      "model_version": "unavailable",
+      "sha256": null,
+      "download_url": null,
+      "expected_classes": ["beyaz", "siyah", "gri", "kirmizi", "mavi", "sari", "yesil", "turuncu", "kahverengi"],
+      "class_inspection": "torch_class_names",
+      "availability": "external-blocker"
+    },
+    {
+      "id": "offline_ocr_bundle",
+      "role": "Turkish/English plate OCR detector and recognizer tar bundle extracted to EASYOCR_MODULE_PATH",
+      "filename": "easyocr-tr-en.bundle",
+      "source": "https://www.jaided.ai/easyocr/modelhub/",
+      "license": "Apache-2.0 and model-specific upstream terms",
+      "model_version": "reproducible tar bundle not yet frozen",
+      "sha256": null,
+      "download_url": null,
+      "expected_classes": ["tr", "en"],
+      "class_inspection": "sidecar_json",
+      "availability": "external-blocker"
+    },
+    {
+      "id": "teknocan_detector",
+      "role": "teknocan detector",
+      "filename": "teknocan_detector.pt",
+      "source": "https://huggingface.co/QoDe-5G/qode-models",
+      "license": "AGPL-3.0",
+      "model_version": "HF revision 9974f608552ad7bf88a7c7e5a8da56cc767a78f4",
+      "sha256": "58a786fff875144ff67e6ad83bafe7dfb3687ed69dc1a6b8d32899f765aa1175",
+      "download_url": "https://huggingface.co/QoDe-5G/qode-models/resolve/9974f608552ad7bf88a7c7e5a8da56cc767a78f4/teknocan_detector.pt",
+      "expected_classes": ["teknocan"],
+      "class_inspection": "ultralytics_names",
+      "availability": "published"
+    },
+    {
+      "id": "cabin_detector",
+      "role": "seatbelt, computer, and calibrated passenger-seat detector",
+      "filename": "cabin_detector.pt",
+      "source": "not yet trained/published",
+      "license": "undetermined",
+      "model_version": "unavailable",
+      "sha256": null,
+      "download_url": null,
+      "expected_classes": ["emniyet_kemeri_ihlali", "bilgisayar", "arka_koltuk_1", "arka_koltuk_2", "on_koltuk"],
+      "class_inspection": "ultralytics_names",
+      "availability": "external-blocker"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "target_platform": "linux/amd64 with NVIDIA Container Toolkit",
+  "base_image": "nvidia/cuda:12.1.0-base-ubuntu22.04",
+  "base_image_platform_digest": "sha256:c348da4a5ab1edae77c22efa89d6915eab7f4cf26ee2c3ca60d94e21c32d4062",
+  "python_runtime": "Ubuntu 22.04 system python3 (3.10)",
+  "python_requirement_lock": "requirements-runtime.txt",
+  "python_requirement_lock_sha256": "c272eab451bae820e0d0226a035a0419dd597c41453033a6d85706b4d0061515",
+  "cuda_runtime": "12.1",
+  "torch": "2.5.1",
+  "torchvision": "0.20.1",
+  "ftr_schema_version": "1",
+  "runtime_network": "disabled by benchmark/runbook; model downloads prohibited"
+}

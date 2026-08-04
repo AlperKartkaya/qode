@@ -5,11 +5,11 @@ Handles all per-frame inference:
   • YOLO11x object/vehicle detection
   • Driver behaviour classification (EfficientNet-B2 or MobileNetV3)
   • Vehicle type classification (EfficientNet-B0 fine-tuned, with TTA & priors)
-  • Passenger zone detection (geometric — arka_koltuk_1/2, on_koltuk)
+  • Calibrated cabin detection (passenger seats, seatbelt, computer)
   • License plate OCR (EasyOCR with crop-zoom-enhance preprocessing)
   • License plate detection (YOLO fine-tuned plate detector)
   • Vehicle color classification (K-Means dominant colour)
-  • Seatbelt violation detection (heuristic on driver crop)
+  • Explicit development-only geometry fallbacks; prohibited in final mode
 
 Enhanced preprocessing pipeline:
   • Driver crop:  windshield ROI → CLAHE → upscale → sharpen
@@ -18,9 +18,6 @@ Enhanced preprocessing pipeline:
 """
 
 import re
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
-
 import cv2
 import numpy as np
 import torch
@@ -35,7 +32,7 @@ from typing import Optional
 
 _ocr_engine = None
 
-def get_ocr_engine():
+def get_ocr_engine(strict: bool = False):
     global _ocr_engine
     if _ocr_engine is None:
         try:
@@ -44,8 +41,10 @@ def get_ocr_engine():
             _ocr_engine = easyocr.Reader(['tr', 'en'], gpu=gpu)
             print("EasyOCR reader initialised.")
         except Exception as e:
-            print(f"Warning: EasyOCR failed to load: {e}. OCR will be skipped.")
             _ocr_engine = None
+            if strict:
+                raise RuntimeError(f"EasyOCR failed to load: {e}") from e
+            print(f"[Engine] Development OCR unavailable: {e}")
     return _ocr_engine
 
 
@@ -268,16 +267,16 @@ def preprocess_inference_frame(image: np.ndarray) -> np.ndarray:
     return final_image
 
 
-def extract_plate_text(crop: np.ndarray) -> Optional[str]:
+def extract_plate_prediction(crop: np.ndarray, strict: bool = False) -> tuple[Optional[str], float]:
     """Run EasyOCR on multiple enhanced versions of the plate crop.
 
     Tries original 2x, then 4x LANCZOS4, CLAHE, adaptive threshold, Otsu,
     sharpened, and high-contrast variants. Returns the best valid Turkish plate
     string or None.
     """
-    ocr = get_ocr_engine()
+    ocr = get_ocr_engine(strict=strict)
     if ocr is None or crop is None or crop.size == 0:
-        return None
+        return None, 0.0
 
     # Collect all candidate reads across multiple preprocessing variants
     candidates: dict[str, float] = {}  # plate_text → best_confidence
@@ -312,9 +311,14 @@ def extract_plate_text(crop: np.ndarray) -> Optional[str]:
     if candidates:
         # Return the candidate with highest confidence
         best = max(candidates, key=candidates.get)
-        return best
+        return best, float(candidates[best])
 
-    return None
+    return None, 0.0
+
+
+def extract_plate_text(crop: np.ndarray, strict: bool = False) -> Optional[str]:
+    """Backward-compatible text-only wrapper for support tooling."""
+    return extract_plate_prediction(crop, strict=strict)[0]
 
 
 # ── Model loading helpers ─────────────────────────────────────────────────────
@@ -355,8 +359,13 @@ class SceneAnalysisEngine:
         yolo_model_name: str = "yolo11x.pt",
         driver_model_path: str = "data/weights/driver_classifier.pt",
         vehicle_type_model_path: str = "data/weights/vehicle_type_classifier.pt",
+        vehicle_color_model_path: str = "data/weights/vehicle_color_classifier.pt",
         teknocan_model_path: str = "data/weights/teknocan_detector.pt",
+        plate_model_path: str = "data/weights/license_plate_detector.pt",
+        cabin_model_path: str = "data/weights/cabin_detector.pt",
+        allow_degraded: bool = False,
     ):
+        self.allow_degraded = allow_degraded
         # ── Device ───────────────────────────────────────────────────────────
         if torch.cuda.is_available():
             self.device = torch.device("cuda")
@@ -375,9 +384,11 @@ class SceneAnalysisEngine:
                 self.yolo = YOLO(str(yolo_path))
                 print(f"[Engine] YOLO loaded: {yolo_path}")
             except Exception as e:
-                print(f"[Engine] YOLO load failed: {e}")
+                self._load_failure("Main detector", e)
         else:
-            print(f"[Engine] YOLO weights not found ({yolo_model_name}). Detection skipped.")
+            if not self.allow_degraded:
+                raise RuntimeError("Main detector weights are required in final mode")
+            print(f"[Engine] Main detector unavailable in development mode: {yolo_model_name}")
 
         # ── Teknocan YOLO ─────────────────────────────────────────────────────
         self.teknocan_yolo = None
@@ -388,12 +399,26 @@ class SceneAnalysisEngine:
                 self.teknocan_yolo = YOLO(str(tekno_path))
                 print(f"[Engine] Teknocan YOLO loaded: {tekno_path}")
             except Exception as e:
-                print(f"[Engine] Teknocan YOLO load failed: {e}")
+                self._load_failure("Teknocan detector", e)
+        elif not self.allow_degraded:
+            raise RuntimeError("Teknocan detector weights are required in final mode")
+
+        self.cabin_yolo = None
+        cabin_path = _resolve_weights(cabin_model_path, "/app/weights/cabin_detector.pt")
+        if cabin_path:
+            try:
+                from ultralytics import YOLO
+                self.cabin_yolo = YOLO(str(cabin_path))
+                print(f"[Engine] Cabin detector loaded: {cabin_path}")
+            except Exception as e:
+                self._load_failure("Cabin detector", e)
+        elif not self.allow_degraded:
+            raise RuntimeError("Cabin detector weights are required in final mode")
 
         # ── License plate detector (YOLO fine-tuned) ──────────────────────────
         self.plate_detector = None
         plate_det_path = _resolve_weights(
-            "data/weights/license_plate_detector.pt",
+            plate_model_path,
             "/app/weights/license_plate_detector.pt",
         )
         if plate_det_path:
@@ -402,9 +427,11 @@ class SceneAnalysisEngine:
                 self.plate_detector = YOLO(str(plate_det_path))
                 print(f"[Engine] Plate detector loaded: {plate_det_path}")
             except Exception as e:
-                print(f"[Engine] Plate detector load failed: {e}")
+                self._load_failure("Plate detector", e)
         else:
-            print("[Engine] Plate detector not found — using fallback crop.")
+            if not self.allow_degraded:
+                raise RuntimeError("Plate detector weights are required in final mode")
+            print("[Engine] Plate detector unavailable; development crop fallback enabled")
 
         # ── Driver behaviour classifier ───────────────────────────────────────
         self.driver_classifier = None
@@ -415,6 +442,10 @@ class SceneAnalysisEngine:
         self.vehicle_type_classifier = None
         self.vehicle_type_classes: list[str] = []
         self._load_vehicle_type_classifier(vehicle_type_model_path)
+
+        self.vehicle_color_classifier = None
+        self.vehicle_color_classes: list[str] = []
+        self._load_vehicle_color_classifier(vehicle_color_model_path)
 
         # ── Image transforms ──────────────────────────────────────────────────
         self._driver_tf = transforms.Compose([
@@ -430,12 +461,23 @@ class SceneAnalysisEngine:
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ])
 
+        if self.yolo is None and not self.allow_degraded:
+            raise RuntimeError("Main detector weights are required in final mode")
+        get_ocr_engine(strict=not self.allow_degraded)
+
+    def _load_failure(self, component: str, error: Exception) -> None:
+        if not self.allow_degraded:
+            raise RuntimeError(f"{component} failed to load: {error}") from error
+        print(f"[Engine] Development fallback: {component} failed to load: {error}")
+
     # ── Loader helpers ────────────────────────────────────────────────────────
 
     def _load_driver_classifier(self, local_path: str) -> None:
         path = _resolve_weights(local_path, "/app/weights/driver_classifier.pt")
         if path is None:
-            print(f"[Engine] Driver classifier not found — driver events will be skipped.")
+            if not self.allow_degraded:
+                raise RuntimeError("Driver classifier weights are required in final mode")
+            print("[Engine] Driver classifier unavailable in development mode")
             return
         try:
             ckpt = torch.load(path, map_location=self.device)
@@ -462,12 +504,14 @@ class SceneAnalysisEngine:
             self.driver_classifier = model
             print(f"[Engine] Driver classifier loaded ({arch}) — classes: {self.driver_classes}")
         except Exception as e:
-            print(f"[Engine] Driver classifier load error: {e}")
+            self._load_failure("Driver classifier", e)
 
     def _load_vehicle_type_classifier(self, local_path: str) -> None:
         path = _resolve_weights(local_path, "/app/weights/vehicle_type_classifier.pt")
         if path is None:
-            print(f"[Engine] Vehicle type classifier not found — COCO fallback will be used.")
+            if not self.allow_degraded:
+                raise RuntimeError("Vehicle type classifier weights are required in final mode")
+            print("[Engine] Vehicle classifier unavailable; development COCO fallback enabled")
             return
         try:
             ckpt = torch.load(path, map_location=self.device)
@@ -484,7 +528,24 @@ class SceneAnalysisEngine:
             self.vehicle_type_classifier = model
             print(f"[Engine] Vehicle type classifier loaded — classes: {self.vehicle_type_classes}")
         except Exception as e:
-            print(f"[Engine] Vehicle type classifier load error: {e}")
+            self._load_failure("Vehicle type classifier", e)
+
+    def _load_vehicle_color_classifier(self, local_path: str) -> None:
+        path = _resolve_weights(local_path, "/app/weights/vehicle_color_classifier.pt")
+        if path is None:
+            if not self.allow_degraded:
+                raise RuntimeError("Vehicle color classifier weights are required in final mode")
+            print("[Engine] Vehicle color classifier unavailable; development palette fallback enabled")
+            return
+        try:
+            ckpt = torch.load(path, map_location=self.device)
+            self.vehicle_color_classes = ckpt["class_names"]
+            model = models.efficientnet_b0(weights=None)
+            model.classifier[1] = nn.Linear(model.classifier[1].in_features, len(self.vehicle_color_classes))
+            model.load_state_dict(ckpt["model_state_dict"])
+            self.vehicle_color_classifier = model.to(self.device).eval()
+        except Exception as e:
+            self._load_failure("Vehicle color classifier", e)
 
     # ── Inference ─────────────────────────────────────────────────────────────
 
@@ -542,15 +603,19 @@ class SceneAnalysisEngine:
                 conf_val = conf.item()
 
                 # Low-confidence fallback: if less than 0.35, use COCO mapping
-                if conf_val < 0.35:
+                if conf_val < 0.35 and self.allow_degraded:
                     fallback = self._COCO_TO_FTR_TYPE.get(coco_cls_id, "sedan")
                     return fallback, conf_val
 
                 return predicted, conf_val
 
             except Exception as e:
-                print(f"Vehicle type classification error: {e}")
+                if not self.allow_degraded:
+                    raise RuntimeError(f"Vehicle classification failed: {e}") from e
+                print(f"[Engine] Development vehicle classification fallback: {e}")
         # Fallback: coarse mapping from COCO class
+        if not self.allow_degraded:
+            raise RuntimeError("Vehicle classifier produced no valid final prediction")
         return self._COCO_TO_FTR_TYPE.get(coco_cls_id, "sedan"), 0.5
 
     def _classify_driver_action(self, crop: np.ndarray, timestamp: float) -> list[dict]:
@@ -573,8 +638,57 @@ class SceneAnalysisEngine:
                     "confidence_score": round(conf_val, 4),
                 }]
         except Exception as e:
-            print(f"Driver classification error: {e}")
+            if not self.allow_degraded:
+                raise RuntimeError(f"Driver classification failed: {e}") from e
+            print(f"[Engine] Development driver classifier error: {e}")
         return []
+
+    def _classify_vehicle_color(self, crop: np.ndarray) -> tuple[str, float]:
+        if self.vehicle_color_classifier is not None and crop is not None and crop.size > 0:
+            try:
+                image = Image.fromarray(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB))
+                tensor = self._vehicle_tf(image).unsqueeze(0).to(self.device)
+                with torch.no_grad():
+                    probabilities = torch.softmax(self.vehicle_color_classifier(tensor), dim=1)[0]
+                confidence, index = torch.max(probabilities, 0)
+                return self.vehicle_color_classes[index.item()], float(confidence.item())
+            except Exception as e:
+                if not self.allow_degraded:
+                    raise RuntimeError(f"Vehicle color classification failed: {e}") from e
+        if not self.allow_degraded:
+            raise RuntimeError("Vehicle color classifier produced no valid final prediction")
+        return classify_vehicle_colour(crop), 0.5
+
+    def _detect_cabin_events(self, crop: np.ndarray, timestamp: float) -> list[dict]:
+        if self.cabin_yolo is None or crop is None or crop.size == 0:
+            if not self.allow_degraded:
+                raise RuntimeError("Cabin detector produced no final prediction")
+            return []
+        events: list[dict] = []
+        output = self.cabin_yolo(crop, verbose=False)[0]
+        names = output.names
+        for box in output.boxes:
+            confidence = float(box.conf[0].item())
+            label = names[int(box.cls[0].item())]
+            if confidence < 0.4:
+                continue
+            categories = {
+                "emniyet_kemeri_ihlali": "sofor_eylemi",
+                "bilgisayar": "nesneler",
+                "arka_koltuk_1": "yolcular",
+                "arka_koltuk_2": "yolcular",
+                "on_koltuk": "yolcular",
+            }
+            if label not in categories:
+                raise RuntimeError(f"Unmapped cabin detector class: {label}")
+            category = categories[label]
+            events.append({
+                "zaman_saniye": timestamp,
+                "kategori": category,
+                "etiket": label,
+                "confidence_score": round(confidence, 4),
+            })
+        return events
 
     def _detect_seatbelt_violation(self, driver_crop: np.ndarray, timestamp: float) -> list[dict]:
         """
@@ -772,8 +886,9 @@ class SceneAnalysisEngine:
             vtype, vtype_conf = self._classify_vehicle_type(vehicle_crop, best_vehicle_cls)
             result["vehicle_type"] = vtype
 
-            # Dominant colour via K-Means
-            result["vehicle_color"] = classify_vehicle_colour(vehicle_crop)
+            color, color_confidence = self._classify_vehicle_color(vehicle_crop)
+            result["vehicle_color"] = color
+            result["vehicle_confidence"] = min(best_vehicle_conf, vtype_conf, color_confidence)
 
             # Plate OCR
             if vehicle_crop.size > 0:
@@ -797,13 +912,14 @@ class SceneAnalysisEngine:
                         plate_img = vehicle_crop[py1:py2, px1:px2]
                 
                 # Eğer plaka modeli yoksa veya bulamadıysa, eski (ilkel) yönteme dön (Alt %40)
-                if plate_img is None or plate_img.size == 0:
+                if (plate_img is None or plate_img.size == 0) and self.allow_degraded:
                     vh2, vw2 = vehicle_crop.shape[:2]
                     plate_img = vehicle_crop[int(vh2 * 0.40):, :]
 
-                plate = extract_plate_text(plate_img)
+                plate, plate_confidence = extract_plate_prediction(plate_img, strict=not self.allow_degraded)
                 if plate:
                     result["plate_text"] = plate
+                    result["vehicle_confidence"] = min(result["vehicle_confidence"], plate_confidence)
 
             # ── Driver crop ───────────────────────────────────────────────────
             driver_crop = None
@@ -840,6 +956,7 @@ class SceneAnalysisEngine:
 
             # Check for phone usage via YOLO bounding boxes (deterministic override)
             yolo_phone_detected = False
+            yolo_phone_confidence = 0.0
             if driver_box_used is not None:
                 dx1, dy1, dx2, dy2 = driver_box_used
                 for pbox, pconf in phone_boxes:
@@ -849,6 +966,7 @@ class SceneAnalysisEngine:
                     ix2 = min(dx2, px2); iy2 = min(dy2, py2)
                     if ix2 > ix1 and iy2 > iy1:
                         yolo_phone_detected = True
+                        yolo_phone_confidence = max(yolo_phone_confidence, float(pconf))
                         break
 
             # Driver behaviour classification
@@ -861,24 +979,20 @@ class SceneAnalysisEngine:
                     "zaman_saniye": timestamp_seconds,
                     "kategori": "sofor_eylemi",
                     "etiket": "telefonla_konusma",
-                    "confidence_score": 0.99
+                    "confidence_score": round(yolo_phone_confidence, 4)
                 })
 
             result["driver_events"].extend(action_events)
 
-            # Seatbelt violation heuristic (run on driver crop)
-            result["driver_events"].extend(
-                self._detect_seatbelt_violation(driver_crop, timestamp_seconds)
-            )
-
-            # Passenger detection (other persons inside vehicle bbox)
-            other_persons = [pb for pb in person_boxes if driver_box_used is None
-                             or not np.array_equal(pb, driver_box_used)]
-            result["driver_events"].extend(
-                self._detect_passengers(
-                    other_persons, (x1, y1, x2, y2), timestamp_seconds, w
+            if self.allow_degraded:
+                result["driver_events"].extend(self._detect_seatbelt_violation(driver_crop, timestamp_seconds))
+                other_persons = [pb for pb in person_boxes if driver_box_used is None
+                                 or not np.array_equal(pb, driver_box_used)]
+                result["driver_events"].extend(
+                    self._detect_passengers(other_persons, (x1, y1, x2, y2), timestamp_seconds, w)
                 )
-            )
+            else:
+                result["driver_events"].extend(self._detect_cabin_events(vehicle_crop, timestamp_seconds))
 
             # ── Teknocan detection inside vehicle ─────────────────────────────
             if self.teknocan_yolo is not None and vehicle_crop.size > 0:
@@ -894,7 +1008,9 @@ class SceneAnalysisEngine:
                                 "confidence_score": round(t_conf, 4),
                             })
                 except Exception as e:
-                    print(f"Teknocan detection error: {e}")
+                    if not self.allow_degraded:
+                        raise RuntimeError(f"Teknocan detection failed: {e}") from e
+                    print(f"[Engine] Development Teknocan detection error: {e}")
 
         # ── Cabin object detections (anywhere in frame) ───────────────────────
         for _lbox, lconf in laptop_boxes:

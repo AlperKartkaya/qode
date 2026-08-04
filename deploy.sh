@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
+
+QODE_VERSION="${QODE_VERSION:-2026.08-p4}"
+IMAGE="teknofest-2026/qode-final:${QODE_VERSION}"
 
 echo "Deploying QoDe to VM..."
 
@@ -7,11 +10,14 @@ echo "Deploying QoDe to VM..."
 mkdir -p /app/data/input /app/data/output /app/weights
 
 # 2. Build Docker Image
-echo "Building Docker image: teknofest-2026/qode:latest"
-docker build -t teknofest-2026/qode:latest .
+echo "Building Docker image: $IMAGE"
+docker build --platform linux/amd64 --build-arg "QODE_VERSION=$QODE_VERSION" \
+  --build-arg "VCS_REF=$(git rev-parse HEAD)" \
+  --build-arg "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  -t "$IMAGE" .
 
 # 3. Print SHA256 (Required for Teknofest Final submission)
-FINGERPRINT=$(docker inspect --format='{{.Id}}' teknofest-2026/qode:latest)
+FINGERPRINT=$(docker inspect --format='{{.Id}}' "$IMAGE")
 echo "----------------------------------------"
 echo "DOCKER IMAGE SHA256 FINGERPRINT:"
 echo "$FINGERPRINT"

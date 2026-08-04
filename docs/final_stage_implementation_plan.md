@@ -3,7 +3,7 @@
 - **Plan tarihi:** 1 Ağustos 2026
 - **Final:** 8–9 Ağustos 2026
 - **AI image değişiklik son tarihi:** 7 Ağustos 2026, 21:00
-- **Durum:** P0–P2 uygulandı; P3 öncesi kanıt kapısında (4 Ağustos 2026)
+- **Durum:** P0–P4 kod/sözleşme uygulaması tamamlandı; P3/P4 fiziksel kabulü eksik final asset bundle, NVIDIA GPU, Docker daemon ve üç gerçek MP4 koşusu nedeniyle açık blokajda (4 Ağustos 2026)
 **Kapsam:** Faz 2 ground truth, düşük/yüksek çözünürlüklü video inference, mobil canlı demo, Open Gateway Number Verification ve Quality on Demand, backend, Docker/Web UI, değerlendirme ve final operasyonu
 
 Bu dosya final aşaması için yapılacak işlerin sırasını, bağımlılıklarını, uygulanacağı kod yüzeylerini, kabul ölçütlerini ve doğrulama komutlarını tek yerde toplar. Kod değişikliğine başlanırken ilk referans bu plan ve `assumptions.md` olacaktır. Eski `docs/ktr_implementation_plan.md` geçmiş KTR/FTR çalışmasının kaydı olarak kalır; final operasyonunun güncel planı bu dosyadır.
@@ -379,6 +379,8 @@ bu yalnız evaluator bütünlük kontrolüdür, model başarısı değildir.
 
 ## P3 — Inference hattını final etiketlerine ve temporal olaylara hazırla
 
+> **4 Ağustos uygulama durumu:** Runtime asset manifest/checker, explicit final/development ayrımı, 4 FPS PTS tabanlı sampling, label-specific temporal state, track-merkezi slalom head'i, doğrudan deterministik timeline builder ve atomik FTR yazımı uygulandı. Final modunda COCO/fixed-crop/seatbelt/passenger fallback'leri kapatıldı. Public dört checkpoint SHA256 ile sabitlendi. Main detector ve OCR checksum'ları ile calibrated color/cabin head'leri teslim edilmediğinden final readiness kasıtlı olarak non-zero dönmektedir. Bu nedenle low/high gerçek prediction metric'i ve final GPU süresi henüz üretilemez; detay `docs/final_stage/p3_p4_evidence.md` içindedir.
+
 **Amaç:** Sabit/heuristik placeholder'lardan gerçek, ölçülebilir ve tüm FTR ailelerini üreten inference'a geçmek.
 
 ### P3.1 Runtime asset readiness
@@ -437,6 +439,8 @@ bu yalnız evaluator bütünlük kontrolüdür, model başarısı değildir.
 ---
 
 ## P4 — Competition Docker image'ı deterministic ve Web UI uyumlu paketle
+
+> **4 Ağustos uygulama durumu:** Image adı, fixed I/O, offline runtime env, pinned amd64 CUDA base digest, runtime dependency lock, build-time asset/class validation, GPU/output/schema/warm-up readiness, exact-one-MP4 kontrolü, atomic output, offline benchmark ve freeze araçları uygulandı. Yerel Docker daemon çalışmadığı ve P3 final asset kapısı geçmediği için image build/freeze/Web UI koşusu sahte başarıyla kapatılmadı; gerçek kabul kanıtı blokajlar giderildiğinde aynı araçlarla üretilecektir.
 
 **Amaç:** Hakem VM'inde tek image ile ağsız, tekrarlanabilir ve süresi ölçülmüş inference.
 

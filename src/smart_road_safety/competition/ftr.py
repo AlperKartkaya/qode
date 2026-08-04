@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
+import tempfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
 from ..analysis import AnalysisResult
+
+FTR_SCHEMA_VERSION = "1"
 
 VEHICLE_TYPES: tuple[str, ...] = (
     "sedan",
@@ -241,6 +245,38 @@ def write_ftr_result(result: FtrCompetitionResult, output_path: str | Path) -> P
         encoding="utf-8",
     )
     return target
+
+
+def write_ftr_result_atomic(result: FtrCompetitionResult, output_path: str | Path) -> Path:
+    """Validate a temporary serialization and atomically publish results.json."""
+    target = Path(output_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{target.name}.", suffix=".tmp", dir=target.parent
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            json.dump(result.to_dict(), handle, ensure_ascii=False, indent=2)
+            handle.flush()
+            os.fsync(handle.fileno())
+        read_ftr_result(temporary)
+        os.replace(temporary, target)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
+    return target
+
+
+def build_ftr_result_from_timeline(
+    video_id: str,
+    vehicle_info: VehicleInfo,
+    events: tuple[DetectionEvent, ...] | list[DetectionEvent],
+) -> FtrCompetitionResult:
+    ordered = tuple(
+        sorted(events, key=lambda event: (event.zaman_saniye, event.kategori, event.etiket))
+    )
+    return FtrCompetitionResult(video_id=video_id, arac_bilgisi=vehicle_info, tespitler=ordered)
 
 
 def map_internal_label_to_ftr_driver_labels(

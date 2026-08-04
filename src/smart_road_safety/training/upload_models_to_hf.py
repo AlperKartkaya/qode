@@ -1,11 +1,20 @@
 import os
+import json
 from pathlib import Path
 from huggingface_hub import HfApi
 
 # Repoyu QoDe-5G organizasyonunda oluşturuyoruz
 REPO_ID = "QoDe-5G/qode-models"
 WEIGHTS_DIR = Path("data/weights")
-MODELS_TO_UPLOAD = ["license_plate_detector.pt", "driver_classifier.pt", "vehicle_type_classifier.pt"]
+MANIFEST_PATH = Path("config/runtime_assets.json")
+
+
+def models_to_upload() -> list[str]:
+    payload = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    return [
+        asset["filename"] for asset in payload["assets"]
+        if asset.get("source", "").startswith("https://huggingface.co/QoDe-5G/qode-models")
+    ]
 
 def upload_to_hf():
     api = HfApi()
@@ -19,7 +28,7 @@ def upload_to_hf():
         return
 
     print("Yenilenen modeller Hugging Face'e yükleniyor...")
-    for model_name in MODELS_TO_UPLOAD:
+    for model_name in models_to_upload():
         model_path = WEIGHTS_DIR / model_name
         if model_path.exists():
             print(f"Yükleniyor: {model_name}...")

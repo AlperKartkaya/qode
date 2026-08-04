@@ -9,7 +9,7 @@ try:
         ogw_client_secret: str = ""
         backend_callback_url: str = "http://localhost:8000/api/auth/callback"
         
-        docker_image_name: str = "teknofest-2026/qode:latest"
+        docker_image_name: str = "teknofest-2026/qode-final:2026.08-p4"
         data_input_dir: str = os.path.join(os.getcwd(), "../data/input")
         data_output_dir: str = os.path.join(os.getcwd(), "../data/output")
 
@@ -31,7 +31,7 @@ except ImportError:
         ogw_client_secret: str = ""
         backend_callback_url: str = "http://localhost:8000/api/auth/callback"
         
-        docker_image_name: str = "teknofest-2026/qode:latest"
+        docker_image_name: str = "teknofest-2026/qode-final:2026.08-p4"
         data_input_dir: str = os.path.join(os.getcwd(), "../data/input")
         data_output_dir: str = os.path.join(os.getcwd(), "../data/output")
 
