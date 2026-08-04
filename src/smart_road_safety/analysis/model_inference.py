@@ -802,7 +802,10 @@ class SceneAnalysisEngine:
                 else:
                     continue  # Front-left is the driver — don't label as passenger
             else:
-                # Rear cabin: dynamically assign arka_koltuk_1, arka_koltuk_2, etc.
+                # Rear cabin: dynamically assign arka_koltuk_1, arka_koltuk_2
+                # Limit to max 2 rear passengers to comply with FTR schema
+                if rear_seat_counter > 2:
+                    continue
                 seat = f"arka_koltuk_{rear_seat_counter}"
                 rear_seat_counter += 1
 
