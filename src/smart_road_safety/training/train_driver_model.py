@@ -56,7 +56,7 @@ class HFImageDataset(Dataset):
 def train_model():
     print("Loading cleaned QoDe-5G/qode-driver-behaviors dataset from Hugging Face...")
     try:
-        hf_dataset = load_dataset("QoDe-5G/qode-driver-behaviors", split="train", download_mode="force_redownload")
+        hf_dataset = load_dataset("QoDe-5G/qode-driver-behaviors", split="train", cache_dir="./hf_temp_cache")
     except Exception as e:
         print(f"Failed to load dataset: {e}")
         return
