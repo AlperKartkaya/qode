@@ -21,6 +21,16 @@ class HFImageDataset(Dataset):
             if field in features:
                 self.label_col = field
                 break
+        
+        if self.label_col is None:
+            # Fallback to the first column that isn't the image
+            for k in features.keys():
+                if k != self.image_col:
+                    self.label_col = k
+                    break
+            
+        if self.label_col is None:
+            print(f"Uyarı: Etiket (label) kolonu bulunamadı. Mevcut kolonlar: {list(features.keys())}")
 
     def __len__(self):
         return len(self.dataset)
@@ -56,6 +66,16 @@ def train_smoker_model():
             label_col = field
             break
             
+    if label_col is None:
+        for k in features.keys():
+            if type(features[k]).__name__ != 'Image' and not hasattr(features[k], 'id'):
+                label_col = k
+                break
+                
+    if label_col is None:
+        print(f"HATA: Veri setinde etiket kolonu bulunamadı! Kolonlar: {list(features.keys())}")
+        return
+        
     classes = features[label_col].names if hasattr(features[label_col], "names") else ["not_smoking", "smoking"]
     print(f"Detected classes: {classes}")
 
