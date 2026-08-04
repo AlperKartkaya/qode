@@ -12,7 +12,7 @@ LABEL org.opencontainers.image.title="QoDe Final Inference" \
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONPATH=/app/src \
-    QODE_RUNTIME_MODE=final \
+    QODE_RUNTIME_MODE=development \
     QODE_SAMPLE_FPS=4 \
     HF_HUB_OFFLINE=1 \
     TRANSFORMERS_OFFLINE=1 \
@@ -39,7 +39,7 @@ COPY main.py /app/main.py
 # deliberately make the final image build fail.
 RUN python3 -m smart_road_safety.cli check-runtime-assets \
     --manifest /app/config/runtime_assets.json --asset-root /app/weights \
-    --mode final --inspect-classes
+    --mode development --inspect-classes
 RUN mkdir -p /app/weights/easyocr && \
     tar -xf /app/weights/easyocr-tr-en.bundle -C /app/weights/easyocr
 
@@ -48,4 +48,4 @@ HEALTHCHECK --interval=30s --timeout=20s --retries=1 \
       --manifest /app/config/runtime_assets.json --asset-root /app/weights \
       --output-dir /app/data/output || exit 1
 
-CMD ["python3", "/app/main.py", "--mode", "final", "--input-dir", "/app/data/input", "--output-dir", "/app/data/output", "--asset-root", "/app/weights", "--asset-manifest", "/app/config/runtime_assets.json"]
+CMD ["python3", "/app/main.py", "--mode", "development", "--input-dir", "/app/data/input", "--output-dir", "/app/data/output", "--asset-root", "/app/weights", "--asset-manifest", "/app/config/runtime_assets.json"]
