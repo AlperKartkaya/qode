@@ -1,6 +1,6 @@
 # QoDe — Smart Road Safety (5G & AI)
 
-**TEKNOFEST 2026 — 5G ve Yapay Zekâ ile Akıllı Yol Güvenliği Yarışması — FTR/KTR Aşaması**
+**TEKNOFEST 2026 — 5G ve Yapay Zekâ ile Akıllı Yol Güvenliği Yarışması — Final Aşaması**
 
 ## Proje Özeti
 
@@ -8,10 +8,13 @@ QoDe, yol kenarı kameralarından gelen video akışını gerçek zamanlı anali
 
 Source-of-truth sırası:
 
-1. `5G_ve_Yapay_Zeka_ile_Akıllı_Yol_Güvenliği_Yarışması_-_FTR_Aşaması_Teslim_D.pdf`
-2. `2026_5G_YAPAY_ZEKA_İLE_AKILLI_YOL_GÜVENLİĞİ_YARISMASI_SARTNAMESI_2_PORZ6.pdf`
-3. `final_report_template.docx`
-4. local/open-source support datasets
+1. `docs/final_stage/final_yarisma_senaryosu.pdf`
+2. `docs/final_stage/platform_operasyon_rehberi.pdf`
+3. `docs/final_stage/open_gateway/`
+4. `docs/final_stage/open_gateway_demo_ux.pdf`
+5. `data/final_stage/faz2/ground_truth.json` (yalnız geliştirme/değerlendirme)
+6. FTR teslim dokümanı, şartname ve geçmiş KTR/FTR belgeleri
+7. local/open-source support datasets
 
 Current milestone:
 
@@ -102,6 +105,30 @@ Repo exact keyleri, izin verilen etiketleri, confidence aralıklarını, ASCII-s
 
 ## Veri Setleri ve KTR Kapsamı
 
+### Final Faz 2 paketi
+
+`data/final_stage/faz2/manifest.json`, organizer HLS master'ını, 240p/1080p
+varyant metadata'sını ve checksum doğrulanan 34-event `ground_truth.json` fixture'ını
+tek sözleşmede tutar. Ground truth yalnız development calibration/evaluation içindir;
+`main.py` veya runtime image tarafından okunmaz.
+
+```bash
+# Manifest ve adapter envanteri
+PYTHONPATH=src python3 -m smart_road_safety.cli check-manifest \
+  data/final_stage/faz2/manifest.json
+PYTHONPATH=src python3 -m smart_road_safety.cli inspect-dataset \
+  data/final_stage/faz2/manifest.json --dataset-root data/final_stage/faz2
+
+# HLS metadata probe (medya indirmez)
+python3 scripts/fetch_final_stage_hls.py --probe-only
+
+# 240p ve 1080p'yi atomik MP4 remux eder; ffmpeg ve ffprobe PATH'te olmalıdır
+python3 scripts/fetch_final_stage_hls.py
+```
+
+İndirilen `data/final_stage/faz2/media/*.mp4` dosyaları gitignore'dadır. Araç
+checksum eşleşen cache'i değiştirmez; eşleşmeyen mevcut dosyada açık hata verir.
+
 Birincil local support veri setleri `data/datasets/` altında beklenir:
 
 | Veri Seti | Root | Sample unit | Label source | FTR rolü |
@@ -123,7 +150,8 @@ Legacy secondary dataset:
 - FTR/şartname hedef kümesi mevcut support veri setlerinden daha geniştir.
 - Plate OCR, vehicle type/color, `teknocan`, `bilgisayar` ve passenger-seat label aileleri ek veri veya curated anotasyon gerektirir.
 - Şartname gerçek hızdan bahseder, fakat mevcut FTR `results.json` şeması speed key içermez; speed şema değişene kadar internal/reporting objective olarak tutulur.
-- Number Verification ve QoD demo/support yolları KTR final rapor kapsamı dışındadır.
+- Number Verification canlı demo kapısıdır; QoD başarısı ek puan yoludur. Gerçek endpoint
+  sözleşmeleri repodadır, credential/SIM/callback provisioning dış bağımlılıktır.
 
 Large dataset payloads local-only kalır; `.gitignore` `data/datasets/**` içeriğini küçük manifest JSON dosyaları hariç ignore eder.
 
@@ -180,13 +208,13 @@ PYTHONPATH=src python -m smart_road_safety.cli train-report-models --max-driver-
 
 ```bash
 # 1. Image oluştur (model ağırlıkları bu aşamada indirilir — timeout'a dahil değil)
-docker build -t teknofest/qode:latest .
+docker build -t teknofest-2026/qode:latest .
 
 # 2. Değerlendirme ortamına uygun şekilde çalıştır
 docker run --rm --gpus all \
   -v /path/to/video.mp4:/app/data/input/video.mp4 \
   -v /path/to/output:/app/data/output \
-  teknofest/qode:latest
+  teknofest-2026/qode:latest
 
 # Sonuç: /path/to/output/results.json
 ```

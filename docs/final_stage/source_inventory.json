@@ -1,0 +1,15 @@
+{
+  "inventory_version": 1,
+  "verified_at": "2026-08-04",
+  "hash_algorithm": "sha256",
+  "sources": [
+    {"path": "docs/final_stage/final_yarisma_senaryosu.pdf", "sha256": "0665fa9f3ab1729af68f3dfc66b9bf0d699c31f7af08275c9fee1ea179241a57", "authority": "final_operations"},
+    {"path": "docs/final_stage/platform_operasyon_rehberi.pdf", "sha256": "005d68e49018e631b08b792a97ff2e798966a2386a0c111a80a04fc5d0d0ff26", "authority": "platform_operations"},
+    {"path": "docs/final_stage/open_gateway_demo_ux.pdf", "sha256": "013da2d4cc22576f975764b7066d251239ff0737cc71070208fd9491ffbdf1b7", "authority": "mobile_demo_ux"},
+    {"path": "docs/final_stage/open_gateway/ogw_teknofest.pdf", "sha256": "e01863b0834a1e96dfd3e188517f7f712750e949df4e2fc4f1b0523731ba2b33", "authority": "open_gateway_overview"},
+    {"path": "docs/final_stage/open_gateway/number-verification.yaml", "sha256": "8199f966b96bde93667d3d2c209fb28fde5e4b13883f8baf299bfd96d1a596a1", "authority": "number_verification_contract"},
+    {"path": "docs/final_stage/open_gateway/quality-on-demand.yaml", "sha256": "5c418fd9ba5c8076e4a04ff7a96c55ed2d22306c6e9da66bb166ed61ae765991", "authority": "qod_contract"},
+    {"path": "docs/final_stage/open_gateway/teknofest.postman_collection.json", "sha256": "4f12928f75238e63fa3cdb3eeda17a37a38026f1a720d5963ead1e72374121e6", "authority": "open_gateway_examples"},
+    {"path": "data/final_stage/faz2/ground_truth.json", "sha256": "41caf875a5ff90d928c2681457780f096e8d5173660eab23d8a088664c4746d7", "authority": "faz2_ground_truth"}
+  ]
+}

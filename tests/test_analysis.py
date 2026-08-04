@@ -108,7 +108,7 @@ class AnalysisSessionTest(unittest.TestCase):
 
         result = run_analysis_session(request)
 
-        self.assertEqual(result.analysis_result.source_ref.endswith(".png"), True)
+        self.assertTrue(result.analysis_result.source_ref.endswith("video_1.mp4"))
         self.assertEqual(
             result.analysis_result.driver_risk_label, "smoking_and_unsafe_scanning"
         )

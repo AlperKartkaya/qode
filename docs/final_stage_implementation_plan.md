@@ -3,7 +3,7 @@
 - **Plan tarihi:** 1 Ağustos 2026
 - **Final:** 8–9 Ağustos 2026
 - **AI image değişiklik son tarihi:** 7 Ağustos 2026, 21:00
-- **Durum:** Uygulama öncesi kanonik plan
+- **Durum:** P0 ve P1 uygulandı; P2 öncesi review kapısında (4 Ağustos 2026)
 **Kapsam:** Faz 2 ground truth, düşük/yüksek çözünürlüklü video inference, mobil canlı demo, Open Gateway Number Verification ve Quality on Demand, backend, Docker/Web UI, değerlendirme ve final operasyonu
 
 Bu dosya final aşaması için yapılacak işlerin sırasını, bağımlılıklarını, uygulanacağı kod yüzeylerini, kabul ölçütlerini ve doğrulama komutlarını tek yerde toplar. Kod değişikliğine başlanırken ilk referans bu plan ve `assumptions.md` olacaktır. Eski `docs/ktr_implementation_plan.md` geçmiş KTR/FTR çalışmasının kaydı olarak kalır; final operasyonunun güncel planı bu dosyadır.
@@ -83,7 +83,7 @@ Bu değerler test fixture'ına körlemesine sabitlenmeyecek; indirme öncesi yen
 
 ## 3. Mevcut repo başlangıç durumu ve açık farklar
 
-Bu plan yazılırken alınan baseline:
+Bu plan yazılırken alınan P0 öncesi baseline:
 
 - `faz2_gt (1).json`, mevcut FTR validator ile **geçiyor** ve 34 tespit içeriyor.
 - `data/real_dataset_manifest.json`, manifest checker'da **adaptation-needed** dönüyor; `nesneler`, `yolcular` ve exact plate text eksik.
@@ -96,7 +96,10 @@ Bu plan yazılırken alınan baseline:
 - `main.py` yaklaşık 1 FPS örnekliyor; 0.89 saniyeden başlayan ve kısa süreli olayları kaçırma riski yüksek.
 - `model_inference.py` içinde araç sınıfı, plaka crop'u, emniyet kemeri ve yolcu pozisyonu için sessiz veya heuristik fallback'ler var.
 - `integration/` gerçek gateway interface'lerini taşıyor fakat çalışan uygulama ve `local_api` default olarak mock gateway kuruyor.
-- `apps/mobile/README.md`, `services/api/README.md` ve `services/vision/README.md` rezerv/placeholder seviyesinde; çalışan mobil uygulama veya final backend yok.
+- İlk plan varsayımının tersine `apps/android/` altında build edilen native Android
+  uygulaması ve `backend/` altında health/test smoke'u geçen FastAPI backend vardır.
+  Kanonik sınır `docs/final_stage/adr/0001-client-backend-boundary.md` ile kilitlenmiştir;
+  `apps/mobile/` legacy prototip, `services/api/` placeholder'dır.
 - Mevcut README örnek image adı `teknofest/qode:latest`; final platformu için geçersiz.
 
 **Başlangıç kuralı:** Bu üç mevcut test hatası önce gerçek repo durumu ile uzlaştırılacak. Yeni değişikliklerin üzerine “önceden de kırık” test borcu taşınmayacak.
@@ -143,13 +146,18 @@ AI competition image'a OAuth credential, mobil session state, backend web sunucu
 
 Mevcut local API stdlib tabanlıdır; multipart upload, OIDC redirect/callback, asenkron job lifecycle ve tutarlı hata modeli için yetersiz kalma riski vardır. Uygulama başlamadan küçük bir ADR hazırlanacaktır:
 
-- **Önerilen backend yönü:** final demo backend'i `services/api/` altında ayrı, minimal bir HTTP uygulaması olarak kurmak; mevcut `src/smart_road_safety/local_api/` yüzeyini geliştirme/uyumluluk adapter'ı olarak korumak.
+- **Kabul edilen backend yönü:** mevcut `backend/` FastAPI uygulamasını tek final demo
+  backend'i olarak sertleştirmek; `src/smart_road_safety/local_api/` yüzeyini
+  geliştirme/uyumluluk adapter'ı olarak korumak ve ikinci server üretmemek.
 - **Karar kapısı:** yeni framework/dependency eklenmeden önce stdlib ile güvenli ve test edilebilir multipart/job çözümünün maliyeti ile minimal framework seçeneği karşılaştırılacak. Yeni bağımlılık ancak ADR'de gerekçe, sürüm, lisans ve image etkisi kaydedildikten sonra eklenecek.
 - **Mobil yön:** repo içindeki mevcut tasarım Android uygulamayı işaret ettiği için varsayılan hedef native Android/Kotlin'dir. Ekipte ayrı bir çalışan mobil repo varsa yeniden scaffold etmek yerine bu sözleşmeler oraya taşınacaktır.
 
 ### 4.4 Repo boundary karar kapısı
 
-`apps/mobile/` ve `services/api/` şu anda yalnız placeholder README içerdiği için, yeni iki ürün yüzeyi bu repoda kendiliğinden varmış gibi kabul edilmeyecektir. P0 sonunda `docs/final_stage/adr/0001-client-backend-boundary.md` oluşturulup şu kararlar kilitlenecektir:
+P0 incelemesi `apps/android/` native uygulamasını ve `backend/` FastAPI
+uygulamasını gerçek ürün yüzeyleri olarak doğrulamıştır. `apps/mobile/` ve
+`services/api/` placeholder/legacy yüzeylerdir. Ayrıntılı karar
+`docs/final_stage/adr/0001-client-backend-boundary.md` içinde kilitlenmiştir:
 
 1. Çalışan mobil uygulama başka bir repo'da mı? Varsa owner/build erişimi doğrulanır ve bu repo yalnız ortak API schema, fixture ve runbook'u taşır; ikinci bir Android uygulama üretilmez.
 2. Mobil uygulama bu repo'da kurulacaksa Gradle wrapper, application ID, min/target SDK, CI build, debug APK ve cihaz smoke'u bootstrap kabul kriteri olur.
@@ -188,8 +196,8 @@ Assumptions ve ortak API/FTR sözleşmeleri kilitlendikten sonra şu dört kol p
 | --- | --- | --- |
 | Veri/evaluation | `data/final_stage/`, manifest, GT evaluator ve testleri | AI prediction JSON'u ve rapor çıktısı |
 | AI/runtime | `main.py`, `analysis/model_inference.py`, FTR builder, weights, Docker | Sabit `/input`–`/output` sözleşmesi |
-| Gateway/backend | `integration/`, `orchestration/`, `services/api/` | Mobil API contract ve image runner |
-| Android | `apps/mobile/` | Backend OpenAPI/JSON contract ve HLS kaynağı |
+| Gateway/backend | `integration/`, `orchestration/`, `backend/` | Mobil API contract ve image runner |
+| Android | `apps/android/` | Backend OpenAPI/JSON contract ve HLS kaynağı |
 
 Ortak dosyalar (`assumptions.md`, `README.md`, `pyproject.toml`, FTR contract) tek bir entegrasyon sahibi üzerinden değiştirilecek; paralel kollarda aynı dosyaya bağımsız edit yapılmayacaktır.
 
@@ -198,6 +206,10 @@ Ortak dosyalar (`assumptions.md`, `README.md`, `pyproject.toml`, FTR contract) t
 ## 6. Sıralı uygulama aşamaları
 
 ## P0 — Kaynak gerçekliğini ve varsayımları kilitle
+
+**Uygulama durumu (4 Ağustos):** Repo-içi maddeler tamamlandı. Credential/SIM/VM
+ve gerçek cihaz HLS→MP4 kanıtları dış kapı olarak `docs/final_stage/open_questions.md`
+dosyasında owner/son karar zamanı ile kayıtlıdır.
 
 **Amaç:** Kod değişmeden önce yeni resmi bilgiler ile eski assumptions arasındaki bütün çelişkileri kaldırmak.
 
@@ -256,6 +268,11 @@ Ortak dosyalar (`assumptions.md`, `README.md`, `pyproject.toml`, FTR contract) t
 ---
 
 ## P1 — Faz 2 veri paketini, HLS varyantlarını ve manifest'i gerçek hale getir
+
+**Uygulama durumu (4 Ağustos):** Manifest, adapter, validator negatif vakaları,
+HLS probe/remux aracı, cache idempotency testleri ve leakage policy tamamlandı.
+Host PATH'inde ffmpeg/ffprobe olmadığı için gerçek MP4 remux artefact'i üretilmedi;
+remote varyantlar manifest envanterinde açıkça `remote` durumundadır.
 
 **Amaç:** Faz 2 videosu ve GT'yi tekrar üretilebilir, doğrulanabilir ve leakage-safe bir geliştirme paketi yapmak.
 
@@ -540,7 +557,7 @@ Upload/job uygulaması:
 - `src/smart_road_safety/integration/opengateway.py` (**yeni**)
 - `src/smart_road_safety/integration/auth.py` (**gerekirse yeni**)
 - `src/smart_road_safety/orchestration/service.py`
-- `services/api/` (**final backend**)
+- `backend/` (**final backend**)
 - `src/smart_road_safety/local_api/server.py` (**dev compatibility adapter**)
 - `tests/test_opengateway_clients.py`, `tests/test_final_backend.py`
 
@@ -628,7 +645,7 @@ Teknik karar kaynakları:
 1. `integration/contracts.py` domain sözleşmelerini gerçek API status/identifier alanlarını taşıyacak şekilde genişlet; HTTP ayrıntısını orchestration'a sızdırma.
 2. `orchestration/service.py` içindeki “mock gateway” mesajlarını gerçek/mod bilgisine göre üret; production request'te `verification_should_pass` ve `qod_should_allow_boost` gibi sahte kontrol boolean'ları kabul etme.
 3. Mock seçimini ayrı `--gateway-mode mock` veya test fixture'ı ile açık yap; default config auto-fallback yapmasın.
-4. `local_api/server.py` mevcut JSON analysis endpoint'lerini korusun fakat final video upload/job yeteneğinin authority'si olmasın; `services/api` client/adapter'ı olarak çalışsın veya deprecation notu alsın.
+4. `local_api/server.py` mevcut JSON analysis endpoint'lerini korusun fakat final video upload/job yeteneğinin authority'si olmasın; `backend/` için geliştirme uyumluluk yüzeyi olarak çalışsın veya deprecation notu alsın.
 5. CLI'ye şu operasyon komutlarını ekle:
    - `check-final-assets`;
    - `fetch-final-hls`;
@@ -650,7 +667,9 @@ Teknik karar kaynakları:
    - Docker adı ve Web UI çalışma adımları;
    - yeni CLI/backend/mobile akışı;
    - artık geçersiz “API dokümanı yok/QoD scope dışı” ifadelerini kaldır.
-8. `apps/mobile/README.md`, `services/api/README.md`, `services/vision/README.md` placeholder metinlerini gerçek build/run/test talimatlarıyla değiştir.
+8. `apps/android/README.md` ve `backend/README.md` talimatlarını final build/run/test
+   gerçekliğiyle güncelle; `apps/mobile/README.md`, `services/api/README.md` ve
+   `services/vision/README.md` dosyalarını kanonik yüzeylere yönlendiren legacy notlarına dönüştür.
 
 ### Local API → final backend migration matrisi
 

@@ -50,17 +50,17 @@ MERMAID_DIAGRAM_IMAGES: tuple[tuple[str, str, str], ...] = (
     (
         "Şekil 1. Uçtan uca yapay zekâ çıkarım hattı",
         "docs/diagrams/ktr_ai_pipeline.mmd",
-        "docs/diagrams/rendered/ktr_ai_pipeline.png",
+        "docs/diagrams/rendered/1.png",
     ),
     (
         "Şekil 2. FTR doğrulama ve sonuç üretim akışı",
         "docs/diagrams/ftr_validation_flow.mmd",
-        "docs/diagrams/rendered/ftr_validation_flow.png",
+        "docs/diagrams/rendered/2.png",
     ),
     (
         "Şekil 3. Model eğitimi ve ağırlık yönetimi akışı",
         "docs/diagrams/model_training_weights_flow.mmd",
-        "docs/diagrams/rendered/model_training_weights_flow.png",
+        "docs/diagrams/rendered/3.png",
     ),
     (
         "Şekil 4. Rapor kanıt izi ve kaynak bağları",

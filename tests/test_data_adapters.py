@@ -94,7 +94,22 @@ class DatasetAdapterTest(unittest.TestCase):
         self.assertEqual(adapter.adapter_key, "observed_media_bundle")
         self.assertEqual(inventory.sample_count, 3)
         self.assertEqual(inventory.get_sample("video_1").sample_id, "video_1")
-        self.assertEqual(len(inventory.get_sample("video_1").screenshot_paths), 4)
+        self.assertEqual(len(inventory.get_sample("video_1").screenshot_paths), 0)
+        self.assertTrue(inventory.get_sample("video_1").video_path.endswith("video_1.mp4"))
+
+    def test_openalpr_manifest_is_explicitly_unsupported(self) -> None:
+        adapter = build_adapter_from_manifest_path(
+            manifest_path=ROOT
+            / "data"
+            / "datasets"
+            / "openalpr-benchmarks"
+            / "manifest.json",
+            dataset_root=ROOT / "data" / "datasets" / "openalpr-benchmarks",
+        )
+
+        self.assertEqual(adapter.adapter_key, "unsupported_dataset")
+        with self.assertRaisesRegex(ValueError, "explicitly unsupported"):
+            adapter.load_inventory()
 
     @unittest.skipUnless(
         (ROOT / "data" / "datasets" / "state-farm-distracted-driver" / "driver_imgs_list.csv").exists(),

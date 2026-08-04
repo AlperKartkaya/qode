@@ -26,6 +26,15 @@ data/video_*.mp4
 data/test_clip.mp4
 data/test-videos/
 data/datasets/
+!data/datasets/
+data/datasets/*
+!data/datasets/open-images-vehicle-subset/
+data/datasets/open-images-vehicle-subset/*
+!data/datasets/open-images-vehicle-subset/manifest.json
+!data/datasets/openalpr-benchmarks/
+data/datasets/openalpr-benchmarks/*
+!data/datasets/openalpr-benchmarks/manifest.json
+data/final_stage/**/media/
 out/
 .env
 

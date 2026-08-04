@@ -20,12 +20,27 @@ class IngestionPlan:
 
 
 @dataclass(frozen=True)
+class DatasetMediaArtifact:
+    artifact_id: str
+    path: str
+    width: int
+    height: int
+    duration_seconds: float
+    sha256: str | None = None
+    fps: float | None = None
+    codec: str | None = None
+    source_url: str | None = None
+    segment_count: int | None = None
+
+
+@dataclass(frozen=True)
 class DatasetMediaSample:
     sample_id: str
     video_path: str
     screenshot_paths: tuple[str, ...]
     label: str | None = None
     metadata: dict[str, str] = field(default_factory=dict)
+    artifacts: tuple[DatasetMediaArtifact, ...] = field(default_factory=tuple)
 
     @property
     def primary_source_ref(self) -> str:
@@ -140,6 +155,26 @@ class AssumedFrameDatasetAdapter(DatasetAdapter):
         )
 
 
+class UnsupportedDatasetAdapter(DatasetAdapter):
+    adapter_key = "unsupported_dataset"
+
+    @classmethod
+    def supports_manifest(cls, manifest: DatasetManifest) -> bool:
+        return manifest.extra_fields.get("adapter_status") == "unsupported"
+
+    def _error(self) -> ValueError:
+        reason = self.manifest.extra_fields.get(
+            "unsupported_reason", "No production adapter is implemented."
+        )
+        return ValueError(f"Dataset is explicitly unsupported: {reason}")
+
+    def build_ingestion_plan(self) -> IngestionPlan:
+        raise self._error()
+
+    def load_inventory(self) -> DatasetInventory:
+        raise self._error()
+
+
 class ObservedMediaBundleDatasetAdapter(DatasetAdapter):
     adapter_key = "observed_media_bundle"
 
@@ -225,6 +260,7 @@ class ManifestAdapterRegistry:
 
 
 def build_default_registry() -> ManifestAdapterRegistry:
+    from .final_stage import FinalStageFtrAdapter
     from .real_adapters import (
         DMDDistractionAdapter,
         DMDDrowsinessAdapter,
@@ -233,6 +269,8 @@ def build_default_registry() -> ManifestAdapterRegistry:
     )
 
     registry = ManifestAdapterRegistry()
+    registry.register(FinalStageFtrAdapter)
+    registry.register(UnsupportedDatasetAdapter)
     registry.register(StateFarmAdapter)
     registry.register(DMDDistractionAdapter)
     registry.register(DMDDrowsinessAdapter)

@@ -1,0 +1,46 @@
+{
+  "dataset_name": "open-images-v7-vehicle-subset",
+  "dataset_role": "outside_vehicle_detection_support",
+  "source_url": "https://storage.googleapis.com/openimages/web/download_v7.html",
+  "license": "annotations=CC BY 4.0; images require per-image license diligence",
+  "sample_unit": "frame",
+  "video_extensions": [],
+  "annotation_format": "open_images_bbox_csv",
+  "includes_train_split": false,
+  "includes_validation_split": true,
+  "includes_test_split": false,
+  "targets": [
+    "vehicle",
+    "vehicle_type",
+    "risk_signal"
+  ],
+  "has_frame_level_annotations": true,
+  "has_clip_level_annotations": false,
+  "has_plate_text": false,
+  "has_speed_ground_truth": false,
+  "has_in_cabin_annotations": false,
+  "has_driver_behavior_annotations": false,
+  "speed_unit": null,
+  "image_count": 80,
+  "annotation_row_count": 139,
+  "class_counts": {
+    "Car": 120,
+    "Motorcycle": 4,
+    "Bus": 4,
+    "Bicycle": 4,
+    "Van": 4,
+    "Truck": 3
+  },
+  "ftr_output_families_covered": [
+    "arac_bilgisi"
+  ],
+  "ftr_labels_covered": [
+    "tip"
+  ],
+  "notes": "Open Images V7 validation subset filtered to exterior vehicle boxes. Useful for outside-camera vehicle detection/type support only; no radar, speed, plate, color, passenger, or driver behavior labels.",
+  "local_root_hint": "data/datasets/open-images-vehicle-subset",
+  "sample_count": 80,
+  "license_name": "annotations=CC BY 4.0; images require per-image license diligence",
+  "adapter_status": "unsupported",
+  "unsupported_reason": "No tracked, tested Open Images bbox adapter exists; image-license provenance must be enforced first."
+}

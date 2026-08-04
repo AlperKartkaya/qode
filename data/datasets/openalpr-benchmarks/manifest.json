@@ -1,0 +1,31 @@
+{
+  "sample_unit": "frame",
+  "video_extensions": [],
+  "annotation_format": "plate_bbox_tsv",
+  "includes_train_split": true,
+  "includes_validation_split": false,
+  "includes_test_split": false,
+  "targets": [
+    "vehicle",
+    "plate",
+    "plate_text"
+  ],
+  "has_frame_level_annotations": true,
+  "has_clip_level_annotations": false,
+  "has_plate_text": true,
+  "has_speed_ground_truth": false,
+  "has_in_cabin_annotations": false,
+  "has_driver_behavior_annotations": false,
+  "speed_unit": null,
+  "dataset_name": "OpenALPR Benchmarks end-to-end subset",
+  "dataset_role": "plate_ocr_support",
+  "label_source_glob": "endtoend/**/*.txt",
+  "sample_count": 444,
+  "ftr_output_families_covered": [
+    "arac_bilgisi"
+  ],
+  "license": "AGPL-3.0",
+  "notes": "Outside-camera plate bbox/text support. Mostly non-Turkish plates; does not provide speed/radar/in-cabin labels.",
+  "adapter_status": "unsupported",
+  "unsupported_reason": "No tracked, tested OpenALPR parser exists; license and Turkish-plate applicability require review."
+}

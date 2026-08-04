@@ -1,7 +1,7 @@
 """
 Fine-tuning script for TEKNOFEST 2026 Phase 2.
-This script extracts frames from the Phase 2 video and matches them with faz2_gt.json
-to create a fine-tuning dataset for YOLO and EfficientNet.
+This script extracts event frames for classification calibration. The Faz 2 clip
+must not also be used for a reported holdout metric; see the final-stage manifest.
 """
 import json
 import os
@@ -52,9 +52,9 @@ def create_finetuning_dataset(video_path: str, gt_path: str, output_dir: str):
             frame_path = os.path.join(images_dir, frame_filename)
             cv2.imwrite(frame_path, frame)
             
-            # Save labels (placeholder bounding boxes for YOLO format)
-            # Note: The JSON only gives temporal labels, so spatial bounding boxes
-            # would need to be manually annotated or pseudo-labeled.
+            # The GT has temporal class labels, not spatial bounding boxes. These
+            # CSV-like rows are classification calibration labels and must never be
+            # presented as YOLO detection annotations.
             label_path = os.path.join(labels_dir, f"frame_{frame_idx}.txt")
             with open(label_path, "w") as lf:
                 for ev in events_by_frame[frame_idx]:
@@ -74,7 +74,12 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Extract fine-tuning data from Phase 2 GT")
     parser.add_argument("--video", type=str, required=True, help="Path to faz2.mp4")
-    parser.add_argument("--gt", type=str, default="faz2_gt (1).json", help="Path to JSON GT")
+    parser.add_argument(
+        "--gt",
+        type=str,
+        default="data/final_stage/faz2/ground_truth.json",
+        help="Path to the canonical development-only FTR ground truth",
+    )
     parser.add_argument("--out", type=str, default="data/finetune", help="Output directory")
     args = parser.parse_args()
     

@@ -24,6 +24,7 @@ KNOWN_ANNOTATION_FORMATS = {
     "openlabel_json",
     "folder_class_csv",
     "csv_tabular",
+    "ftr_results_json",
     # legacy example manifests kept for adapter-compatibility tests
     "json",
     "csv",
@@ -112,6 +113,20 @@ class AdaptationGap:
 
 def compare_manifest_to_assumptions(manifest: DatasetManifest) -> list[AdaptationGap]:
     gaps: list[AdaptationGap] = []
+
+    if manifest.extra_fields.get("adapter_status") == "unsupported":
+        gaps.append(
+            AdaptationGap(
+                assumption_id="DS-003",
+                severity="high",
+                message="Dataset is explicitly marked unsupported by the adapter registry.",
+                action=str(
+                    manifest.extra_fields.get(
+                        "unsupported_reason", "Implement and test a production adapter."
+                    )
+                ),
+            )
+        )
 
     if manifest.sample_unit not in ALLOWED_SAMPLE_UNITS:
         gaps.append(

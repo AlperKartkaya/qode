@@ -13,188 +13,284 @@ class AssumptionRecord:
     impact_surface: tuple[str, ...]
 
 
+def _record(
+    assumption_id: str,
+    domain: str,
+    statement: str,
+    verification: str,
+    *impact_surface: str,
+    confidence: str = "high",
+) -> AssumptionRecord:
+    return AssumptionRecord(
+        assumption_id=assumption_id,
+        domain=domain,
+        statement=statement,
+        confidence=confidence,
+        verify_when_dataset_arrives=verification,
+        impact_surface=impact_surface,
+    )
+
+
 ASSUMPTIONS: tuple[AssumptionRecord, ...] = (
-    AssumptionRecord(
-        assumption_id="DS-001",
-        domain="dataset packaging",
-        statement=(
-            "Support datasets are State Farm images, DMD videos/OpenLABEL, "
-            "DriverSVT telemetry, and the legacy three-video TOGG-like bundle; "
-            "the final evaluator runs on organizer-provided videos."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Verified from FTR and 2026 şartname source documents.",
-        impact_surface=("ingestion", "preprocessing", "report wording"),
+    _record(
+        "DS-001",
+        "dataset packaging",
+        "Support datasets are joined by an organizer-provided Faz 2 HLS VOD with 240p/1080p variants and event-level FTR ground truth; hidden final videos must not depend on that fixture at runtime.",
+        "Verified from the final scenario and supplied Faz 2 ground truth.",
+        "ingestion",
+        "preprocessing",
+        "evaluation",
     ),
-    AssumptionRecord(
-        assumption_id="DS-002",
-        domain="sample unit",
-        statement=(
-            "Support sample units vary by dataset, but final FTR inference sample "
-            "unit is one video at /app/data/input/video.mp4."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Verified from FTR Docker contract.",
-        impact_surface=("dataset adapters", "submission wrapper"),
+    _record(
+        "DS-002",
+        "sample unit",
+        "Support sample units vary, but final FTR inference consumes exactly one video at /app/data/input/video.mp4.",
+        "Verified from the FTR and platform Docker contracts.",
+        "dataset adapters",
+        "submission wrapper",
     ),
-    AssumptionRecord(
-        assumption_id="DS-003",
-        domain="annotation source",
-        statement=(
-            "Support annotations keep their native labels, but final output must be "
-            "the exact FTR results.json schema with ASCII-safe labels."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Verified from FTR output examples.",
-        impact_surface=("parsers", "schema validation", "competition exporter"),
+    _record(
+        "DS-003",
+        "annotation source",
+        "Support annotations retain native formats; the Faz 2 fixture uses validated ftr_results_json and final predictions must use that schema without reading the fixture at runtime.",
+        "Verified from the Faz 2 ground truth and FTR examples.",
+        "parsers",
+        "schema validation",
+        "leakage controls",
     ),
-    AssumptionRecord(
-        assumption_id="DS-004",
-        domain="targets",
-        statement=(
-            "The competition target taxonomy includes vehicle body type, plate, "
-            "vehicle color, driver actions, selected objects, and passenger positions."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Verified from FTR expected values and 2026 şartname target list.",
-        impact_surface=("model heads", "output schema", "evaluation", "KTR report"),
+    _record(
+        "DS-004",
+        "targets",
+        "Required outputs cover vehicle body type, plate, color, driver actions, selected objects, and passenger positions.",
+        "Verified from the FTR vocabulary and Faz 2 ground truth.",
+        "model heads",
+        "output schema",
+        "evaluation",
     ),
-    AssumptionRecord(
-        assumption_id="DS-005",
-        domain="plate labels",
-        statement=(
-            "Plate OCR is required for FTR output; current local support datasets do "
-            "not provide reusable exact Turkish plate text labels."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Update only if organizer publishes labelled plate ground truth.",
-        impact_surface=("OCR pipeline", "post-processing", "output validation"),
+    _record(
+        "DS-005",
+        "plate labels",
+        "Faz 2 supplies one exact Turkish plate for development validation, but it is not a general plate-training corpus.",
+        "Verified from the Faz 2 ground truth; revisit if broader labels arrive.",
+        "OCR pipeline",
+        "post-processing",
+        "output validation",
     ),
-    AssumptionRecord(
-        assumption_id="DS-006",
-        domain="speed labels",
-        statement=(
-            "The şartname mentions real vehicle speed, but the current FTR results.json "
-            "schema omits a speed key; keep speed as an internal/reporting objective until updated."
-        ),
+    _record(
+        "DS-006",
+        "speed labels",
+        "Speed is mentioned by the şartname but absent from the FTR schema and Faz 2 ground truth, so it remains an internal/optional metric.",
+        "Re-check only if final guidance revises results.json.",
+        "normalization",
+        "reporting",
+        "optional model head",
         confidence="medium",
-        verify_when_dataset_arrives="Re-check if final KTR/FTR guidance revises results.json.",
-        impact_surface=("normalization", "reporting", "optional model head"),
     ),
-    AssumptionRecord(
-        assumption_id="DS-007",
-        domain="in-cabin labels",
-        statement=(
-            "FTR requires exact labels for driver actions, teknocan/bilgisayar, "
-            "and passenger-seat positions; existing datasets cover only a subset."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Verified from FTR labels and current manifests.",
-        impact_surface=("classification schema", "dataset gap analysis"),
+    _record(
+        "DS-007",
+        "in-cabin labels",
+        "Faz 2 demonstrates every required driver, object, and passenger label; support datasets still cover subsets and Faz 2 is calibration/evaluation data rather than unrestricted training evidence.",
+        "Verified from the 34-event Faz 2 ground truth.",
+        "classification schema",
+        "dataset gap analysis",
+        "evaluation",
     ),
-    AssumptionRecord(
-        assumption_id="DS-008",
-        domain="annotation granularity",
-        statement=(
-            "Support granularity varies, while final output is event-level with "
-            "zaman_saniye plus one per-video arac_bilgisi summary."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Verified from FTR output examples.",
-        impact_surface=("temporal logic", "metrics", "adapter outputs"),
+    _record(
+        "DS-008",
+        "annotation granularity",
+        "Final output is a per-video vehicle summary plus event-level detections with zaman_saniye; repeated labels at different timestamps remain distinct events.",
+        "Verified from Faz 2 and FTR examples.",
+        "temporal logic",
+        "metrics",
+        "adapter outputs",
     ),
-    AssumptionRecord(
-        assumption_id="DS-010",
-        domain="target-vehicle scope",
-        statement=(
-            "TOGG/target-vehicle approach remains a primary visual use case, but "
-            "the current KTR final report must discuss it as vehicle, plate, and "
-            "video analysis rather than a QoD trigger story."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives=(
-            "Updated from the 2026-06-15 user scope change removing QoD from KTR report focus."
-        ),
-        impact_surface=("detection logic", "model roadmap", "report wording"),
+    _record(
+        "DS-009",
+        "split strategy",
+        "Support data splits must be grouped by subject/session and Faz 2 fine-tuning windows must remain separate from reported holdout windows.",
+        "Update if an official organizer split is published.",
+        "experimentation workflow",
+        "leakage controls",
     ),
-    AssumptionRecord(
-        assumption_id="DS-011",
-        domain="final-report scope",
-        statement=(
-            "QoD and telecom API integration remain support/demo code paths, but "
-            "they must be excluded from generated KTR final-report content for this milestone."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Update only if the user explicitly re-adds QoD to the final-report scope.",
-        impact_surface=("reporting", "generated DOCX", "markdown exports"),
+    _record(
+        "DS-010",
+        "target-vehicle scope",
+        "Vehicle/plate/video analysis is the AI scope, while Number Verification, QoD, streaming, upload, and result display are separate final live-demo responsibilities.",
+        "Verified from the final scenario and UX guide.",
+        "detection logic",
+        "demo architecture",
+        "report wording",
     ),
-    AssumptionRecord(
-        assumption_id="DS-012",
-        domain="report evidence",
-        statement=(
-            "The KTR report evidence must center on FTR output compliance, dataset "
-            "construction, trained model artifacts, model metrics, FPS/runtime readiness, "
-            "and source-code traceability."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Update when trained deep-learning weights and official evaluator outputs are available.",
-        impact_surface=("training", "evaluation", "report generation"),
+    _record(
+        "DS-011",
+        "final-stage scope",
+        "Number Verification gates the live demo and QoD can add points; QoD failure must allow streaming to continue and mocks are test doubles only.",
+        "Verified from the final scenario and Open Gateway documents.",
+        "orchestration",
+        "mobile",
+        "backend",
+        "live demo",
     ),
-    AssumptionRecord(
-        assumption_id="DS-013",
-        domain="Number Verification integration",
-        statement=(
-            "Real credentials are unavailable; mocks remain isolated while design "
-            "tracks CAMARA/Open Gateway silent SIM/phone verification semantics."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Update when Turkcell credentials/base URL/device details are granted.",
-        impact_surface=("mobile/auth integration",),
+    _record(
+        "DS-012",
+        "report evidence",
+        "Evidence must cover FTR compliance, data provenance, model metrics, runtime, gateway/mobile smoke results, and source traceability without inventing results.",
+        "Update as live and hidden-evaluator evidence becomes available.",
+        "training",
+        "evaluation",
+        "report generation",
     ),
-    AssumptionRecord(
-        assumption_id="DS-014",
-        domain="report generator",
-        statement=(
-            "The report generator must produce a final_report_template.docx-aligned "
-            "DOCX and a markdown QA artifact from repo-grounded evidence without "
-            "inventing unavailable model results."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Verify with DOCX text extraction and generated artifact checks.",
-        impact_surface=("reporting", "tests", "manual QA"),
+    _record(
+        "DS-013",
+        "telecom integration",
+        "Official API root, OIDC, NV, and QoD contracts are available; only credentials, redirect URI, SIM binding, and live environment proof remain external.",
+        "Update when organizer provisioning is delivered.",
+        "mobile/auth integration",
+        "backend",
+        "live smoke",
     ),
-    AssumptionRecord(
-        assumption_id="DS-015",
-        domain="evaluation focus",
-        statement=(
-            "Final/KTR evaluation for this milestone must emphasize AI accuracy, "
-            "precision for FTR labels, dataset balance, model-training evidence, "
-            "runtime/FPS readiness, and report quality."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Updated from user scope change removing QoD from KTR report.",
-        impact_surface=("roadmap prioritization", "KTR sections"),
+    _record(
+        "DS-014",
+        "report generator",
+        "Report artifacts must remain template-aligned and repo-grounded without inventing unavailable model or live-integration results.",
+        "Verify through OOXML, rendered output, and evidence checks.",
+        "reporting",
+        "tests",
+        "manual QA",
     ),
-    AssumptionRecord(
-        assumption_id="OR-002",
-        domain="orchestration risk labels",
-        statement=(
-            "Internal labels may remain richer, but competition export must map to "
-            "the exact FTR label set and reject unmapped labels."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Verified from FTR exact-match warning.",
-        impact_surface=("mobile output", "reporting", "evaluation"),
+    _record(
+        "DS-015",
+        "evaluation focus",
+        "Low-resolution inference, high-resolution inference, live demo, and presentation are equally weighted final concerns.",
+        "Verified from the final scenario.",
+        "roadmap prioritization",
+        "evaluation",
+        "operations",
     ),
-    AssumptionRecord(
-        assumption_id="AN-002",
-        domain="analyzer outputs",
-        statement=(
-            "The internal AnalysisResult remains useful for orchestration, but a "
-            "separate FTR competition output contract is required for results.json."
-        ),
-        confidence="high",
-        verify_when_dataset_arrives="Verified from FTR schema mismatch.",
-        impact_surface=("orchestration integration", "local API", "CLI"),
+    _record(
+        "DS-016",
+        "privacy and sharing",
+        "Organizer-provided network, video, training, Q&A, and evaluation material must not be shared outside the competition without permission.",
+        "Verified from the competition privacy rule.",
+        "repo hygiene",
+        "publication",
+        "data handling",
+    ),
+    _record(
+        "DS-017",
+        "final platform operation",
+        "Judges use Web UI, image names begin with teknofest-2026/, fixed FTR I/O paths are mandatory, and only one frozen final image should remain.",
+        "Verified from the platform operation guide.",
+        "Docker",
+        "deployment",
+        "manual QA",
+    ),
+    _record(
+        "DS-018",
+        "final timing",
+        "Mobile HLS export must finish within 5 minutes, each inference within 10 minutes, and image SHA256 must be frozen before 7 August 2026 21:00.",
+        "Verified from the final scenario.",
+        "mobile",
+        "inference performance",
+        "release operations",
+    ),
+    _record(
+        "OR-001",
+        "orchestration source reference",
+        "Internal orchestration may keep source_ref, while final output uses video_id and exact FTR keys.",
+        "Verified from FTR examples.",
+        "orchestration inputs",
+        "competition exporter",
+    ),
+    _record(
+        "OR-002",
+        "orchestration risk labels",
+        "Internal labels may be richer, but competition export maps explicitly to the FTR vocabulary and rejects unmapped labels.",
+        "Verified from the FTR exact-match rule.",
+        "mobile output",
+        "reporting",
+        "evaluation",
+    ),
+    _record(
+        "OR-003",
+        "orchestration identifiers",
+        "Real IDs follow organizer responses; deterministic local IDs are acceptable only in mocks/tests.",
+        "Verify during live API provisioning.",
+        "orchestration traces",
+        "logging",
+    ),
+    _record(
+        "EV-001",
+        "scenario fixtures",
+        "Fixtures include support demos and the Faz 2 golden FTR document without leaking it into runtime inference.",
+        "Update as organizer fixtures expand.",
+        "evaluation",
+        "traceability",
+    ),
+    _record(
+        "EV-002",
+        "behavior scoring",
+        "FTR scoring validates schema, exact labels, plate, confidence, and event timestamps; official matching tolerance remains unknown.",
+        "Update when the official evaluator is published.",
+        "evaluation",
+        "reporting",
+    ),
+    _record(
+        "EV-003",
+        "scenario coverage",
+        "Coverage includes vehicle, plate, every event family, schema failures, resolution variants, and live-demo failure handling.",
+        "Update as final criteria evolve.",
+        "evaluation",
+        "robustness",
+    ),
+    _record(
+        "EX-001",
+        "markdown exports",
+        "Exports distinguish real, mock, and unavailable evidence and include data, metrics, runtime, gateway/mobile, and image-digest tables.",
+        "Compare with final presentation and report needs.",
+        "reporting",
+        "presentation",
+    ),
+    _record(
+        "API-001",
+        "local http wrapper",
+        "The current HTTP server is a development surface, not the final production mobile backend.",
+        "Re-evaluate through the final backend boundary ADR.",
+        "demo integration",
+        "mobile client",
+    ),
+    _record(
+        "API-002",
+        "local endpoint payloads",
+        "Local endpoints may reuse internal contracts, but every FTR-facing surface speaks exact results.json.",
+        "Verify through local/final backend parity tests.",
+        "mobile integration",
+        "local API",
+    ),
+    _record(
+        "AN-001",
+        "analyzer inputs",
+        "Final inference accepts arbitrary organizer video and must not rely on dataset identity or Faz 2 ground truth.",
+        "Verify after final inference implementation.",
+        "analysis boundary",
+        "model integration",
+    ),
+    _record(
+        "AN-002",
+        "analyzer outputs",
+        "Internal AnalysisResult remains useful, while final competition output is a separate exact FTR contract.",
+        "Verified from the contract mismatch.",
+        "orchestration integration",
+        "local API",
+        "CLI",
+    ),
+    _record(
+        "AN-003",
+        "analysis session controls",
+        "Local verification/QoD booleans remain explicit test controls and never enter final inference or detect evaluator state.",
+        "Verified from the anti-manipulation rule.",
+        "demo flow",
+        "local API",
+        "submission wrapper",
     ),
 )

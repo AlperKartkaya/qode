@@ -1,0 +1,67 @@
+{
+  "dataset_id": "teknofest-2026-final-faz2",
+  "sample_unit": "video_clip",
+  "video_extensions": [".mp4"],
+  "annotation_format": "ftr_results_json",
+  "includes_train_split": false,
+  "includes_validation_split": true,
+  "includes_test_split": false,
+  "targets": [
+    "vehicle",
+    "plate_text",
+    "driver_behavior",
+    "in_cabin_object",
+    "passenger_position"
+  ],
+  "has_frame_level_annotations": false,
+  "has_clip_level_annotations": true,
+  "has_plate_text": true,
+  "has_speed_ground_truth": false,
+  "has_in_cabin_annotations": true,
+  "has_driver_behavior_annotations": true,
+  "speed_unit": null,
+  "ftr_output_families_covered": [
+    "arac_bilgisi",
+    "sofor_eylemi",
+    "nesneler",
+    "yolcular"
+  ],
+  "sample_id": "faz2",
+  "video_id": "video.mp4",
+  "source_url": "https://teknofest-arge-turkcell.ercdn.net/hls/4/pZ/faz2/faz2.smil/playlist.m3u8",
+  "duration_seconds": 113.92,
+  "ground_truth_path": "ground_truth.json",
+  "ground_truth_sha256": "41caf875a5ff90d928c2681457780f096e8d5173660eab23d8a088664c4746d7",
+  "ground_truth_event_count": 34,
+  "usage_policy": "development_calibration_only",
+  "split_policy": "single_clip_chronological_groups; no segment may be both fine-tune input and reported holdout",
+  "media_assets": [
+    {
+      "artifact_id": "faz2-240p",
+      "variant_name": "240p",
+      "path": "media/faz2-240p.mp4",
+      "availability": "remote",
+      "width": 426,
+      "height": 240,
+      "duration_seconds": 113.92,
+      "segment_count": 56,
+      "fps": null,
+      "codec": "avc1.424015,mp4a.40.2",
+      "sha256": null
+    },
+    {
+      "artifact_id": "faz2-1080p",
+      "variant_name": "1080p",
+      "path": "media/faz2-1080p.mp4",
+      "availability": "remote",
+      "width": 1920,
+      "height": 1080,
+      "duration_seconds": 113.92,
+      "segment_count": 56,
+      "fps": null,
+      "codec": "avc1.640028,mp4a.40.2",
+      "sha256": null
+    }
+  ],
+  "notes": "Organizer Faz 2 HLS and FTR ground truth. GT is never a runtime inference input."
+}

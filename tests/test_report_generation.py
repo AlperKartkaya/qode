@@ -5,6 +5,7 @@ import sys
 import zipfile
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -106,7 +107,20 @@ class ReportModelTrainingTest(unittest.TestCase):
             self.assertIn("PROJE ÖZETİ", text)
             self.assertIn("YOLO11", text)
             self.assertIn("EK A. GÖRSEL KOD REFERANSLARI", text)
-            self.assertIn("Şekil 1. Uçtan uca yapay zekâ çıkarım hattı", text)
+            with zipfile.ZipFile(result.docx_path) as archive:
+                document = ET.fromstring(archive.read("word/document.xml"))
+            namespace = {
+                "w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            }
+            captions = [
+                "".join(node.text or "" for node in paragraph.findall(".//w:t", namespace))
+                for paragraph in document.findall(".//w:p", namespace)
+                if paragraph.find(
+                    "./w:pPr/w:pStyle[@w:val='Caption']", namespace
+                )
+                is not None
+            ]
+            self.assertIn("Şekil 1. Uçtan uca yapay zekâ çıkarım hattı", captions)
             self.assertNotIn("docs/diagrams/ktr_ai_pipeline.mmd", text)
             self.assertNotIn(".mmd", text)
             self.assertIn("Ek A.1. Model ağırlık yükleme mantığı", text)

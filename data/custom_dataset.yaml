@@ -12,6 +12,6 @@ names:
   10: on_koltuk
   11: arka_koltuk_1
   12: arka_koltuk_2
-path: /Users/ebubekirerden/Documents/VSCode/qode/data/datasets/yolo_ftr_dataset
+path: datasets/yolo_ftr_dataset
 train: images/train
 val: images/val
