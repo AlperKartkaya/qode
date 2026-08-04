@@ -6,6 +6,21 @@ from torchvision import models, transforms
 from datasets import load_dataset
 from torch.utils.data import DataLoader, Dataset
 from pathlib import Path
+from PIL import Image
+import cv2
+import numpy as np
+
+def _enhance_crop_for_classification(crop: np.ndarray) -> np.ndarray:
+    try:
+        lab = cv2.cvtColor(crop, cv2.COLOR_RGB2LAB)
+        l, a, b = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        cl = clahe.apply(l)
+        limg = cv2.merge((cl, a, b))
+        return cv2.cvtColor(limg, cv2.COLOR_LAB2RGB)
+    except Exception:
+        return crop
+
 
 class HFImageDataset(Dataset):
     def __init__(self, hf_dataset, transform=None):
@@ -31,6 +46,10 @@ class HFImageDataset(Dataset):
         
         if img.mode != 'RGB':
             img = img.convert('RGB')
+            
+        img_np = np.array(img)
+        img_np = _enhance_crop_for_classification(img_np)
+        img = Image.fromarray(img_np)
             
         if self.transform:
             img = self.transform(img)
