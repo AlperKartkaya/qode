@@ -6,8 +6,8 @@ IMAGE="teknofest-2026/qode-final:${QODE_VERSION}"
 
 echo "Deploying QoDe to VM..."
 
-# 1. Ensure directories exist
-mkdir -p /app/data/input /app/data/output /app/weights
+# 1. Ensure directories exist (using relative paths for the host, not root /app)
+mkdir -p data/input data/output data/weights
 
 # 2. Build Docker Image
 echo "Building Docker image: $IMAGE"
