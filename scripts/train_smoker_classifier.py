@@ -66,7 +66,7 @@ class HFImageDataset(Dataset):
 def train_smoker_model():
     print("Loading smoker-detection dataset from Hugging Face...")
     try:
-        dataset = load_dataset("QoDe-5G/qode-smoker-detection", split="train")
+        dataset = load_dataset("QoDe-5G/qode-smoker-detection", split="train", download_mode="force_redownload")
     except Exception as e:
         print(f"Failed to load dataset: {e}")
         sys.exit(1)
