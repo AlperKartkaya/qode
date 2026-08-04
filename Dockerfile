@@ -41,7 +41,11 @@ RUN python3 -m smart_road_safety.cli check-runtime-assets \
     --manifest /app/config/runtime_assets.json --asset-root /app/weights \
     --mode development --inspect-classes
 RUN mkdir -p /app/weights/easyocr && \
-    tar -xf /app/weights/easyocr-tr-en.bundle -C /app/weights/easyocr
+    if [ -f /app/weights/easyocr-tr-en.bundle ]; then \
+        tar -xf /app/weights/easyocr-tr-en.bundle -C /app/weights/easyocr; \
+    else \
+        echo "Warning: easyocr-tr-en.bundle not found, skipping offline OCR extraction"; \
+    fi
 
 HEALTHCHECK --interval=30s --timeout=20s --retries=1 \
   CMD python3 -m smart_road_safety.cli check-runtime-readiness \
