@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchvision import models, transforms
-from datasets import load_dataset
+from datasets import load_dataset, Features, Image as HFImage, ClassLabel
 from torch.utils.data import DataLoader, Dataset
 from PIL import Image
 import cv2
@@ -69,7 +69,11 @@ class HFImageDataset(Dataset):
 def train_smoker_model():
     print("Loading smoker-detection dataset from Hugging Face...")
     try:
-        dataset = load_dataset("QoDe-5G/qode-smoker-detection", split="train", cache_dir="./hf_temp_cache")
+        schema = Features({
+            "image": HFImage(),
+            "label": ClassLabel(names=["not_smoking", "smoking"])
+        })
+        dataset = load_dataset("QoDe-5G/qode-smoker-detection", split="train", cache_dir="./hf_temp_cache", features=schema)
     except Exception as e:
         print(f"Failed to load dataset: {e}")
         sys.exit(1)
