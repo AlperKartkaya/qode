@@ -358,6 +358,7 @@ class SceneAnalysisEngine:
         self,
         yolo_model_name: str = "yolo11x.pt",
         driver_model_path: str = "data/weights/driver_classifier.pt",
+        smoker_model_path: str = "data/weights/smoker_classifier.pt",
         vehicle_type_model_path: str = "data/weights/vehicle_type_classifier.pt",
         vehicle_color_model_path: str = "data/weights/vehicle_color_classifier.pt",
         teknocan_model_path: str = "data/weights/teknocan_detector.pt",
@@ -436,7 +437,10 @@ class SceneAnalysisEngine:
         # ── Driver behaviour classifier ───────────────────────────────────────
         self.driver_classifier = None
         self.driver_classes: list[str] = []
+        self.smoker_classifier = None
+
         self._load_driver_classifier(driver_model_path)
+        self._load_smoker_classifier(smoker_model_path)
 
         # ── Vehicle type classifier ───────────────────────────────────────────
         self.vehicle_type_classifier = None
@@ -505,6 +509,21 @@ class SceneAnalysisEngine:
             print(f"[Engine] Driver classifier loaded ({arch}) — classes: {self.driver_classes}")
         except Exception as e:
             self._load_failure("Driver classifier", e)
+
+    def _load_smoker_classifier(self, local_path: str) -> None:
+        path = _resolve_weights(local_path, "/app/weights/smoker_classifier.pt")
+        if not path:
+            print("[Engine] No smoker classifier found; smoking detection will be disabled or fallback.")
+            return
+        try:
+            model = torch.jit.load(path, map_location=self.device)
+            self.smoker_classifier = model
+            self.smoker_classifier.eval()
+            print(f"[Engine] Smoker classifier loaded from {path}")
+        except Exception as e:
+            if not self.allow_degraded:
+                raise RuntimeError(f"Failed to load smoker classifier: {e}") from e
+            print(f"[Engine] Development degraded (smoker): {e}")
 
     def _load_vehicle_type_classifier(self, local_path: str) -> None:
         path = _resolve_weights(local_path, "/app/weights/vehicle_type_classifier.pt")
@@ -617,6 +636,63 @@ class SceneAnalysisEngine:
         if not self.allow_degraded:
             raise RuntimeError("Vehicle classifier produced no valid final prediction")
         return self._COCO_TO_FTR_TYPE.get(coco_cls_id, "sedan"), 0.5
+
+    def _extract_face_crop(self, driver_crop: np.ndarray) -> np.ndarray:
+        """Extracts the face from the driver crop using Haar Cascade or a geometric fallback."""
+        if driver_crop is None or driver_crop.size == 0:
+            return driver_crop
+            
+        h, w = driver_crop.shape[:2]
+        gray = cv2.cvtColor(driver_crop, cv2.COLOR_BGR2GRAY)
+        
+        # Load OpenCV's built-in Haar Cascade for face detection
+        cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+        face_cascade = cv2.CascadeClassifier(cascade_path)
+        
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
+        
+        if len(faces) > 0:
+            # Get the largest face
+            faces = sorted(faces, key=lambda x: x[2]*x[3], reverse=True)
+            x, y, fw, fh = faces[0]
+            
+            # Expand the crop slightly to include mouth and chin (for smoking/yawning)
+            margin_x = int(fw * 0.2)
+            margin_y = int(fh * 0.3)
+            fx1 = max(0, x - margin_x)
+            fy1 = max(0, y - margin_y)
+            fx2 = min(w, x + fw + margin_x)
+            fy2 = min(h, y + fh + int(margin_y * 1.5)) # More margin at the bottom for mouth/cigarette
+            
+            return driver_crop[fy1:fy2, fx1:fx2]
+            
+        # Fallback: top 35% of the driver crop
+        return driver_crop[0:int(h * 0.35), :]
+
+    def _classify_smoker(self, face_crop: np.ndarray, timestamp: float) -> list[dict]:
+        """Run dedicated smoker classifier on the face crop."""
+        if self.smoker_classifier is None or face_crop is None or face_crop.size == 0:
+            return []
+        try:
+            img = Image.fromarray(cv2.cvtColor(face_crop, cv2.COLOR_BGR2RGB))
+            t = self._driver_tf(img).unsqueeze(0).to(self.device)
+            with torch.no_grad():
+                probs = torch.softmax(self.smoker_classifier(t), dim=1)[0]
+                conf, idx = torch.max(probs, 0)
+            conf_val = conf.item()
+            
+            # Assuming smoker_classifier outputs binary [not_smoking, smoking] or similar
+            # For now, we will map idx==1 to sigara_icme if confidence is high
+            if idx.item() == 1 and conf_val > 0.60:
+                return [{
+                    "zaman_saniye": timestamp,
+                    "kategori": "sofor_eylemi",
+                    "etiket": "sigara_icme",
+                    "confidence_score": round(conf_val, 4),
+                }]
+        except Exception as e:
+            print(f"[Engine] Smoker classifier error: {e}")
+        return []
 
     def _classify_driver_action(self, crop: np.ndarray, timestamp: float) -> list[dict]:
         """Run driver classifier on the provided crop. Returns list of detection dicts."""
@@ -972,8 +1048,16 @@ class SceneAnalysisEngine:
                         yolo_phone_confidence = max(yolo_phone_confidence, float(pconf))
                         break
 
-            # Driver behaviour classification
+            # Driver behaviour classification (Body)
             action_events = self._classify_driver_action(driver_crop, timestamp_seconds)
+            
+            # Filter out sigara_icme from old driver model just in case it still predicts it
+            action_events = [e for e in action_events if e["etiket"] != "sigara_icme"]
+            
+            # Smoker classification (Face Crop)
+            face_crop = self._extract_face_crop(driver_crop)
+            smoker_events = self._classify_smoker(face_crop, timestamp_seconds)
+            action_events.extend(smoker_events)
             
             # Eğer YOLO elinde telefon gördüyse, görüntü sınıflandırıcısının yanılması (esneme/sigara) engellenir.
             if yolo_phone_detected:
