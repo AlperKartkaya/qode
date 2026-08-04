@@ -9,16 +9,10 @@ from PIL import Image
 import cv2
 import numpy as np
 
-def _enhance_crop_for_classification(crop: np.ndarray) -> np.ndarray:
-    try:
-        lab = cv2.cvtColor(crop, cv2.COLOR_RGB2LAB)
-        l, a, b = cv2.split(lab)
-        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-        cl = clahe.apply(l)
-        limg = cv2.merge((cl, a, b))
-        return cv2.cvtColor(limg, cv2.COLOR_LAB2RGB)
-    except Exception:
-        return crop
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+from smart_road_safety.analysis.model_inference import _enhance_crop_for_classification
 
 
 class HFImageDataset(Dataset):
@@ -57,10 +51,12 @@ class HFImageDataset(Dataset):
         if img.mode != 'RGB':
             img = img.convert('RGB')
             
-        # Kullanıcının harika tespiti: Anti-Glare (CLAHE) filtresini eğitime de ekliyoruz!
+        # Exact match with inference preprocessing (requires BGR for OpenCV)
         img_np = np.array(img)
-        img_np = _enhance_crop_for_classification(img_np)
-        img = Image.fromarray(img_np)
+        img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+        img_enhanced_bgr = _enhance_crop_for_classification(img_bgr)
+        img_enhanced_rgb = cv2.cvtColor(img_enhanced_bgr, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(img_enhanced_rgb)
             
         if self.transform:
             img = self.transform(img)
