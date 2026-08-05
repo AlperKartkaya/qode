@@ -24,12 +24,12 @@
     {
       "id": "driver_action_classifier",
       "role": "driver action classifier",
-      "filename": "driver_classifier.pt",
+      "filename": "driver_classifier_finetuned.pt",
       "source": "https://huggingface.co/QoDe-5G/qode-models",
       "license": "MIT",
-      "model_version": "HF revision 9974f608552ad7bf88a7c7e5a8da56cc767a78f4",
-      "sha256": "4d83e4d7594c62dafe659c601dfae6cb3cf9c3c58d808ba0b4af9f91a7807f08",
-      "download_url": "https://huggingface.co/QoDe-5G/qode-models/resolve/9974f608552ad7bf88a7c7e5a8da56cc767a78f4/driver_classifier.pt",
+      "model_version": "Faz2 Finetuned",
+      "sha256": "18766d110e81ce12999d2c8fa1b2291d9090cc390e7101a2c7896bb6e2510caf",
+      "download_url": "https://huggingface.co/QoDe-5G/qode-models/resolve/main/driver_classifier_finetuned.pt",
       "expected_classes": ["arkaya_bakma", "esneme", "etrafa_bakinma", "safe_driving", "sigara_icme", "su_icme", "telefonla_konusma"],
       "class_inspection": "torch_class_names",
       "availability": "published"
@@ -61,19 +61,7 @@
       "class_match": "exact",
       "availability": "published"
     },
-    {
-      "id": "offline_ocr_bundle",
-      "role": "Turkish/English plate OCR detector and recognizer tar bundle extracted to EASYOCR_MODULE_PATH",
-      "filename": "easyocr-tr-en.bundle",
-      "source": "https://www.jaided.ai/easyocr/modelhub/",
-      "license": "Apache-2.0 and model-specific upstream terms",
-      "model_version": "reproducible tar bundle not yet frozen",
-      "sha256": null,
-      "download_url": null,
-      "expected_classes": ["tr", "en"],
-      "class_inspection": "sidecar_json",
-      "availability": "external-blocker"
-    },
+
     {
       "id": "teknocan_detector",
       "role": "teknocan detector",
@@ -88,17 +76,17 @@
       "availability": "published"
     },
     {
-      "id": "cabin_detector",
-      "role": "seatbelt, computer, and calibrated passenger-seat detector",
-      "filename": "cabin_detector.pt",
-      "source": "not yet trained/published",
-      "license": "undetermined",
-      "model_version": "unavailable",
-      "sha256": null,
-      "download_url": null,
-      "expected_classes": ["emniyet_kemeri_ihlali", "bilgisayar", "arka_koltuk_1", "arka_koltuk_2", "on_koltuk"],
-      "class_inspection": "ultralytics_names",
-      "availability": "external-blocker"
+      "id": "smoker_classifier",
+      "role": "face smoker classifier",
+      "filename": "smoker_classifier_finetuned.pt",
+      "source": "https://huggingface.co/QoDe-5G/qode-models",
+      "license": "MIT",
+      "model_version": "Faz2 Finetuned",
+      "sha256": "43f413f8865a567d7964cbe9d4c3ec01be2a24cf02c9e79b4d295ddba11ac1e6",
+      "download_url": "https://huggingface.co/QoDe-5G/qode-models/resolve/main/smoker_classifier_finetuned.pt",
+      "expected_classes": ["not_smoking", "smoking"],
+      "class_inspection": "torch_class_names",
+      "availability": "published"
     }
   ]
 }
