@@ -33,9 +33,6 @@ def extract_crops(images_dir, labels_dir, out_driver_dir, out_face_dir):
     print("Loading YOLO for person detection...")
     yolo_model = YOLO("yolo11n.pt") # Fast model for person detection
     
-    cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-    face_cascade = cv2.CascadeClassifier(cascade_path)
-    
     os.makedirs(out_driver_dir, exist_ok=True)
     os.makedirs(out_face_dir, exist_ok=True)
     
@@ -68,22 +65,9 @@ def extract_crops(images_dir, labels_dir, out_driver_dir, out_face_dir):
         driver_out = os.path.join(out_driver_dir, frame_name)
         cv2.imwrite(driver_out, driver_crop)
         
-        # Extract face
+        # Extract face (geometric fallback)
         h, w = driver_crop.shape[:2]
-        gray = cv2.cvtColor(driver_crop, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
-        if len(faces) > 0:
-            faces = sorted(faces, key=lambda f: f[2]*f[3], reverse=True)
-            fx, fy, fw, fh = faces[0]
-            margin_x = int(fw * 0.2)
-            margin_y = int(fh * 0.3)
-            fx1 = max(0, fx - margin_x)
-            fy1 = max(0, fy - margin_y)
-            fx2 = min(w, fx + fw + margin_x)
-            fy2 = min(h, fy + fh + int(margin_y * 1.5))
-            face_crop = driver_crop[fy1:fy2, fx1:fx2]
-        else:
-            face_crop = driver_crop[0:int(h * 0.35), :]
+        face_crop = driver_crop[0:int(h * 0.35), :]
             
         face_out = os.path.join(out_face_dir, frame_name)
         cv2.imwrite(face_out, face_crop)
