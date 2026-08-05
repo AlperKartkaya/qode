@@ -19,9 +19,8 @@ class FineTuneDataset(Dataset):
         self.transform = transform
         
         self.samples = []
-        self.classes = ['arkaya_bakma', 'emniyet_kemeri_ihlali', 'esneme', 
-                       'etrafa_bakinma', 'guvenli_surus', 'sigara_icme', 
-                       'su_icme', 'telefonla_konusma', 'uyuklama']
+        self.classes = ['arkaya_bakma', 'esneme', 'etrafa_bakinma', 
+                       'sigara_icme', 'su_icme', 'telefonla_konusma']
                        
         for label_file in os.listdir(labels_dir):
             if label_file.endswith('.txt'):
@@ -52,9 +51,8 @@ def finetune():
     # 1. Load base architecture
     model = models.efficientnet_b2()
     num_ftrs = model.classifier[1].in_features
-    classes = ['arkaya_bakma', 'emniyet_kemeri_ihlali', 'esneme', 
-               'etrafa_bakinma', 'guvenli_surus', 'sigara_icme', 
-               'su_icme', 'telefonla_konusma', 'uyuklama']
+    classes = ['arkaya_bakma', 'esneme', 'etrafa_bakinma', 
+               'sigara_icme', 'su_icme', 'telefonla_konusma']
     model.classifier[1] = nn.Linear(num_ftrs, len(classes))
     
     # 2. Load TorchScript state dict into base architecture
