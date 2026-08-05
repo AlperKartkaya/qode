@@ -1,9 +1,13 @@
 import paramiko
+import os
 import time
 
-hostname = '34.86.94.186'
-username = 'u4865671'
-password = 'Hqt4Ch2j2eQHSVLh'
+
+def required_env(name):
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"{name} must be provided outside the repository")
+    return value
 
 def run_command_interactive(channel, command):
     print(f"Executing: {command}")
@@ -20,10 +24,20 @@ def run_command_interactive(channel, command):
     return output
 
 def deploy():
+    hostname = required_env("QODE_VM_HOST")
+    username = required_env("QODE_VM_USER")
+    key_path = required_env("QODE_VM_KEY_PATH")
     print("Connecting to VM...")
     client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(hostname, username=username, password=password, timeout=5)
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.RejectPolicy())
+    client.connect(
+        hostname,
+        username=username,
+        key_filename=os.path.expanduser(key_path),
+        look_for_keys=False,
+        timeout=5,
+    )
     print("Connected successfully.")
     
     # Open an interactive shell
@@ -35,12 +49,9 @@ def deploy():
         print(channel.recv(4096).decode('utf-8'))
         
     commands = [
-        "rm -rf qode", # Clean slate
-        "git clone https://github.com/AlperKartkaya/qode.git",
-        "cd qode",
-        "cp backend/.env.example backend/.env",
-        "chmod +x deploy.sh",
-        "./deploy.sh"
+        "test -d qode/.git || git clone https://github.com/AlperKartkaya/qode.git qode",
+        "git -C qode pull --ff-only",
+        "cd qode && chmod +x deploy.sh && ./deploy.sh",
     ]
     
     for cmd in commands:

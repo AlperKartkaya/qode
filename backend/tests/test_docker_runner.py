@@ -2,16 +2,13 @@ import pytest
 from unittest.mock import patch, MagicMock
 import docker
 from docker_runner import run_inference_container
-import os
 
+@patch("docker_runner.settings.use_gpu", False)
 @patch("docker_runner.client")
 def test_run_inference_container_success(mock_client):
     # Setup mock container
     mock_container = MagicMock()
     mock_client.containers.run.return_value = mock_container
-    
-    # Test without GPU
-    os.environ["USE_GPU"] = "False"
     
     container = run_inference_container()
     
@@ -23,13 +20,11 @@ def test_run_inference_container_success(mock_client):
     assert "device_requests" in call_args
     assert call_args["device_requests"] == []
 
+@patch("docker_runner.settings.use_gpu", True)
 @patch("docker_runner.client")
 def test_run_inference_container_with_gpu(mock_client):
     mock_container = MagicMock()
     mock_client.containers.run.return_value = mock_container
-    
-    # Test with GPU
-    os.environ["USE_GPU"] = "True"
     
     container = run_inference_container()
     

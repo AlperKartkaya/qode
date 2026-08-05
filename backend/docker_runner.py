@@ -1,6 +1,6 @@
 import docker
-import os
 from config import settings
+import os
 
 try:
     client = docker.from_env()
@@ -20,8 +20,9 @@ def run_inference_container():
     
     print(f"Running docker container {settings.docker_image_name}")
     try:
-        # Determine if we should request GPU
-        use_gpu = os.environ.get('USE_GPU', 'False').lower() == 'true'
+        # Settings owns environment parsing so invalid boolean values fail during
+        # startup instead of silently changing the container contract here.
+        use_gpu = settings.use_gpu
         device_requests = [docker.types.DeviceRequest(count=-1, capabilities=[['gpu']])] if use_gpu else []
         
         print(f"Starting container with GPU: {use_gpu}")

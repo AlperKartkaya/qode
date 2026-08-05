@@ -1,5 +1,6 @@
 package com.qode.roadsafety.data.api
 
+import com.qode.roadsafety.BuildConfig
 import com.qode.roadsafety.data.model.*
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -30,8 +31,7 @@ interface ApiService {
 }
 
 object ApiClient {
-    // Connects Android App to the remote Teknofest Google Cloud VM Backend!
-    var baseUrl: String = "http://34.86.94.186:8000/"
+    private val baseUrl: String = BuildConfig.QODE_API_BASE_URL
 
     private fun getOkHttpClient(): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {

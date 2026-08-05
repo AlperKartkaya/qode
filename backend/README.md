@@ -5,7 +5,7 @@ Bu klasör, Teknofest 2026 5G ve Yapay Zeka ile Akıllı Yol Güvenliği yarış
 ## Mimari Yapı
 ```mermaid
 graph TD
-    A[Mobil Uygulama (React Native)] -->|HTTP POST| B(FastAPI Backend)
+    A[Mobil Uygulama (Native Android/Kotlin)] -->|HTTP| B(FastAPI Backend)
     B -->|API Çağrısı| C{Open Gateway API}
     C -->|Number Verification| D[Numara Doğrulama]
     C -->|Quality on Demand| E[Bant Genişliği Önceliği]
@@ -19,26 +19,33 @@ graph TD
 - Docker (NVIDIA GPU destekli `nvidia-docker2` - Yarışma VM'i için zorunlu)
 
 ## Kurulum (Yerel Test)
-Yerel test ortamında GPU gerekmez, sistem `USE_GPU=False` mantığıyla çalışır.
+Yerel API smoke'u GPU olmadan açılabilir. AI inference ise Docker daemon/image
+yoksa **FAILED** olur; sahte `results.json` üretmez.
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r backend/requirements.txt pytest
+cd backend
 uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-## Kurulum (Yarışma VM - Canlı Ortam)
-Yarışma komitesi tarafından verilen VM'e bağlanıp kurulum yapmak için:
-1. `ssh kullanici@vm-ip` ile sunucuya bağlanın.
-2. Bu kodları sunucuya çekin.
-3. Komite tarafından verilen Docker imajının (örn: `teknofest-ai:latest`) VM üzerinde yüklü olduğundan emin olun.
-4. `config.py` içerisindeki `docker_image_name` değişkenini komitenin imaj ismiyle güncelleyin.
-5. Ortam değişkenlerinde (Environment Variables) GPU'yu aktif edin: `export USE_GPU=True`
-6. `uvicorn app:app --host 0.0.0.0 --port 8000` komutuyla sunucuyu başlatın.
+## Yarışma VM'i
+
+VM adresi, SSH hesabı, private key/parola ve Open Gateway secret değerleri repoya
+yazılmaz. Takımın ürettiği, checksum/digest ile dondurulmuş
+`teknofest-2026/qode-final:<frozen-tag>` image'ı kullanılır; `latest` kullanılmaz.
+P5 canlı kurulum sırası ve komiteden beklenecek alanlar
+[`docs/final_stage/pending_implementation_info_sheet.md`](../docs/final_stage/pending_implementation_info_sheet.md)
+dosyasındadır.
 
 ## Testler (Unit Tests)
 Proje, hatalara karşı kapsamlı bir test paketi içerir. Testleri çalıştırmak için:
 ```bash
-pip install -r requirements-dev.txt
-pytest tests/
+cd backend
+PYTHONPATH=. python -m pytest tests
 ```
+
+> Mevcut `/auth/token`, `/nv/verify`, `/qod/session`, `/upload`, `/ai-run` ve
+> `/ai-result` yüzeyi P5 öncesi uyumluluk yüzeyidir. Open Gateway access token'ının
+> mobilden backend'e taşındığı bu sözleşme production/final kabul edilmez; P5'te
+> backend-owned OIDC session ve job-id tabanlı API ile değiştirilecektir.

@@ -6,6 +6,7 @@ venv/
 backend/venv/
 dist/
 build/
+*.egg-info/
 *.pyc
 .DS_Store
 

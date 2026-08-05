@@ -477,10 +477,6 @@ class SceneAnalysisEngine:
     # ── Loader helpers ────────────────────────────────────────────────────────
 
     def _load_driver_classifier(self, local_path: str) -> None:
-        finetuned_path = local_path.replace('.pt', '_finetuned.pt')
-        if Path(finetuned_path).exists():
-            local_path = finetuned_path
-            
         path = _resolve_weights(local_path, "/app/weights/driver_classifier.pt")
         if path is None:
             if not self.allow_degraded:
@@ -515,19 +511,22 @@ class SceneAnalysisEngine:
             self._load_failure("Driver classifier", e)
 
     def _load_smoker_classifier(self, local_path: str) -> None:
-        finetuned_path = local_path.replace('.pt', '_finetuned.pt')
-        if Path(finetuned_path).exists():
-            local_path = finetuned_path
-            
         path = _resolve_weights(local_path, "/app/weights/smoker_classifier.pt")
         if not path:
-            print("[Engine] No smoker classifier found; smoking detection will be disabled or fallback.")
+            if not self.allow_degraded:
+                raise RuntimeError("Smoker classifier weights are required in final mode")
+            print("[Engine] Smoker classifier unavailable in development mode")
             return
         try:
-            model = torch.jit.load(path, map_location=self.device)
-            self.smoker_classifier = model
-            self.smoker_classifier.eval()
-            print(f"[Engine] Smoker classifier loaded from {path}")
+            checkpoint = torch.load(path, map_location=self.device)
+            class_names = checkpoint.get("class_names")
+            if class_names != ["not_smoking", "smoking"]:
+                raise ValueError(f"Unexpected smoker class mapping: {class_names}")
+            model = models.mobilenet_v3_small(weights=None)
+            model.classifier[3] = nn.Linear(model.classifier[3].in_features, len(class_names))
+            model.load_state_dict(checkpoint["model_state_dict"])
+            self.smoker_classifier = model.to(self.device).eval()
+            print(f"[Engine] Smoker classifier checkpoint loaded from {path}")
         except Exception as e:
             if not self.allow_degraded:
                 raise RuntimeError(f"Failed to load smoker classifier: {e}") from e
@@ -646,35 +645,10 @@ class SceneAnalysisEngine:
         return self._COCO_TO_FTR_TYPE.get(coco_cls_id, "sedan"), 0.5
 
     def _extract_face_crop(self, driver_crop: np.ndarray) -> np.ndarray:
-        """Extracts the face from the driver crop using Haar Cascade or a geometric fallback."""
+        """Apply the deterministic upper-face ROI used by Faz 2 fine-tuning."""
         if driver_crop is None or driver_crop.size == 0:
             return driver_crop
-            
-        h, w = driver_crop.shape[:2]
-        gray = cv2.cvtColor(driver_crop, cv2.COLOR_BGR2GRAY)
-        
-        # Load OpenCV's built-in Haar Cascade for face detection
-        cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-        face_cascade = cv2.CascadeClassifier(cascade_path)
-        
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
-        
-        if len(faces) > 0:
-            # Get the largest face
-            faces = sorted(faces, key=lambda x: x[2]*x[3], reverse=True)
-            x, y, fw, fh = faces[0]
-            
-            # Expand the crop slightly to include mouth and chin (for smoking/yawning)
-            margin_x = int(fw * 0.2)
-            margin_y = int(fh * 0.3)
-            fx1 = max(0, x - margin_x)
-            fy1 = max(0, y - margin_y)
-            fx2 = min(w, x + fw + margin_x)
-            fy2 = min(h, y + fh + int(margin_y * 1.5)) # More margin at the bottom for mouth/cigarette
-            
-            return driver_crop[fy1:fy2, fx1:fx2]
-            
-        # Fallback: top 35% of the driver crop
+        h = driver_crop.shape[0]
         return driver_crop[0:int(h * 0.35), :]
 
     def _classify_smoker(self, face_crop: np.ndarray, timestamp: float) -> list[dict]:

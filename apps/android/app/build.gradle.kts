@@ -3,6 +3,12 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val qodeApiBaseUrl = providers.gradleProperty("QODE_API_BASE_URL")
+    .orElse(providers.environmentVariable("QODE_API_BASE_URL"))
+    .orElse("http://10.0.2.2:8000/")
+    .get()
+require(qodeApiBaseUrl.endsWith("/")) { "QODE_API_BASE_URL must end with /" }
+
 android {
     namespace = "com.qode.roadsafety"
     compileSdk = 34
@@ -18,6 +24,7 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        buildConfigField("String", "QODE_API_BASE_URL", "\"${qodeApiBaseUrl.replace("\"", "\\\"")}\"")
     }
 
     buildTypes {
@@ -38,6 +45,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"

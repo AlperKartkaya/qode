@@ -134,7 +134,8 @@ def _build_scene_analysis_engine(asset_root: Path, allow_degraded: bool) -> Any:
 
     return SceneAnalysisEngine(
         yolo_model_name=str(asset_root / "yolo11x.pt"),
-        driver_model_path=str(asset_root / "driver_classifier.pt"),
+        driver_model_path=str(asset_root / "driver_classifier_finetuned.pt"),
+        smoker_model_path=str(asset_root / "smoker_classifier_finetuned.pt"),
         vehicle_type_model_path=str(asset_root / "vehicle_type_classifier.pt"),
         vehicle_color_model_path=str(asset_root / "vehicle_color_classifier.pt"),
         teknocan_model_path=str(asset_root / "teknocan_detector.pt"),

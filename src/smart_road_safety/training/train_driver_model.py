@@ -18,6 +18,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from smart_road_safety.analysis.model_inference import _enhance_crop_for_classification
 
+EXPECTED_DRIVER_CLASSES = [
+    "arkaya_bakma",
+    "esneme",
+    "etrafa_bakinma",
+    "safe_driving",
+    "sigara_icme",
+    "su_icme",
+    "telefonla_konusma",
+]
+
 
 class HFImageDataset(Dataset):
     def __init__(self, hf_dataset, transform=None):
@@ -72,8 +82,15 @@ def train_model():
         if field in features:
             label_col = field
             break
+
+    if label_col is None or not hasattr(features[label_col], "names"):
+        raise ValueError("Dataset must expose a ClassLabel driver-action column")
             
-    classes = features[label_col].names if hasattr(features[label_col], "names") else []
+    classes = list(features[label_col].names)
+    if classes != EXPECTED_DRIVER_CLASSES:
+        raise ValueError(
+            f"Driver class contract mismatch: expected {EXPECTED_DRIVER_CLASSES}, got {classes}"
+        )
     print(f"Tespit edilen sınıflar: {classes}")
 
     train_transforms = transforms.Compose([
@@ -128,11 +145,18 @@ def train_model():
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "driver_classifier.pt"
     
-    print("Modeli TorchScript formatına çeviriyoruz (C++ ve inference için gerekli)...")
+    print("Saving class-mapped checkpoint for deterministic runtime validation...")
     model.eval()
-    dummy_input = torch.randn(1, 3, 224, 224).to(device)
-    traced_model = torch.jit.trace(model, dummy_input)
-    traced_model.save(str(out_path))
+    torch.save(
+        {
+            "model_state_dict": model.state_dict(),
+            "class_names": list(classes),
+            "model_architecture": "efficientnet_b2",
+            "training_source": "QoDe-5G/qode-driver-behaviors",
+            "metric_status": "training_only_no_holdout",
+        },
+        out_path,
+    )
     
     print(f"Model başarıyla {out_path} dosyasına kaydedildi!")
 

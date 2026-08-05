@@ -197,8 +197,8 @@ ASSUMPTIONS: tuple[AssumptionRecord, ...] = (
     _record(
         "DS-019",
         "final model assets",
-        "Published driver, plate, teknocan, and vehicle checkpoints are incomplete for final inference; main detection, offline OCR, passenger/seat-position, and seatbelt assets remain unavailable, and final readiness must fail rather than degrade.",
-        "Verified from the public model repository and workspace inventory on 4 August 2026.",
+        "Published Faz 2-finetuned driver and smoker TorchScript candidates lack the embedded class contract required for release; main-detector checksum, offline OCR, calibrated color, passenger/seat-position, and seatbelt assets remain unavailable, and final readiness must fail on missing, mutable, format, checksum, or class mismatch rather than degrade.",
+        "Verified from HF revision 1cc68e82080a6d5699866761a03caf11079e6d01 and the workspace on 5 August 2026.",
         "runtime asset manifest",
         "inference heads",
         "Docker",

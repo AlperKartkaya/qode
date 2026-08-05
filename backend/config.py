@@ -1,6 +1,4 @@
 import os
-from typing import Optional
-
 try:
     from pydantic_settings import BaseSettings, SettingsConfigDict
     class Settings(BaseSettings):
@@ -13,11 +11,8 @@ try:
         data_input_dir: str = os.path.join(os.getcwd(), "../data/input")
         data_output_dir: str = os.path.join(os.getcwd(), "../data/output")
 
-        vm_name: Optional[str] = None
-        vm_ip: Optional[str] = None
-        vm_username: Optional[str] = None
-        vm_password: Optional[str] = None
-        use_gpu: Optional[str] = "False"
+        use_gpu: bool = False
+        allow_mock_gateway: bool = False
 
         model_config = SettingsConfigDict(
             env_file=".env",
@@ -35,11 +30,8 @@ except ImportError:
         data_input_dir: str = os.path.join(os.getcwd(), "../data/input")
         data_output_dir: str = os.path.join(os.getcwd(), "../data/output")
 
-        vm_name: Optional[str] = None
-        vm_ip: Optional[str] = None
-        vm_username: Optional[str] = None
-        vm_password: Optional[str] = None
-        use_gpu: Optional[str] = "False"
+        use_gpu: bool = False
+        allow_mock_gateway: bool = False
 
         class Config:
             env_file = ".env"

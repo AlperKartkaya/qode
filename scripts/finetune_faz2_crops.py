@@ -12,6 +12,12 @@ from ultralytics import YOLO
 
 cv2.setNumThreads(0)
 
+DRIVER_CLASSES = [
+    "arkaya_bakma", "esneme", "etrafa_bakinma", "safe_driving",
+    "sigara_icme", "su_icme", "telefonla_konusma",
+]
+SMOKER_CLASSES = ["not_smoking", "smoking"]
+
 class FineTuneDataset(Dataset):
     def __init__(self, crop_paths, labels, transform=None):
         self.crop_paths = crop_paths
@@ -38,9 +44,6 @@ def extract_crops(images_dir, labels_dir, out_driver_dir, out_face_dir):
     
     driver_samples = [] # (path, label_idx)
     face_samples = []   # (path, label_idx)
-    
-    driver_classes = ['arkaya_bakma', 'esneme', 'etrafa_bakinma', 'sigara_icme', 'su_icme', 'telefonla_konusma']
-    smoker_classes = ['not_smoking', 'smoking']
     
     for label_file in os.listdir(labels_dir):
         if not label_file.endswith('.txt'): continue
@@ -77,16 +80,16 @@ def extract_crops(images_dir, labels_dir, out_driver_dir, out_face_dir):
             for line in f:
                 cat, label = line.strip().split(',')
                 if cat == 'sofor_eylemi':
-                    if label in driver_classes:
-                        driver_samples.append((driver_out, driver_classes.index(label)))
+                    if label in DRIVER_CLASSES:
+                        driver_samples.append((driver_out, DRIVER_CLASSES.index(label)))
                     if label == 'sigara_icme':
-                        face_samples.append((face_out, smoker_classes.index('smoking')))
+                        face_samples.append((face_out, SMOKER_CLASSES.index('smoking')))
                     elif label in ['su_icme', 'esneme', 'telefonla_konusma']:
-                        face_samples.append((face_out, smoker_classes.index('not_smoking')))
+                        face_samples.append((face_out, SMOKER_CLASSES.index('not_smoking')))
                         
     return driver_samples, face_samples
 
-def finetune_model(model, dataloader, num_classes, save_path, device, num_epochs=3):
+def finetune_model(model, dataloader, class_names, architecture, save_path, device, num_epochs=3):
     if len(dataloader.dataset) == 0:
         print(f"Skipping {save_path}, no training samples.")
         return
@@ -113,10 +116,31 @@ def finetune_model(model, dataloader, num_classes, save_path, device, num_epochs
         print(f"Epoch {epoch+1}/{num_epochs} - Loss: {running_loss/len(dataloader.dataset):.4f} - Acc: {corrects.float()/len(dataloader.dataset):.4f}")
         
     model.eval()
-    dummy_input = torch.randn(1, 3, 224, 224).to(device)
-    traced_model = torch.jit.trace(model, dummy_input)
-    traced_model.save(save_path)
+    torch.save({
+        "model_state_dict": model.state_dict(),
+        "class_names": class_names,
+        "model_architecture": architecture,
+        "training_source": "faz2_development_calibration",
+        "metric_status": "training_only_no_holdout",
+    }, save_path)
     print(f"Saved {save_path}")
+
+
+def load_contract_checkpoint(model, path, expected_classes, expected_architecture):
+    checkpoint = torch.load(path, map_location="cpu")
+    if not isinstance(checkpoint, dict) or "model_state_dict" not in checkpoint:
+        raise ValueError(f"{path} is not a class-mapped checkpoint")
+    if checkpoint.get("class_names") != expected_classes:
+        raise ValueError(
+            f"{path} class contract mismatch: expected {expected_classes}, "
+            f"got {checkpoint.get('class_names')}"
+        )
+    if checkpoint.get("model_architecture") != expected_architecture:
+        raise ValueError(
+            f"{path} architecture mismatch: expected {expected_architecture}, "
+            f"got {checkpoint.get('model_architecture')}"
+        )
+    model.load_state_dict(checkpoint["model_state_dict"])
 
 def main():
     print("Extracting intelligent crops (Driver Body and Face) from full 1080p frames...")
@@ -136,28 +160,30 @@ def main():
     # 1. Driver Model (EfficientNet-B2)
     print("\n--- Fine-tuning Driver Classifier ---")
     driver_model = models.efficientnet_b2()
-    driver_model.classifier[1] = nn.Linear(driver_model.classifier[1].in_features, 6)
+    driver_model.classifier[1] = nn.Linear(driver_model.classifier[1].in_features, len(DRIVER_CLASSES))
     if os.path.exists("data/weights/driver_classifier.pt"):
-        traced_d = torch.jit.load("data/weights/driver_classifier.pt", map_location="cpu")
-        driver_model.load_state_dict(traced_d.state_dict())
+        load_contract_checkpoint(
+            driver_model, "data/weights/driver_classifier.pt", DRIVER_CLASSES, "efficientnet_b2"
+        )
     driver_model = driver_model.to(device)
     
     d_paths, d_labels = zip(*d_samples) if d_samples else ([], [])
     d_loader = DataLoader(FineTuneDataset(d_paths, d_labels, train_transforms), batch_size=4, shuffle=True)
-    finetune_model(driver_model, d_loader, 6, "data/weights/driver_classifier_finetuned.pt", device)
+    finetune_model(driver_model, d_loader, DRIVER_CLASSES, "efficientnet_b2", "data/weights/driver_classifier_finetuned.pt", device)
     
     # 2. Smoker Model (MobileNetV3-Small)
     print("\n--- Fine-tuning Smoker Classifier ---")
     smoker_model = models.mobilenet_v3_small()
-    smoker_model.classifier[3] = nn.Linear(smoker_model.classifier[3].in_features, 2)
+    smoker_model.classifier[3] = nn.Linear(smoker_model.classifier[3].in_features, len(SMOKER_CLASSES))
     if os.path.exists("data/weights/smoker_classifier.pt"):
-        traced_s = torch.jit.load("data/weights/smoker_classifier.pt", map_location="cpu")
-        smoker_model.load_state_dict(traced_s.state_dict())
+        load_contract_checkpoint(
+            smoker_model, "data/weights/smoker_classifier.pt", SMOKER_CLASSES, "mobilenet_v3_small"
+        )
     smoker_model = smoker_model.to(device)
     
     f_paths, f_labels = zip(*f_samples) if f_samples else ([], [])
     f_loader = DataLoader(FineTuneDataset(f_paths, f_labels, train_transforms), batch_size=4, shuffle=True)
-    finetune_model(smoker_model, f_loader, 2, "data/weights/smoker_classifier_finetuned.pt", device)
+    finetune_model(smoker_model, f_loader, SMOKER_CLASSES, "mobilenet_v3_small", "data/weights/smoker_classifier_finetuned.pt", device)
 
 if __name__ == "__main__":
     main()

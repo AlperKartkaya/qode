@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+import app as app_module
 from app import app
 from unittest.mock import patch, MagicMock
 
@@ -44,3 +45,27 @@ def test_ai_result():
     response = client.get("/ai-result")
     assert response.status_code == 200
     assert "status" in response.json()
+
+
+def test_background_inference_fails_closed_without_docker(tmp_path, monkeypatch):
+    monkeypatch.setattr(app_module.settings, "data_output_dir", str(tmp_path))
+    monkeypatch.setattr(app_module, "run_inference_container", lambda: None)
+    app_module.inference_status = "UPLOADED"
+
+    app_module.background_inference()
+
+    assert app_module.inference_status == "FAILED"
+    assert not (tmp_path / "results.json").exists()
+
+
+def test_ai_result_does_not_publish_stale_output(tmp_path, monkeypatch):
+    monkeypatch.setattr(app_module.settings, "data_output_dir", str(tmp_path))
+    (tmp_path / "results.json").write_text('{"stale": true}', encoding="utf-8")
+    app_module.inference_status = "IDLE"
+    app_module.inference_progress = 0.0
+    app_module.inference_message = ""
+
+    response = client.get("/ai-result")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "IDLE", "progress": 0.0, "message": ""}

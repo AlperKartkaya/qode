@@ -79,7 +79,8 @@ def _warmup_models(root: Path) -> None:
 
     engine = SceneAnalysisEngine(
         yolo_model_name=str(root / "yolo11x.pt"),
-        driver_model_path=str(root / "driver_classifier.pt"),
+        driver_model_path=str(root / "driver_classifier_finetuned.pt"),
+        smoker_model_path=str(root / "smoker_classifier_finetuned.pt"),
         vehicle_type_model_path=str(root / "vehicle_type_classifier.pt"),
         vehicle_color_model_path=str(root / "vehicle_color_classifier.pt"),
         teknocan_model_path=str(root / "teknocan_detector.pt"),
@@ -93,6 +94,7 @@ def _warmup_models(root: Path) -> None:
     classification_input = torch.zeros((1, 3, 224, 224), device=engine.device)
     with torch.no_grad():
         engine.driver_classifier(classification_input)
+        engine.smoker_classifier(classification_input)
         engine.vehicle_type_classifier(classification_input)
         engine.vehicle_color_classifier(classification_input)
 

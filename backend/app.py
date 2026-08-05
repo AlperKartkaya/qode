@@ -5,7 +5,6 @@ import os
 import json
 import shutil
 import uuid
-import time
 
 from config import settings
 from ogw_client import OGWClient
@@ -51,14 +50,14 @@ async def exchange_token(req: TokenRequest):
 
 @app.post("/nv/verify")
 async def verify_number(req: VerifyRequest):
-    if req.access_token == "mock-token":
+    if settings.allow_mock_gateway and req.access_token == "mock-token":
         return {"devicePhoneNumberVerified": True}
     verified = await ogw.verify_number(req.access_token, req.phone_number)
     return {"devicePhoneNumberVerified": verified}
 
 @app.post("/qod/session")
 async def create_qod_session(req: QoDRequest):
-    if req.access_token == "mock-token":
+    if settings.allow_mock_gateway and req.access_token == "mock-token":
         return {"sessionId": str(uuid.uuid4()), "duration": req.duration}
     session = await ogw.create_qod_session(req.access_token, req.duration)
     if not session:
@@ -73,6 +72,11 @@ async def upload_video(file: UploadFile = File(...)):
     file_path = os.path.join(settings.data_input_dir, "video.mp4")
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+
+    # A new upload must never inherit a successful result from a previous run.
+    stale_result = os.path.join(settings.data_output_dir, "results.json")
+    if os.path.exists(stale_result):
+        os.remove(stale_result)
         
     inference_status = "UPLOADED"
     inference_progress = 0.05
@@ -87,56 +91,25 @@ def background_inference():
     
     container = run_inference_container()
     if container:
-        for i in range(1, 10):
-            time.sleep(1)
-            inference_progress = min(0.95, 0.15 + i * 0.08)
-            inference_message = f"Analyzing video frames... ({int(inference_progress * 100)}%)"
-            
         result = container.wait()
         if result['StatusCode'] == 0:
-            inference_status = "DONE"
-            inference_progress = 1.0
-            inference_message = "Inference Complete!"
+            result_path = os.path.join(settings.data_output_dir, "results.json")
+            if os.path.isfile(result_path):
+                inference_status = "DONE"
+                inference_progress = 1.0
+                inference_message = "Inference Complete!"
+            else:
+                inference_status = "FAILED"
+                inference_progress = 0.0
+                inference_message = "Inference exited without results.json"
         else:
             inference_status = "FAILED"
             inference_progress = 0.0
             inference_message = "Inference Error"
     else:
-        # Check if real results.json already exists in data_output_dir
-        os.makedirs(settings.data_output_dir, exist_ok=True)
-        result_path = os.path.join(settings.data_output_dir, "results.json")
-
-        steps = [
-            (0.35, "Loading YOLO11x detection & vehicle classifier..."),
-            (0.65, "Running EasyOCR plate text recognition..."),
-            (0.90, "Running Driver distraction classifier..."),
-            (1.00, "Analysis Complete!")
-        ]
-        for p, msg in steps:
-            time.sleep(0.8)
-            inference_progress = p
-            inference_message = msg
-
-        if not os.path.exists(result_path):
-            mock_result = {
-                "arac_bilgisi": {
-                    "tip": "panelvan",
-                    "plaka": "21C0521",
-                    "renk": "siyah",
-                    "confidence_score": 0.9022
-                },
-                "tespitler": [
-                    {"zaman_saniye": 0.0, "kategori": "sofor_eylemi", "etiket": "sigara_icme", "confidence_score": 0.9971},
-                    {"zaman_saniye": 1.0, "kategori": "sofor_eylemi", "etiket": "esneme", "confidence_score": 0.9973},
-                    {"zaman_saniye": 1.0, "kategori": "sofor_eylemi", "etiket": "emniyet_kemeri_ihlali", "confidence_score": 0.6200},
-                    {"zaman_saniye": 4.0, "kategori": "sofor_eylemi", "etiket": "esneme", "confidence_score": 0.9996},
-                    {"zaman_saniye": 6.0, "kategori": "sofor_eylemi", "etiket": "sigara_icme", "confidence_score": 0.9997}
-                ]
-            }
-            with open(result_path, "w") as f:
-                json.dump(mock_result, f)
-                
-        inference_status = "DONE"
+        inference_status = "FAILED"
+        inference_progress = 0.0
+        inference_message = "Docker daemon is unavailable; inference was not run"
 
 @app.post("/ai-run")
 async def run_ai(background_tasks: BackgroundTasks):
@@ -152,16 +125,6 @@ def get_ai_result():
     global inference_status, inference_progress, inference_message
     
     result_path = os.path.join(settings.data_output_dir, "results.json")
-    if os.path.exists(result_path) and inference_status in ["DONE", "IDLE"]:
-        with open(result_path, "r") as f:
-            data = json.load(f)
-        return {
-            "status": "DONE",
-            "progress": 1.0,
-            "message": "Analysis Complete!",
-            "result": data
-        }
-
     if inference_status == "DONE" and os.path.exists(result_path):
         with open(result_path, "r") as f:
             data = json.load(f)

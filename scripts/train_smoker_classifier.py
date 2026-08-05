@@ -17,6 +17,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from smart_road_safety.analysis.model_inference import _enhance_crop_for_classification
 
+EXPECTED_SMOKER_CLASSES = ["not_smoking", "smoking"]
+
 
 class HFImageDataset(Dataset):
     def __init__(self, hf_dataset, transform=None):
@@ -99,7 +101,11 @@ def train_smoker_model():
         print("ÇÖZÜM: Veri setiniz HuggingFace'te oluşturulurken etiketsiz (labelsiz) yüklenmiş.")
         sys.exit(1)
         
-    classes = features[label_col].names if hasattr(features[label_col], "names") else ["not_smoking", "smoking"]
+    classes = list(features[label_col].names) if hasattr(features[label_col], "names") else []
+    if classes != EXPECTED_SMOKER_CLASSES:
+        raise ValueError(
+            f"Smoker class contract mismatch: expected {EXPECTED_SMOKER_CLASSES}, got {classes}"
+        )
     print(f"Detected classes: {classes}")
 
     train_transforms = transforms.Compose([
@@ -156,11 +162,17 @@ def train_smoker_model():
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, "smoker_classifier.pt")
     
-    # Save using torch.jit.script for C++ inference compatibility, as expected by model_inference.py
     model.eval()
-    dummy_input = torch.randn(1, 3, 224, 224).to(device)
-    traced_model = torch.jit.trace(model, dummy_input)
-    traced_model.save(out_path)
+    torch.save(
+        {
+            "model_state_dict": model.state_dict(),
+            "class_names": list(classes),
+            "model_architecture": "mobilenet_v3_small",
+            "training_source": "QoDe-5G/qode-smoker-detection",
+            "metric_status": "training_only_no_holdout",
+        },
+        out_path,
+    )
     
     print(f"Model successfully saved to {out_path}!")
 
