@@ -477,6 +477,10 @@ class SceneAnalysisEngine:
     # ── Loader helpers ────────────────────────────────────────────────────────
 
     def _load_driver_classifier(self, local_path: str) -> None:
+        finetuned_path = local_path.replace('.pt', '_finetuned.pt')
+        if Path(finetuned_path).exists():
+            local_path = finetuned_path
+            
         path = _resolve_weights(local_path, "/app/weights/driver_classifier.pt")
         if path is None:
             if not self.allow_degraded:
@@ -511,6 +515,10 @@ class SceneAnalysisEngine:
             self._load_failure("Driver classifier", e)
 
     def _load_smoker_classifier(self, local_path: str) -> None:
+        finetuned_path = local_path.replace('.pt', '_finetuned.pt')
+        if Path(finetuned_path).exists():
+            local_path = finetuned_path
+            
         path = _resolve_weights(local_path, "/app/weights/smoker_classifier.pt")
         if not path:
             print("[Engine] No smoker classifier found; smoking detection will be disabled or fallback.")
