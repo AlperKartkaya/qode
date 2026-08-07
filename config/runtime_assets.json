@@ -24,6 +24,16 @@
   },
   "assets": [
     {
+      "id": "main_detector",
+      "role": "main object detector",
+      "filename": "yolo11x.pt",
+      "source": "https://github.com/ultralytics/assets/releases",
+      "description": "YOLO11x object detector.",
+      "class_mapping_source": "builtin",
+      "class_inspection": "none",
+      "fallback_allowed": false
+    },
+    {
       "id": "driver_action_classifier",
       "role": "driver action classifier",
       "filename": "driver_classifier_finetuned.pt",
