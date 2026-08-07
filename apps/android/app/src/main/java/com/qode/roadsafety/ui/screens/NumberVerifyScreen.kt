@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -89,7 +90,7 @@ fun NumberVerifyScreen(
     val scope = rememberCoroutineScope()
 
     // Store raw digits typed by user (e.g. "5390000020")
-    var rawDigits by remember { mutableStateOf("") }
+    var rawDigits by rememberSaveable { mutableStateOf("") }
 
     var isLoading by remember { mutableStateOf(false) }
     var hasError by remember { mutableStateOf(false) }
