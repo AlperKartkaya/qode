@@ -98,8 +98,12 @@ fun NumberVerifyScreen(
     }
 
     fun handleVerify() {
-        val targetDigits = if (rawDigits.isBlank()) "5390000020" else rawDigits.filter { it.isDigit() }
-        val fullMsisdn = if (targetDigits.startsWith("90")) "+$targetDigits" else "+90$targetDigits"
+        val digits = rawDigits.filter { it.isDigit() }
+        if (digits.length < 10) {
+            Toast.makeText(context, "Please enter a valid 10-digit number", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val fullMsisdn = if (digits.startsWith("90")) "+$digits" else "+90$digits"
 
         isLoading = true
         hasError = false
@@ -120,16 +124,14 @@ fun NumberVerifyScreen(
                     Toast.makeText(context, "Number verified successfully!", Toast.LENGTH_SHORT).show()
                     onVerificationSuccess(fullMsisdn)
                 } else {
-                    addLog("Backend response: ${response.code()}. Falling back to Mock Verification.")
-                    addLog("devicePhoneNumberVerified: true (Mock Fallback)")
-                    Toast.makeText(context, "Mock Number Verified!", Toast.LENGTH_SHORT).show()
-                    onVerificationSuccess(fullMsisdn)
+                    addLog("Backend response: ${response.code()}")
+                    hasError = true
+                    Toast.makeText(context, "Verification Failed!", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                addLog("Backend VM offline (${e.localizedMessage ?: "timeout"}).")
-                addLog("Using Local Mock Verification -> devicePhoneNumberVerified: true")
-                Toast.makeText(context, "Number Verified (Local Mock Mode)", Toast.LENGTH_SHORT).show()
-                onVerificationSuccess(fullMsisdn)
+                addLog("Backend Error: ${e.localizedMessage ?: "timeout"}")
+                hasError = true
+                Toast.makeText(context, "Network Error", Toast.LENGTH_SHORT).show()
             } finally {
                 isLoading = false
             }

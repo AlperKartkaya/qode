@@ -359,6 +359,57 @@ Fallback: sürücü crop'un üst %35
 | **Atomik Yazım** | `tmp → validator → os.replace()` → yarım JSON imkânsız |
 | **Fail-closed** | Eksik model → non-zero exit; stale output silinir; ağsız çalışma |
 
+---
+
+## 04 — 5G API Entegrasyonu (CAMARA Standartları)
+
+*(Tasarım Fikri: Gönderdiğin resimdeki gibi Sol tarafta başlık, Ortada 3 çizgili madde, Sağda teknolojik bir görsel)*
+
+**Sol Taraf (Başlık Alanı):**
+*   **Başlık:** 5G Open Gateway Entegrasyonu
+*   **Alt Metin:** Şartnamenin **%40'lık** puan ağırlığını oluşturan 5G CAMARA ağ API'lerini mobil sistemimize nasıl entegre ettik?
+
+**Orta Taraf (3 Maddelik Liste):**
+
+**01. OIDC ile Number Verification**
+Sisteme giriş yapan yetkilinin cihazı, SMS (OTP) koduna gerek kalmadan `POST /verify` uç noktası (endpoint) üzerinden operatör ağıyla konuşarak arka planda saniyeler içinde doğrulanır.
+
+**02. Akıllı Tetikleyici (Trigger) Mantığı**
+Sistem sürekli ağ önceliği talep ederek bant genişliğini israf etmez. Sadece "Sürücü risk skoru çok yüksekse" veya "Kanıt görüntüsü bulanıksa" 5G API'lerini tetikleme kararı alır.
+
+**03. Quality on Demand (QoD) Aktivasyonu**
+İhlal kesinleştiğinde sistem `POST /sessions` çağrısı yaparak ağdan "QOS_E (Boosted)" profili talep eder. 1080p acil durum kanıt videosu, ağdaki trafikten etkilenmeden VIP şeritten merkeze akar.
+
+**Konuşma Metni:**
+> "Yarışmada en kritik konulardan biri 5G entegrasyonuydu ve biz bunu doğrudan uygulamanın çekirdeğine kodladık. Jürimizi uzun JSON kodlarına boğmak istemiyoruz; ancak şunu bilmenizi isteriz ki, sistemimiz CAMARA standartlarına birebir uyumludur. Sürekli ağ önceliği istemiyoruz. Sisteme akıllı bir tetikleyici yazdık. Eğer yapay zeka 'Burada kesin bir ihlal var ama çözünürlük düşerse kanıtlayamam' derse, sistem otomatik olarak 'POST sessions' çağrısı atıyor ve QoD üzerinden QOS_E (Boosted) profiline geçiyor. Yani 5G ağı, yapay zekanın emrine amade şekilde sadece ihtiyaç anında esniyor."
+
+---
+
+## Slayt 4B: Mobil Komuta Merkezi (Native Android)
+
+*(Tasarım Fikri: Gönderdiğin resimdeki gibi Sağ taraf siyah arka planda büyük başlık, Sol taraf 4 satırlı birbirine zıt (zigzag) resim/metin yerleşimi)*
+
+**Sağ Taraf (Koyu Alan - Büyük Başlık):**
+Mobil Komuta Merkezi
+(Native Android)
+
+**Sol Taraf (4 Satırlı Zikzak Yapı):**
+
+**Satır 1 (Resim Solda, Metin Sağda): Native Kotlin & Jetpack Compose**
+Sistemi cross-platform (React/Flutter) yerine doğrudan **Kotlin** ile yerel (Native) olarak kodladık. Kamera ve ağ trafiği süreçlerinde cihaz donanımından maksimum performans elde edildi.
+
+**Satır 2 (Metin Solda, Resim Sağda): ExoPlayer ile Adaptif Akış**
+Canlı yarışma yayını standart bir player yerine Media3 ExoPlayer ile entegre edildi. Video donmaz, kalite anlık 5G ağ hızına göre kendi adaptif ayarını (Adaptive Bitrate) yapar.
+
+**Satır 3 (Resim Solda, Metin Sağda): Lifebox ve ZIP Otomasyonu**
+Operatörün manuel dosya işlemlerini engellemek için Android Intent API'leri kullanıldı. Çekilen video otomatik kaydedilir, ZIP'lenir ve tek tuşla doğrudan **Lifebox**'a yüklenir.
+
+**Satır 4 (Metin Solda, Resim Sağda): Gerçek Zamanlı AI Dashboard**
+İhlal sonuçları kafa karıştırıcı JSON formatında yığılmaz. Tespitler görsel bir Zaman Çizelgesi (Timeline) ve Araç Kimlik Kartı olarak operatörün ekranına saniyeler içinde düşer.
+
+**Konuşma Metni:**
+> "Sahadaki ekiplerin saniyelerle yarıştığını biliyoruz, bu yüzden hantal web panellerine değil, hızlı bir mobil uygulamaya ihtiyacımız vardı. Sistemi %100 Native Kotlin ve Jetpack Compose ile kodladık. Tüm tasarımımız operatörün işini kolaylaştırmak üzerine kurulu. Canlı yayın ExoPlayer ile donmadan ekrana geliyor. Bir ihlal kaydedildiğinde kullanıcının klasörlerde dosya aramasına gerek kalmıyor; sistem onu otomatik zipleyip tek tuşla Lifebox'a aktarıyor. Çıkan yapay zeka sonuçları ise kod yığınları olarak değil, görsel bir 'Zaman Çizelgesi' olarak operatöre sunuluyor. Kısacası bu sadece bir demo değil, sahada çalışmaya hazır gerçek bir mobil komuta merkezidir."
+
 ## 05 — Doğrulama & Kanıt (Uçtan Uca Testler)
 
 *(Tasarım Fikri: Yapay Zeka slaytında kullandığımız "6 Maddelik Izgara (Grid)" şablonu. Sol tarafta büyük başlık, sağ tarafta 6 madde.)*

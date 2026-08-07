@@ -133,13 +133,14 @@ fun HomeScreen(
                     qodStatus = "ACTIVE"
                     Toast.makeText(context, "QoD Activated!", Toast.LENGTH_SHORT).show()
                 } else {
-                    qodStatus = "ACTIVE"
-                    Toast.makeText(context, "QoD Session Activated (Demo)", Toast.LENGTH_SHORT).show()
+                    qodStatus = "INACTIVE"
+                    addTraceLog("POST /qod/session", "ERROR", "Status: ${res.code()}")
+                    Toast.makeText(context, "QoD Error: ${res.code()}", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                qodStatus = "ACTIVE"
-                addTraceLog("POST /qod/session", "201 Created (Local)", "profile: teknofest2026")
-                Toast.makeText(context, "QoD Session Activated (Local Demo)", Toast.LENGTH_SHORT).show()
+                qodStatus = "INACTIVE"
+                addTraceLog("POST /qod/session", "FAILED", e.message ?: "Unknown error")
+                Toast.makeText(context, "QoD Request Failed: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 isQodLoading = false
             }
@@ -196,21 +197,24 @@ fun HomeScreen(
                 val uploadRes = ApiClient.service.uploadVideo(multipart)
 
                 if (uploadRes.isSuccessful) {
-                    addTraceLog("POST /upload", "202 Accepted", "video.mp4 uploaded -> AI container triggered")
+                    addTraceLog("POST /upload", "202 Accepted", "video.mp4 uploaded")
+                    
+                    val aiRes = ApiClient.service.runAi()
+                    if (aiRes.isSuccessful) {
+                        addTraceLog("POST /ai-run", "200 OK", "status: Inference started")
+                        Toast.makeText(context, "Upload successful. Proceeding to AI Result...", Toast.LENGTH_LONG).show()
+                        selectedTab = 1
+                    } else {
+                        addTraceLog("POST /ai-run", "ERROR", "Status: ${aiRes.code()}")
+                        Toast.makeText(context, "AI Run Error: ${aiRes.code()}", Toast.LENGTH_LONG).show()
+                    }
                 } else {
-                    addTraceLog("POST /upload", "202 Accepted (Demo)", "video.mp4 uploaded")
+                    addTraceLog("POST /upload", "ERROR", "Status: ${uploadRes.code()}")
+                    Toast.makeText(context, "Upload Error: ${uploadRes.code()}", Toast.LENGTH_LONG).show()
                 }
-
-                ApiClient.service.runAi()
-                addTraceLog("POST /ai-run", "200 OK", "status: Inference started")
-                Toast.makeText(context, "202 Accepted -> AI Result sekmesine geçiliyor...", Toast.LENGTH_LONG).show()
-
-                // Switch to AI Result tab automatically (Tab 1)
-                selectedTab = 1
             } catch (e: Exception) {
-                addTraceLog("POST /upload", "202 Accepted (Demo)", "AI container triggered")
-                Toast.makeText(context, "202 Accepted -> AI Result sekmesine geçiliyor...", Toast.LENGTH_LONG).show()
-                selectedTab = 1
+                addTraceLog("POST /upload or ai-run", "FAILED", e.message ?: "Unknown error")
+                Toast.makeText(context, "Operation Failed: ${e.message}", Toast.LENGTH_LONG).show()
             } finally {
                 isUploading = false
             }
