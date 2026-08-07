@@ -62,6 +62,7 @@ fun HomeScreen(
 
     // QoD State
     var qodStatus by remember { mutableStateOf("INACTIVE") } // INACTIVE, REQUESTED, ACTIVE
+    var qodSessionId by remember { mutableStateOf<String?>(null) }
     var isQodLoading by remember { mutableStateOf(false) }
 
     // Source Selection (HLS vs YouTube) & Editable URL
@@ -126,9 +127,22 @@ fun HomeScreen(
 
     fun handleToggleQoD() {
         if (qodStatus == "ACTIVE" || qodStatus == "REQUESTED") {
-            qodStatus = "INACTIVE"
-            addTraceLog("DELETE /qod/session", "200 OK", "qosStatus: INACTIVE")
-            Toast.makeText(context, "QoD Deactivated", Toast.LENGTH_SHORT).show()
+            isQodLoading = true
+            scope.launch {
+                try {
+                    qodSessionId?.let { id ->
+                        ApiClient.service.deleteQoDSession(id)
+                        addTraceLog("DELETE /api/qod/sessions/$id", "204 No Content", "qosStatus: INACTIVE")
+                    }
+                } catch (e: Exception) {
+                    addTraceLog("DELETE /api/qod/sessions", "WARN", e.localizedMessage ?: "Failed to delete session")
+                } finally {
+                    qodStatus = "INACTIVE"
+                    qodSessionId = null
+                    isQodLoading = false
+                    Toast.makeText(context, "QoD Deactivated", Toast.LENGTH_SHORT).show()
+                }
+            }
             return
         }
 
@@ -142,6 +156,7 @@ fun HomeScreen(
                 val res = ApiClient.service.createQoDSession(QoDRequest(flowId = flowId, duration = 60))
                 val body = res.body()
                 if (res.isSuccessful && body != null) {
+                    qodSessionId = body.sessionId
                     val returnedStatus = body.qosStatus ?: "UNAVAILABLE"
                     qodStatus = if (returnedStatus == "REQUESTED") "ACTIVE" else returnedStatus
                     addTraceLog(

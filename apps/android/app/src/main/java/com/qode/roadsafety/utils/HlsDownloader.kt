@@ -109,6 +109,9 @@ object HlsDownloader {
                     val bytes = resp.body?.bytes() ?: byteArrayOf()
                     fos.write(bytes)
                 }
+                
+                // Add a small delay to prevent starving ExoPlayer's network requests
+                Thread.sleep(100)
             }
         }
 

@@ -20,6 +20,9 @@ interface ApiService {
     @POST("api/qod/sessions")
     suspend fun createQoDSession(@Body request: QoDRequest): Response<QoDResponse>
 
+    @DELETE("api/qod/sessions/{session_id}")
+    suspend fun deleteQoDSession(@Path("session_id") sessionId: String): Response<Void>
+
     @Multipart
     @POST("api/videos")
     suspend fun uploadVideo(
@@ -43,9 +46,9 @@ object ApiClient {
         }
         return OkHttpClient.Builder()
             .addInterceptor(logging)
-            .connectTimeout(5, TimeUnit.SECONDS)
-            .readTimeout(10, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(120, TimeUnit.SECONDS)
             .build()
     }
 

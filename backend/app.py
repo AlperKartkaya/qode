@@ -258,6 +258,11 @@ def create_app(
             },
         )
 
+    @app.delete("/api/qod/sessions/{session_id}", status_code=204)
+    def delete_qod_session(session_id: str) -> None:
+        """Mock deleting a QoD session early."""
+        return None
+
     @app.post("/api/videos", status_code=202)
     async def upload_video(
         background_tasks: BackgroundTasks,
@@ -269,9 +274,7 @@ def create_app(
             auth_store.require_verified(flow_id)
         except AuthStateError as exc:
             raise auth_error(exc) from exc
-        if file.content_type not in ("video/mp4", "application/octet-stream", "video/quicktime", ""):
-            # Be lenient on the header, the actual magic bytes check (ftyp) will validate it later
-            pass
+        # Removed content_type check completely to avoid 415 errors. Magic byte check (ftyp) will validate it instead.
         try:
             record, created = jobs.allocate(
                 flow_id,
@@ -300,8 +303,10 @@ def create_app(
                     output.write(chunk)
                 output.flush()
                 os.fsync(output.fileno())
-            if len(header) < 12 or header[4:8] != b"ftyp":
-                raise HTTPException(status_code=415, detail={"code": "INVALID_MP4_SIGNATURE"})
+            is_mp4 = (len(header) >= 12 and header[4:8] == b"ftyp")
+            is_ts = (len(header) >= 1 and header[0] == 0x47)
+            if not (is_mp4 or is_ts):
+                raise HTTPException(status_code=415, detail={"code": "INVALID_VIDEO_SIGNATURE"})
             os.replace(temporary, target)
             duration = probe_video_duration(target)
         except HTTPException:
