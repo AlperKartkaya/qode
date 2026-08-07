@@ -50,6 +50,12 @@ class ContainerInferenceRunner:
             )
             result = container.wait(timeout=self.timeout_seconds)
             exit_code = int(result.get("StatusCode", 1))
+            if exit_code != 0:
+                print(f"Container failed with exit code {exit_code}. Logs:")
+                try:
+                    print(container.logs().decode('utf-8'))
+                except Exception as log_exc:
+                    print(f"Failed to fetch logs: {log_exc}")
             return RunnerResult(exit_code, "COMPLETED" if exit_code == 0 else "NONZERO_EXIT")
         except Exception as exc:
             return RunnerResult(1, f"CONTAINER_ERROR_{type(exc).__name__.upper()}")
