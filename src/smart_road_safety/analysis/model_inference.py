@@ -280,6 +280,7 @@ def extract_plate_prediction(crop: np.ndarray, strict: bool = False) -> tuple[Op
 
     # Collect all candidate reads across multiple preprocessing variants
     candidates: dict[str, float] = {}  # plate_text → best_confidence
+    fallback_candidates: dict[str, float] = {}
 
     def _try_ocr(img: np.ndarray) -> None:
         """Run OCR on one image variant and accumulate valid candidates."""
@@ -287,6 +288,11 @@ def extract_plate_prediction(crop: np.ndarray, strict: bool = False) -> tuple[Op
             results = ocr.readtext(img)
             for _bbox, text, conf in results:
                 cleaned = re.sub(r"[^A-Za-z0-9]", "", text).upper()
+                if not cleaned:
+                    continue
+                
+                fallback_candidates[cleaned] = max(fallback_candidates.get(cleaned, 0.0), conf)
+                
                 # Try raw cleaned text
                 if PLATE_PATTERN.fullmatch(cleaned):
                     candidates[cleaned] = max(candidates.get(cleaned, 0.0), conf)
@@ -312,6 +318,11 @@ def extract_plate_prediction(crop: np.ndarray, strict: bool = False) -> tuple[Op
         # Return the candidate with highest confidence
         best = max(candidates, key=candidates.get)
         return best, float(candidates[best])
+        
+    if fallback_candidates:
+        best_fallback = max(fallback_candidates, key=fallback_candidates.get)
+        if len(best_fallback) >= 4:
+            return best_fallback, float(fallback_candidates[best_fallback] * 0.8)
 
     return None, 0.0
 
