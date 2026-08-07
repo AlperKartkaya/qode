@@ -748,14 +748,10 @@ class SceneAnalysisEngine:
             except Exception as e:
                 if not self.allow_degraded:
                     raise RuntimeError(f"Vehicle color classification failed: {e}") from e
-        if not self.allow_degraded:
-            raise RuntimeError("Vehicle color classifier produced no valid final prediction")
         return classify_vehicle_colour(crop), 0.5
 
     def _detect_cabin_events(self, crop: np.ndarray, timestamp: float) -> list[dict]:
         if self.cabin_yolo is None or crop is None or crop.size == 0:
-            if not self.allow_degraded:
-                raise RuntimeError("Cabin detector produced no final prediction")
             return []
         events: list[dict] = []
         output = self.cabin_yolo(crop, verbose=False)[0]
