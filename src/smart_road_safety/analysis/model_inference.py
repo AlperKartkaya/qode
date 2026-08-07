@@ -495,29 +495,40 @@ class SceneAnalysisEngine:
             print("[Engine] Driver classifier unavailable in development mode")
             return
         try:
-            ckpt = torch.load(path, map_location=self.device)
-            self.driver_classes = ckpt.get(
-                "class_names",
-                ["arkaya_bakma", "esneme", "etrafa_bakinma", "sigara_icme", "su_icme", "telefonla_konusma"],
-            )
-            arch = ckpt.get("model_architecture", "mobilenet_v3_small")
+            try:
+                # Try loading as a dictionary checkpoint first (warnings suppressed by ignoring them if it fails)
+                ckpt = torch.load(path, map_location=self.device)
+            except Exception:
+                # If it's a TorchScript model, torch.load might throw or return ScriptModule.
+                ckpt = torch.jit.load(str(path), map_location=self.device)
 
-            if "efficientnet" in arch:
-                # Support EfficientNet-B0 / B2 checkpoints
-                model = models.efficientnet_b2(weights=None)
-                model.classifier[1] = nn.Linear(
-                    model.classifier[1].in_features, len(self.driver_classes)
+            if isinstance(ckpt, dict):
+                self.driver_classes = ckpt.get(
+                    "class_names",
+                    ["arkaya_bakma", "esneme", "etrafa_bakinma", "sigara_icme", "su_icme", "telefonla_konusma"],
                 )
+                arch = ckpt.get("model_architecture", "mobilenet_v3_small")
+
+                if "efficientnet" in arch:
+                    model = models.efficientnet_b2(weights=None)
+                    model.classifier[1] = nn.Linear(
+                        model.classifier[1].in_features, len(self.driver_classes)
+                    )
+                else:
+                    model = models.mobilenet_v3_small(weights=None)
+                    model.classifier[3] = nn.Linear(
+                        model.classifier[3].in_features, len(self.driver_classes)
+                    )
+
+                model.load_state_dict(ckpt["model_state_dict"])
+                self.driver_classifier = model.to(self.device).eval()
+                print(f"[Engine] Driver classifier loaded ({arch}) — classes: {self.driver_classes}")
             else:
-                model = models.mobilenet_v3_small(weights=None)
-                model.classifier[3] = nn.Linear(
-                    model.classifier[3].in_features, len(self.driver_classes)
-                )
+                # It's a TorchScript module
+                self.driver_classes = ["arkaya_bakma", "esneme", "etrafa_bakinma", "sigara_icme", "su_icme", "telefonla_konusma"]
+                self.driver_classifier = ckpt.to(self.device).eval()
+                print(f"[Engine] Driver classifier loaded (TorchScript) — assumed classes: {self.driver_classes}")
 
-            model.load_state_dict(ckpt["model_state_dict"])
-            model = model.to(self.device).eval()
-            self.driver_classifier = model
-            print(f"[Engine] Driver classifier loaded ({arch}) — classes: {self.driver_classes}")
         except Exception as e:
             self._load_failure("Driver classifier", e)
 
@@ -529,15 +540,23 @@ class SceneAnalysisEngine:
             print("[Engine] Smoker classifier unavailable in development mode")
             return
         try:
-            checkpoint = torch.load(path, map_location=self.device)
-            class_names = checkpoint.get("class_names")
-            if class_names != ["not_smoking", "smoking"]:
-                raise ValueError(f"Unexpected smoker class mapping: {class_names}")
-            model = models.mobilenet_v3_small(weights=None)
-            model.classifier[3] = nn.Linear(model.classifier[3].in_features, len(class_names))
-            model.load_state_dict(checkpoint["model_state_dict"])
-            self.smoker_classifier = model.to(self.device).eval()
-            print(f"[Engine] Smoker classifier checkpoint loaded from {path}")
+            try:
+                checkpoint = torch.load(path, map_location=self.device)
+            except Exception:
+                checkpoint = torch.jit.load(str(path), map_location=self.device)
+
+            if isinstance(checkpoint, dict):
+                class_names = checkpoint.get("class_names")
+                if class_names != ["not_smoking", "smoking"]:
+                    raise ValueError(f"Unexpected smoker class mapping: {class_names}")
+                model = models.mobilenet_v3_small(weights=None)
+                model.classifier[3] = nn.Linear(model.classifier[3].in_features, len(class_names))
+                model.load_state_dict(checkpoint["model_state_dict"])
+                self.smoker_classifier = model.to(self.device).eval()
+                print(f"[Engine] Smoker classifier checkpoint loaded from {path}")
+            else:
+                self.smoker_classifier = checkpoint.to(self.device).eval()
+                print(f"[Engine] Smoker classifier loaded (TorchScript) from {path}")
         except Exception as e:
             if not self.allow_degraded:
                 raise RuntimeError(f"Failed to load smoker classifier: {e}") from e
