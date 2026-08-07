@@ -32,6 +32,7 @@ class AuthFlow:
     qod_session_id: str | None = None
     qod_status: str | None = None
     qod_correlator: str | None = None
+    return_uri: str | None = None
 
 
 class AuthSessionStore:
@@ -51,7 +52,7 @@ class AuthSessionStore:
         self._flows: dict[str, AuthFlow] = {}
         self._lock = threading.RLock()
 
-    def create_pending(self) -> PendingAuthorization:
+    def create_pending(self, *, return_uri: str | None = None) -> PendingAuthorization:
         with self._lock:
             self._purge_expired()
             now = self._clock()
@@ -65,6 +66,7 @@ class AuthSessionStore:
                 flow_id=pending.flow_id,
                 status="AUTH_PENDING",
                 session_expires_at=now + self._session_ttl,
+                return_uri=return_uri,
             )
             return pending
 

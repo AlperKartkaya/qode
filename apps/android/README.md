@@ -5,11 +5,13 @@ Native Android application built with Kotlin, Jetpack Compose, Media3 ExoPlayer,
 ## 📱 Features
 
 1. **Number Verification (NV)**:
-   - Cell network phone number verification via OIDC Open Gateway API (`POST /nv/verify`).
+   - Backend-owned OIDC flow starts at `GET /api/auth/start?mobile=true`.
+   - The backend returns to `qode://auth/callback`; Android then calls `POST /api/number-verification/verify` with the opaque flow ID.
+   - HTTP/network failures block entry. There is no local/mock success fallback.
    - Live Connection logs console for debugging.
 
 2. **Quality on Demand (QoD)**:
-   - Network quality acceleration toggle (`POST /qod/session`).
+   - Network quality request through `POST /api/qod/sessions` with the verified flow ID.
    - Dynamic profile badge (`1080p Boosted` vs `240p Standard`).
 
 3. **HLS Video Streaming & Direct MP4 Recording**:
@@ -40,5 +42,9 @@ Native Android application built with Kotlin, Jetpack Compose, Media3 ExoPlayer,
 ### Commands
 Open the project in Android Studio or build via Gradle:
 ```bash
-./gradlew assembleDebug
+QODE_API_BASE_URL="http://<BACKEND_HOST>:8000/" ./gradlew testDebugUnitTest assembleDebug
 ```
+
+`QODE_API_BASE_URL` is compiled into the APK. A physical phone cannot use the
+emulator-only default `http://10.0.2.2:8000/`; build a new APK with the reachable
+VM/backend address whenever the target changes.

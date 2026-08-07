@@ -147,6 +147,24 @@ def test_invalid_and_replayed_oidc_state_fail(tmp_path):
     assert replay.status_code == 400
 
 
+def test_mobile_auth_returns_to_registered_app_link(tmp_path):
+    client, _ = build_client(tmp_path)
+    start = client.get("/api/auth/start", params={"mobile": "true"}, follow_redirects=False)
+    state = parse_qs(urlparse(start.headers["location"]).query)["state"][0]
+
+    callback = client.get(
+        "/api/auth/callback",
+        params={"code": "authorization-code", "state": state},
+        follow_redirects=False,
+    )
+
+    assert callback.status_code == 302
+    mobile_uri = urlparse(callback.headers["location"])
+    assert f"{mobile_uri.scheme}://{mobile_uri.netloc}{mobile_uri.path}" == "qode://auth/callback"
+    flow_id = parse_qs(mobile_uri.query)["flowId"][0]
+    assert client.get(f"/api/session/{flow_id}").json()["status"] == "AUTHORIZED"
+
+
 def test_qod_failure_is_explicit_fail_open(tmp_path):
     gateway = FakeGateway()
     gateway.qod_error = OpenGatewayError(503, "UPSTREAM_UNAVAILABLE", "qod-failed")

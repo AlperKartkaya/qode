@@ -35,12 +35,13 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     phoneNumber: String,
+    flowId: String,
+    verificationCorrelator: String?,
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
@@ -51,8 +52,7 @@ fun HomeScreen(
     var isVideoUploaded by remember { mutableStateOf(false) }
 
     // Session Identifiers
-    val flowId = remember { UUID.randomUUID().toString().take(8) }
-    val correlationId = remember { UUID.randomUUID().toString().take(12) }
+    val correlationId = verificationCorrelator ?: "not-returned"
 
     // QoD State
     var qodStatus by remember { mutableStateOf("INACTIVE") } // INACTIVE, REQUESTED, ACTIVE
@@ -98,7 +98,11 @@ fun HomeScreen(
     // Initial Trace Logs
     LaunchedEffect(Unit) {
         if (traceLogs.isEmpty()) {
-            addTraceLog("POST /nv/verify", "200 OK", "devicePhoneNumberVerified: true (Flow: $flowId)")
+            addTraceLog(
+                "POST /api/number-verification/verify",
+                "200 OK",
+                "devicePhoneNumberVerified: true (Flow: $flowId, correlator: $correlationId)"
+            )
         }
     }
 
@@ -127,20 +131,31 @@ fun HomeScreen(
 
         scope.launch {
             try {
-                addTraceLog("POST /qod/session", "201 Created", "profile: teknofest2026, duration: 60s")
-                val res = ApiClient.service.createQoDSession(QoDRequest(duration = 60))
-                if (res.isSuccessful) {
-                    qodStatus = "ACTIVE"
-                    Toast.makeText(context, "QoD Activated!", Toast.LENGTH_SHORT).show()
+                addTraceLog("POST /api/qod/sessions", "REQUESTED", "profile: teknofest2026, duration: 60s")
+                val res = ApiClient.service.createQoDSession(QoDRequest(flowId = flowId, duration = 60))
+                val body = res.body()
+                if (res.isSuccessful && body != null) {
+                    qodStatus = body.qosStatus ?: "UNAVAILABLE"
+                    addTraceLog(
+                        "POST /api/qod/sessions",
+                        res.code().toString(),
+                        "qosStatus: ${body.qosStatus}, correlator: ${body.correlator ?: "not-returned"}"
+                    )
+                    val message = if (body.qosStatus == "UNAVAILABLE") {
+                        "QoD unavailable; streaming limited to ${body.fallbackMaxResolution ?: "240p"}"
+                    } else {
+                        "QoD ${body.qosStatus}"
+                    }
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                 } else {
-                    qodStatus = "INACTIVE"
-                    addTraceLog("POST /qod/session", "ERROR", "Status: ${res.code()}")
-                    Toast.makeText(context, "QoD Error: ${res.code()}", Toast.LENGTH_LONG).show()
+                    qodStatus = "ERROR"
+                    addTraceLog("POST /api/qod/sessions", "HTTP ${res.code()}", "QoD request rejected")
+                    Toast.makeText(context, "QoD request failed", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                qodStatus = "INACTIVE"
-                addTraceLog("POST /qod/session", "FAILED", e.message ?: "Unknown error")
-                Toast.makeText(context, "QoD Request Failed: ${e.message}", Toast.LENGTH_LONG).show()
+                qodStatus = "ERROR"
+                addTraceLog("POST /api/qod/sessions", "NETWORK ERROR", e.localizedMessage ?: "timeout")
+                Toast.makeText(context, "Backend unavailable; QoD was not activated", Toast.LENGTH_LONG).show()
             } finally {
                 isQodLoading = false
             }

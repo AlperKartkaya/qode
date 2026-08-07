@@ -1,5 +1,7 @@
 package com.qode.roadsafety.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -79,7 +81,9 @@ class PhoneVisualTransformation : VisualTransformation {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NumberVerifyScreen(
-    onVerificationSuccess: (String) -> Unit
+    authorizedFlowId: String?,
+    onAuthorizationConsumed: () -> Unit,
+    onVerificationSuccess: (String, String, String?) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -97,13 +101,15 @@ fun NumberVerifyScreen(
         logs.add("[$time] $msg")
     }
 
-    fun handleVerify() {
-        val digits = rawDigits.filter { it.isDigit() }
-        if (digits.length < 10) {
-            Toast.makeText(context, "Please enter a valid 10-digit number", Toast.LENGTH_SHORT).show()
+    fun verifyAuthorizedNumber(flowId: String) {
+        val targetDigits = rawDigits.filter { it.isDigit() }
+        if (targetDigits.length != 10) {
+            hasError = true
+            addLog("Verification stopped: enter a 10-digit Turkish mobile number.")
+            Toast.makeText(context, "Enter a valid 10-digit phone number", Toast.LENGTH_LONG).show()
             return
         }
-        val fullMsisdn = if (digits.startsWith("90")) "+$digits" else "+90$digits"
+        val fullMsisdn = if (targetDigits.startsWith("90")) "+$targetDigits" else "+90$targetDigits"
 
         isLoading = true
         hasError = false
@@ -113,29 +119,57 @@ fun NumberVerifyScreen(
         scope.launch {
             try {
                 addLog("Target MSISDN: $fullMsisdn")
-                addLog("Initiating OIDC Authorization Code (3-legged) flow...")
-                addLog("Sending POST /nv/verify to OpenGateway...")
+                addLog("OIDC callback received. Sending backend-owned NV request...")
+                addLog("POST /api/number-verification/verify")
                 Toast.makeText(context, "Verifying $fullMsisdn...", Toast.LENGTH_SHORT).show()
 
-                val response = ApiClient.service.verifyNumber(VerifyRequest(phone_number = fullMsisdn))
+                val response = ApiClient.service.verifyNumber(
+                    VerifyRequest(flowId = flowId, phoneNumber = fullMsisdn)
+                )
                 if (response.isSuccessful && response.body()?.devicePhoneNumberVerified == true) {
                     addLog("Received response: ${response.body()}")
                     addLog("devicePhoneNumberVerified: true")
                     Toast.makeText(context, "Number verified successfully!", Toast.LENGTH_SHORT).show()
-                    onVerificationSuccess(fullMsisdn)
+                    onVerificationSuccess(fullMsisdn, flowId, response.body()?.correlator)
                 } else {
-                    addLog("Backend response: ${response.code()}")
                     hasError = true
-                    Toast.makeText(context, "Verification Failed!", Toast.LENGTH_SHORT).show()
+                    addLog("Verification rejected by backend: HTTP ${response.code()}.")
+                    addLog("Access remains blocked; no mock fallback was used.")
+                    Toast.makeText(context, "Number verification failed", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                addLog("Backend Error: ${e.localizedMessage ?: "timeout"}")
                 hasError = true
-                Toast.makeText(context, "Network Error", Toast.LENGTH_SHORT).show()
+                addLog("Backend VM offline (${e.localizedMessage ?: "timeout"}).")
+                addLog("Access remains blocked; check QODE_API_BASE_URL and backend health.")
+                Toast.makeText(context, "Backend unavailable; verification not completed", Toast.LENGTH_LONG).show()
             } finally {
                 isLoading = false
             }
         }
+    }
+
+    fun handleVerify() {
+        val targetDigits = rawDigits.filter { it.isDigit() }
+        if (targetDigits.length != 10) {
+            hasError = true
+            addLog("Enter a 10-digit Turkish mobile number before sign in.")
+            return
+        }
+        hasError = false
+        logs.clear()
+        addLog("Opening backend OIDC Authorization Code flow...")
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ApiClient.mobileAuthorizationUrl)))
+        } catch (e: Exception) {
+            hasError = true
+            addLog("Could not open authorization browser: ${e.localizedMessage ?: "unknown error"}")
+        }
+    }
+
+    LaunchedEffect(authorizedFlowId) {
+        val flowId = authorizedFlowId ?: return@LaunchedEffect
+        onAuthorizationConsumed()
+        verifyAuthorizedNumber(flowId)
     }
 
     Surface(

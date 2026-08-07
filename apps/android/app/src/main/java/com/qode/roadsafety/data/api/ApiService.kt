@@ -13,10 +13,10 @@ import java.util.concurrent.TimeUnit
 
 interface ApiService {
 
-    @POST("nv/verify")
+    @POST("api/number-verification/verify")
     suspend fun verifyNumber(@Body request: VerifyRequest): Response<VerifyResponse>
 
-    @POST("qod/session")
+    @POST("api/qod/sessions")
     suspend fun createQoDSession(@Body request: QoDRequest): Response<QoDResponse>
 
     @Multipart
@@ -53,4 +53,7 @@ object ApiClient {
             .build()
             .create(ApiService::class.java)
     }
+
+    val mobileAuthorizationUrl: String
+        get() = baseUrl.trimEnd('/') + "/api/auth/start?mobile=true"
 }

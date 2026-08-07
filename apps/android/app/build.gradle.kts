@@ -3,10 +3,14 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-val qodeApiBaseUrl = providers.gradleProperty("QODE_API_BASE_URL")
+val configuredQodeApiBaseUrl = providers.gradleProperty("QODE_API_BASE_URL")
     .orElse(providers.environmentVariable("QODE_API_BASE_URL"))
-    .orElse("http://10.0.2.2:8000/")
-    .get()
+    .orNull
+val releaseRequested = gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }
+require(!releaseRequested || configuredQodeApiBaseUrl != null) {
+    "QODE_API_BASE_URL must be set explicitly for release builds; 10.0.2.2 is emulator-only"
+}
+val qodeApiBaseUrl = configuredQodeApiBaseUrl ?: "http://10.0.2.2:8000/"
 require(qodeApiBaseUrl.endsWith("/")) { "QODE_API_BASE_URL must end with /" }
 
 android {

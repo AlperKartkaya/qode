@@ -6,6 +6,7 @@ import os
 import subprocess
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from fastapi import (
     BackgroundTasks,
@@ -74,6 +75,13 @@ def probe_video_duration(path: Path) -> float:
     if duration <= 0:
         raise ValueError("uploaded video duration must be positive")
     return duration
+
+
+def append_query_parameter(uri: str, name: str, value: str) -> str:
+    parts = urlsplit(uri)
+    query = parse_qsl(parts.query, keep_blank_values=True)
+    query.append((name, value))
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
 def create_app(
@@ -147,19 +155,21 @@ def create_app(
         }
 
     @app.get("/api/auth/start")
-    def auth_start() -> RedirectResponse:
+    def auth_start(mobile: bool = False) -> RedirectResponse:
         try:
             settings.require_gateway_config()
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail={"code": "GATEWAY_CONFIG_MISSING"}) from exc
-        pending = auth_store.create_pending()
+        pending = auth_store.create_pending(
+            return_uri=settings.mobile_auth_return_uri if mobile else None
+        )
         return RedirectResponse(
             active_gateway.authorization_url(pending.state, settings.opengw_scopes),
             status_code=302,
         )
 
     @app.get("/api/auth/callback")
-    async def auth_callback(code: str, state: str) -> dict[str, Any]:
+    async def auth_callback(code: str, state: str) -> Response:
         try:
             flow_id = auth_store.consume_state(state)
         except AuthStateError as exc:
@@ -171,8 +181,13 @@ def create_app(
                 status_code=502,
                 detail={"code": exc.code, "correlator": exc.correlator},
             ) from exc
-        auth_store.authorize(flow_id, token)
-        return auth_store.public_summary(flow_id)
+        flow = auth_store.authorize(flow_id, token)
+        if flow.return_uri:
+            return RedirectResponse(
+                append_query_parameter(flow.return_uri, "flowId", flow_id),
+                status_code=302,
+            )
+        return JSONResponse(auth_store.public_summary(flow_id))
 
     @app.get("/api/session/{flow_id}")
     def session_summary(flow_id: str) -> dict[str, object]:

@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     opengw_qos_profile: str = Field(
         default="teknofest2026", validation_alias="OPENGW_QOS_PROFILE"
     )
+    mobile_auth_return_uri: str = Field(
+        default="qode://auth/callback", validation_alias="MOBILE_AUTH_RETURN_URI"
+    )
     opengw_timeout_seconds: float = Field(default=15.0, validation_alias="OPENGW_TIMEOUT_SECONDS")
 
     final_ai_image: str = Field(

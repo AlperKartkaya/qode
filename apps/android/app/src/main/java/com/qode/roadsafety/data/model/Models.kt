@@ -3,23 +3,31 @@ package com.qode.roadsafety.data.model
 import com.google.gson.annotations.SerializedName
 
 data class VerifyRequest(
-    val access_token: String = "mock-token",
-    val phone_number: String
+    val flowId: String,
+    val phoneNumber: String
 )
 
 data class VerifyResponse(
-    val devicePhoneNumberVerified: Boolean
+    val flowId: String,
+    val devicePhoneNumberVerified: Boolean,
+    val phoneNumber: String? = null,
+    val correlator: String? = null
 )
 
 data class QoDRequest(
-    val access_token: String = "mock-token",
+    val flowId: String,
     val duration: Int = 60
 )
 
 data class QoDResponse(
+    val flowId: String,
     val sessionId: String? = null,
     val duration: Int? = null,
-    val qosStatus: String? = null
+    val qosStatus: String? = null,
+    val streamingAllowed: Boolean,
+    val fallbackMaxResolution: String? = null,
+    val reasonCode: String? = null,
+    val correlator: String? = null
 )
 
 data class UploadResponse(

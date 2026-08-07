@@ -63,7 +63,7 @@ kapanışını kapsar.
 7 Ağustos 2026 yerel doğrulama sonucu:
 
 - core/unit suite: **94 test geçti**;
-- final backend suite: **11 test geçti**;
+- final backend suite: **12 test geçti**;
 - Python `compileall`: geçti;
 - `git diff --check`: geçti;
 - root `.env`: git tarafından ignore ediliyor; client id, client secret ve callback
@@ -73,6 +73,15 @@ kapanışını kapsar.
 
 Bu smoke gerçek operatör isteği değildir; yalnız backend state machine ve HTTP
 sözleşmesinin yerel kanıtıdır.
+
+Android incelemesinde eski uygulamanın legacy `/nv/verify` çağrısına hard-coded
+mock token gönderdiği ve her HTTP/network hatasında kullanıcıyı doğrulanmış kabul
+ettiği görüldü. Bu yol kaldırıldı. Mobil akış artık
+`/api/auth/start?mobile=true` → provider/backend callback →
+`qode://auth/callback?flowId=...` → `/api/number-verification/verify` sırasını
+izler; hata halinde giriş kapalı kalır. QoD çağrısı da verified flow ID ile yeni
+`/api/qod/sessions` endpoint'ine taşındı. Debug APK build'i geçti ve release build
+VM'e erişen explicit `QODE_API_BASE_URL` olmadan fail eder.
 
 ## Canlı kabul için kalanlar
 
