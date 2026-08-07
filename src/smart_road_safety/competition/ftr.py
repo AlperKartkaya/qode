@@ -260,6 +260,7 @@ def write_ftr_result_atomic(result: FtrCompetitionResult, output_path: str | Pat
             json.dump(result.to_dict(), handle, ensure_ascii=False, indent=2)
             handle.flush()
             os.fsync(handle.fileno())
+        os.chmod(temporary_name, 0o666)
         read_ftr_result(temporary)
         os.replace(temporary, target)
     except Exception:
