@@ -50,15 +50,11 @@ async def exchange_token(req: TokenRequest):
 
 @app.post("/nv/verify")
 async def verify_number(req: VerifyRequest):
-    if settings.allow_mock_gateway and req.access_token == "mock-token":
-        return {"devicePhoneNumberVerified": True}
     verified = await ogw.verify_number(req.access_token, req.phone_number)
     return {"devicePhoneNumberVerified": verified}
 
 @app.post("/qod/session")
 async def create_qod_session(req: QoDRequest):
-    if settings.allow_mock_gateway and req.access_token == "mock-token":
-        return {"sessionId": str(uuid.uuid4()), "duration": req.duration}
     session = await ogw.create_qod_session(req.access_token, req.duration)
     if not session:
         raise HTTPException(status_code=400, detail="Could not create QoD session")
