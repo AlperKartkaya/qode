@@ -186,12 +186,19 @@ def create_app(
         output_dir = jobs.output_dir(job_id)
         result = active_runner.run(input_path, output_dir)
         if result.exit_code != 0:
-            jobs.mark_failed(job_id, result.message)
+            jobs.mark_failed(job_id, f"{result.message}_CODE_{result.exit_code}")
             return
+        
+        json_path = output_dir / "results.json"
         try:
-            read_ftr_result(output_dir / "results.json")
-        except (OSError, ValueError, json.JSONDecodeError):
-            jobs.mark_failed(job_id, "INVALID_FTR_RESULT")
+            read_ftr_result(json_path)
+        except Exception as exc:
+            import traceback
+            traceback.print_exc()
+            error_details = type(exc).__name__
+            if isinstance(exc, ValueError):
+                error_details = str(exc).replace(" ", "_")[:50]
+            jobs.mark_failed(job_id, f"INVALID_JSON_{error_details}")
             return
         jobs.mark_done(job_id)
 
