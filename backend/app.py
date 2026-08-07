@@ -106,6 +106,32 @@ def append_query_parameter(uri: str, name: str, value: str) -> str:
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
+class DummyInferenceRunner:
+    def run(self, input_path: Path, output_dir: Path) -> Any:
+        import subprocess
+        import sys
+        from container_runner import RunnerResult
+        output_dir.mkdir(parents=True, exist_ok=True)
+        # Call the dummy_ai.py script
+        dummy_script = Path(__file__).parent / "dummy_ai" / "dummy_ai.py"
+        try:
+            # We copy the logic of dummy_ai.py manually since the script hardcodes /app/data/output
+            import json
+            import time
+            time.sleep(3)
+            mock_result = {
+                "arac_bilgisi": {"tip": "Sedan (Dummy)", "plaka": "34DUMMY123", "renk": "Beyaz", "confidence_score": 0.98},
+                "tespitler": [
+                    {"zaman_saniye": 1, "kategori": "Risk", "etiket": "Emniyet Kemeri Yok", "confidence_score": 0.90},
+                    {"zaman_saniye": 4, "kategori": "Dikkat", "etiket": "Telefona Bakıyor", "confidence_score": 0.85}
+                ]
+            }
+            result_path = output_dir / "results.json"
+            result_path.write_text(json.dumps(mock_result))
+            return RunnerResult(0, "COMPLETED")
+        except Exception as exc:
+            return RunnerResult(1, f"DUMMY_ERROR_{type(exc).__name__.upper()}")
+
 def create_app(
     *,
     settings: Settings = default_settings,
@@ -117,7 +143,7 @@ def create_app(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "DELETE"],
         allow_headers=["Content-Type", "Idempotency-Key"],
     )
     active_gateway = gateway or OpenGatewayClient(
@@ -128,11 +154,14 @@ def create_app(
         qos_profile=settings.opengw_qos_profile,
         timeout_seconds=settings.opengw_timeout_seconds,
     )
-    active_runner = runner or ContainerInferenceRunner(
-        image=settings.final_ai_image,
-        use_gpu=settings.use_gpu,
-        timeout_seconds=settings.container_timeout_seconds,
-    )
+    if settings.final_ai_image.lower() == "dummy":
+        active_runner = runner or DummyInferenceRunner()
+    else:
+        active_runner = runner or ContainerInferenceRunner(
+            image=settings.final_ai_image,
+            use_gpu=settings.use_gpu,
+            timeout_seconds=settings.container_timeout_seconds,
+        )
     auth_store = AuthSessionStore(
         state_ttl_seconds=settings.auth_state_ttl_seconds,
         session_ttl_seconds=settings.session_ttl_seconds,

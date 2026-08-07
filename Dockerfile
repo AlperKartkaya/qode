@@ -40,8 +40,6 @@ COPY main.py /app/main.py
 RUN python3 -m smart_road_safety.cli check-runtime-assets \
     --manifest /app/config/runtime_assets.json --asset-root /app/weights \
     --mode final --inspect-classes
-RUN mkdir -p /app/weights/easyocr && \
-    tar -xf /app/weights/easyocr-tr-en.bundle -C /app/weights/easyocr
 
 HEALTHCHECK --interval=30s --timeout=20s --retries=1 \
   CMD python3 -m smart_road_safety.cli check-runtime-readiness \

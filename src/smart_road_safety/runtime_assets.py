@@ -114,7 +114,9 @@ def check_runtime_assets(
 
 
 def _inspect_class_mapping(asset: dict[str, Any], path: Path) -> tuple[str, str] | None:
-    method = asset["class_inspection"]
+    method = asset.get("class_inspection")
+    if not method or method == "none":
+        return None
     expected = list(asset["expected_classes"])
     try:
         if method == "torch_class_names":
