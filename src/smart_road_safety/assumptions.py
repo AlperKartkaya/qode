@@ -143,8 +143,8 @@ ASSUMPTIONS: tuple[AssumptionRecord, ...] = (
     _record(
         "DS-013",
         "telecom integration",
-        "Official API root, OIDC, NV, and QoD contracts are available; only credentials, redirect URI, SIM binding, and live environment proof remain external.",
-        "Update when organizer provisioning is delivered.",
+        "Official API root, OIDC, NV, and QoD contracts are available and non-empty credential/callback values are provisioned in an ignored root .env, but P5 is incomplete until tokens are backend-only, state is one-time and TTL-bound, x-correlator and typed upstream outcomes are implemented, and callback/SIM behavior is proven live.",
+        "Verified from organizer contracts, environment key inventory, and backend audit on 7 August 2026; secret values were not printed.",
         "mobile/auth integration",
         "backend",
         "live smoke",

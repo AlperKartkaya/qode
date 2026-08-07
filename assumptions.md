@@ -90,8 +90,8 @@ Available support data in the current delivery:
 - Organizer-provided Faz 2 HLS VOD with 240p and 1080p variants plus `data/final_stage/faz2/ground_truth.json`, containing one vehicle summary and 34 event-level FTR annotations across `sofor_eylemi`, `nesneler`, and `yolcular`
 
 Unavailable in the current delivery:
-- organizer-issued `client_id`, `client_secret`, approved redirect URI, final SIM/device binding, and live proof of Number Verification/QoD
-- team VM/IP/port provisioning details required for the OIDC callback and Web UI rehearsal
+- Open Gateway credentials and a callback value are now present only in the ignored root `.env`; their provisioning is not yet proof of a successful token exchange, approved redirect registration, final SIM/device binding, or live Number Verification/QoD behavior
+- a completed external callback reachability check and VM/Web UI rehearsal (VM credentials remain operator-only and must not enter application config, logs, or Git)
 - hidden final-day video ground truth, official timestamp-matching tolerance, and the exact allocation of the remaining live-demo points
 - a Lifebox automation API/credential; until one is supplied, sharing remains an explicit device share-sheet/manual handoff
 - official train/validation/test split metadata for DMD and DriverSVT
@@ -116,7 +116,7 @@ Unavailable in the current delivery:
 | DS-010 | target-vehicle scope | Vehicle/plate/video analysis remains the AI output scope, while Number Verification, QoD, streaming, upload, and result display are separate but equally real final live-demo responsibilities. | high | verified from the final scenario and UX guide | detection logic, model roadmap, demo architecture, report wording |
 | DS-011 | final-stage scope | Number Verification and QoD are no longer optional support-only paths: NV gates the live demo and QoD can add points, while QoD failure must allow streaming to continue. Mocks remain test doubles only. | high | verified from the final scenario and Open Gateway documents | orchestration, mobile, backend, reporting, live demo |
 | DS-012 | report evidence | The KTR report evidence must center on FTR output compliance, dataset construction, trained model artifacts, model metrics, FPS/runtime measurements where available, Mermaid architecture sources with rendered diagrams, and source-code traceability appendices as images. | high | update when trained deep-learning weights and official evaluator outputs are available | training, evaluation, report generation |
-| DS-013 | telecom integration | Official API root, OIDC flow, scopes, NV and QoD payloads are available. Live credentials have now been added to the backend environment and mock fallbacks removed. Only final SIM/device binding and environment proof remain as live-demo blockers. | high | verified from integration of live credentials and removal of mock flags | mobile/auth integration, backend, live smoke |
+| DS-013 | telecom integration | Official API root, OIDC flow, scopes, NV and QoD payloads are available, and non-empty credential/callback values are present in the ignored root `.env`. The current legacy backend still returns access tokens to callers and accepts caller-supplied bearer tokens, so provisioning alone is not P5 completion. P5 must move tokens to a backend-only TTL session store, validate one-time OIDC state, add `x-correlator`, distinguish upstream outcomes, and prove the registered callback plus final SIM in the live environment. | high | verified from the organizer contracts, environment key inventory, and backend audit on 7 August 2026; secret values were not printed | mobile/auth integration, backend, live smoke |
 | DS-014 | report generator | The report generator must produce a `final_report_template.docx`-aligned `ktr_v1.docx`, markdown QA artifact, evidence JSON, rendered Mermaid-backed architecture sections, and image-based code appendices from repo-grounded evidence without inventing unavailable model results. | high | verify with DOCX text extraction/rendering and generated artifact checks | reporting, tests, manual QA |
 | DS-015 | evaluation focus | Final evaluation weights low-resolution inference, high-resolution inference, live demo, and presentation equally. AI metrics, <10-minute runtime, NV/QoD behavior, <5-minute mobile MP4 export, Web UI operation, and evidence quality are all acceptance concerns. | high | verified from the final scenario and platform guide | roadmap prioritization, evaluation, operations, presentation |
 | DS-016 | privacy and sharing | Organizer-provided 5G network details, video files, training material, Q&A content, and evaluation data must not be shared outside the competition without Turkcell permission. | high | verified from şartname participation/privacy rule | repo hygiene, publication, data handling |
@@ -184,8 +184,8 @@ Unavailable in the current delivery:
 
 ## Known Unavailable Inputs In The Current Delivery
 
-- operator credentials, SIM/device binding, and live QoD/Number Verification environment details
-- approved callback/redirect URI and team VM network details
+- final SIM/device binding and redact-safe live QoD/Number Verification evidence; credentials are provisioned locally but not yet live-validated
+- approved callback reachability and team VM network rehearsal evidence; operator credentials remain outside the application/repository boundary
 - official hidden final-video labels and scoring/timestamp tolerance
 - FTR-aligned annotations for vehicle body type, vehicle color, exact plate text, passengers, `teknocan`, and `bilgisayar`
 - complete contract-compatible final weights and measured holdout accuracy/FPS tables; public Faz 2-finetuned TorchScript candidates are not yet release-compatible checkpoints and Faz 2 training accuracy is not a holdout metric

@@ -1,6 +1,6 @@
 # Final aşama bekleyen işler ve bilgi talep föyü
 
-**Durum tarihi:** 5 Ağustos 2026  
+**Durum tarihi:** 7 Ağustos 2026
 **Kapsam:** P5–P8, eksik P3/P4 fiziksel kabul kapıları ve model iyileştirme yolu  
 **Kaynak plan:** [`../final_stage_implementation_plan.md`](../final_stage_implementation_plan.md)
 
@@ -38,7 +38,7 @@ SSH host key kullanır.
 | P3 runtime asset sözleşmesi | Fail-closed manifest geri yüklendi | Dokuz asset checksum + class inspection geçmeli |
 | Driver/smoker yeni HF dosyaları | Dosyalar var; yayımlanan TorchScript class metadata taşımıyor | Class-mapped checkpoint olarak yeniden export, upload ve manifest SHA güncelleme |
 | P4 final Docker | Tekrar `final` moda alındı; eksik asset'te build fail eder | Dokuz asset ile offline build/run, üç video ve Web UI kanıtı |
-| P5 Open Gateway/backend | Mevcut backend yalnız geçici uyumluluk scaffold'ı | Gerçek OIDC/NV/QoD contract testleri ve credential'lı smoke |
+| P5 Open Gateway/backend | Backend-owned OIDC state/token store, gerçek NV/QoD client, fail-open QoD ve job-scoped upload/runner API uygulandı; eski token/global endpoint'ler `410` | Kayıtlı callback + final SIM ile credential'lı live smoke ve frozen image digest |
 | P6 Android | Native Kotlin uygulama mevcut; final auth/job sözleşmesine bağlı değil | Gerçek cihazda OIDC → NV → QoD → HLS → MP4 → upload → result |
 | P7 ortak yol/dokümantasyon | Kısmi | CLI/local API/backend aynı validator ve domain servislerini kullanmalı |
 | P8 VM/freeze | VM bilgisi takımda; bu repoda tutulmayacak | İki prova, frozen digest/tar SHA, Web UI ve recovery drill |

@@ -25,8 +25,9 @@ yoksa **FAILED** olur; sahte `results.json` üretmez.
 python3 -m venv venv
 source venv/bin/activate
 pip install -r backend/requirements.txt pytest
+pip install -e .
 cd backend
-uvicorn app:app --host 0.0.0.0 --port 8000
+PYTHONPATH=../src:. uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
 ## Yarışma VM'i
@@ -42,10 +43,24 @@ dosyasındadır.
 Proje, hatalara karşı kapsamlı bir test paketi içerir. Testleri çalıştırmak için:
 ```bash
 cd backend
-PYTHONPATH=. python -m pytest tests
+PYTHONPATH=.:../src python -m pytest tests
 ```
 
-> Mevcut `/auth/token`, `/nv/verify`, `/qod/session`, `/upload`, `/ai-run` ve
-> `/ai-result` yüzeyi P5 öncesi uyumluluk yüzeyidir. Open Gateway access token'ının
-> mobilden backend'e taşındığı bu sözleşme production/final kabul edilmez; P5'te
-> backend-owned OIDC session ve job-id tabanlı API ile değiştirilecektir.
+## P5 API sözleşmesi
+
+| Endpoint | İşlev |
+| --- | --- |
+| `GET /api/auth/start` | Tek kullanımlık state üretip organizer authorize URL'sine yönlendirir |
+| `GET /api/auth/callback` | Code exchange; token yalnız backend memory store'da tutulur |
+| `GET /api/session/{flow_id}` | Maskeli NV/QoD durum özeti |
+| `POST /api/number-verification/verify` | Backend-owned token ile gerçek NV |
+| `POST /api/qod/sessions` | Gerçek QoD; upstream hata halinde açık 240p fail-open sonucu |
+| `POST /api/videos` | Doğrulanmış flow için atomik/idempotent MP4 upload ve `202` job |
+| `GET /api/jobs/{job_id}` | Job durumu |
+| `GET /api/jobs/{job_id}/result` | Yalnız validator'dan geçmiş DONE sonucu |
+| `GET /api/jobs/{job_id}/trace` | Secret içermeyen job trace |
+
+Eski `/auth/token`, `/nv/verify`, `/qod/session`, `/upload`, `/ai-run` ve
+`/ai-result` endpoint'leri access token'ı mobile taşıyan/global-state sözleşmeyi
+yeniden kullanılmasın diye `410 Gone` döndürür. Android istemci P6'da yeni flow/job
+sözleşmesine geçirilecektir.

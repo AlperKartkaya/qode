@@ -24,15 +24,18 @@ echo "$FINGERPRINT"
 echo "----------------------------------------"
 echo "Please save this SHA256 fingerprint for submission before Aug 7, 21:00."
 
-# 4. Start Backend API
+# 4. Start Backend API. Secrets must already exist in the ignored root .env or
+# VM secret environment; this script never creates/copies a credential file.
 echo "Starting Backend API on port 8000..."
-cd backend
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
+if [ ! -d "backend/venv" ]; then
+    python3 -m venv backend/venv
 fi
-source venv/bin/activate
-pip install -r requirements.txt
+source backend/venv/bin/activate
+pip install -r backend/requirements.txt
+pip install -e .
 # Run via uvicorn in background
-nohup uvicorn app:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
+nohup env PYTHONPATH="$PWD/src:$PWD/backend" \
+  uvicorn app:app --app-dir backend --host 0.0.0.0 --port 8000 \
+  > backend/backend.log 2>&1 &
 
 echo "Deployment finished! Backend is running at http://localhost:8000"
