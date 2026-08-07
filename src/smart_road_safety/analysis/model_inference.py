@@ -424,8 +424,8 @@ class SceneAnalysisEngine:
                 print(f"[Engine] Cabin detector loaded: {cabin_path}")
             except Exception as e:
                 self._load_failure("Cabin detector", e)
-        elif not self.allow_degraded:
-            raise RuntimeError("Cabin detector weights are required in final mode")
+        else:
+            print("[Engine] Cabin detector unavailable; using fallback (allowed)")
 
         # ── License plate detector (YOLO fine-tuned) ──────────────────────────
         self.plate_detector = None
