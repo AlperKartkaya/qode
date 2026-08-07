@@ -94,6 +94,12 @@ fun AIResultScreen(
             val resultStr = gson.toJson(result)
             val file = File(context.cacheDir, "results.json")
             file.writeText(resultStr)
+            
+            val md = java.security.MessageDigest.getInstance("MD5")
+            val hashStr = md.digest(resultStr.toByteArray()).joinToString("") { "%02x".format(it) }
+            val md5File = File(context.cacheDir, "results.json.md5")
+            md5File.writeText(hashStr)
+            
             jsonFile = file
         }
     }
@@ -336,6 +342,10 @@ fun AIResultScreen(
 
                             val gson = remember { GsonBuilder().create() }
                             val singleLineJson = remember(aiResultResponse) { gson.toJson(result) }
+                            val md5Hash = remember(singleLineJson) {
+                                val md = java.security.MessageDigest.getInstance("MD5")
+                                md.digest(singleLineJson.toByteArray()).joinToString("") { "%02x".format(it) }
+                            }
 
                             Box(
                                 modifier = Modifier
@@ -343,12 +353,44 @@ fun AIResultScreen(
                                     .background(Color(0xFF111827), RoundedCornerShape(12.dp))
                                     .padding(16.dp)
                             ) {
-                                Text(
-                                    text = singleLineJson,
-                                    color = Color(0xFF34D399),
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 11.sp
-                                )
+                                Column {
+                                    Text(
+                                        text = singleLineJson,
+                                        color = Color(0xFF34D399),
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 11.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    HorizontalDivider(color = Color(0xFF374151))
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Default.Fingerprint, contentDescription = null, tint = Color(0xFF9CA3AF), modifier = Modifier.size(14.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "MD5 Fingerprint: $md5Hash",
+                                                color = Color(0xFF9CA3AF),
+                                                fontFamily = FontFamily.Monospace,
+                                                fontSize = 10.sp
+                                            )
+                                        }
+                                        IconButton(
+                                            onClick = {
+                                                val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                                                val clip = android.content.ClipData.newPlainText("MD5 Hash", md5Hash)
+                                                clipboard.setPrimaryClip(clip)
+                                                Toast.makeText(context, "Kopyalandı!", Toast.LENGTH_SHORT).show()
+                                            },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy Hash", tint = Color(0xFF9CA3AF), modifier = Modifier.size(14.dp))
+                                        }
+                                    }
+                                }
                             }
                             
                             jsonFile?.let { file ->
