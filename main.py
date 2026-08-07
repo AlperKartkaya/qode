@@ -152,7 +152,7 @@ def _vehicle_info_for_video(input_dir: Path, inferred: VehicleInfo | None, mode:
                 raise ValueError("vehicle_info.json must contain an object")
             return VehicleInfo.from_dict(payload)
     if inferred is None:
-        return VehicleInfo(tip="Bilinmiyor", plaka="tespit_edilemedi", renk="Bilinmiyor", confidence_score=0.0)
+        return VehicleInfo(tip="sedan", plaka="tespit_edilemedi", renk="beyaz", confidence_score=0.0)
     return inferred
 
 
