@@ -25,6 +25,8 @@ import com.qode.roadsafety.data.api.ApiClient
 import com.qode.roadsafety.data.model.AiResultResponse
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
+import android.content.Intent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +41,7 @@ fun AIResultScreen(
     var stepMessage by remember { mutableStateOf("Initializing AI Analysis...") }
     var aiResultResponse by remember { mutableStateOf<AiResultResponse?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
+    var jsonFile by remember { mutableStateOf<File?>(null) }
 
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
@@ -96,6 +99,17 @@ fun AIResultScreen(
 
     LaunchedEffect(Unit) {
         fetchResult()
+    }
+
+    LaunchedEffect(aiResultResponse) {
+        val result = aiResultResponse?.result
+        if (result != null) {
+            val gson = GsonBuilder().create()
+            val resultStr = gson.toJson(result)
+            val file = File(context.cacheDir, "results.json")
+            file.writeText(resultStr)
+            jsonFile = file
+        }
     }
 
     Scaffold(
@@ -334,8 +348,8 @@ fun AIResultScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            val gson = remember { GsonBuilder().setPrettyPrinting().create() }
-                            val prettyJson = remember(aiResultResponse) { gson.toJson(result) }
+                            val gson = remember { GsonBuilder().create() }
+                            val singleLineJson = remember(aiResultResponse) { gson.toJson(result) }
 
                             Box(
                                 modifier = Modifier
@@ -344,11 +358,50 @@ fun AIResultScreen(
                                     .padding(16.dp)
                             ) {
                                 Text(
-                                    text = prettyJson,
+                                    text = singleLineJson,
                                     color = Color(0xFF34D399),
                                     fontFamily = FontFamily.Monospace,
                                     fontSize = 11.sp
                                 )
+                            }
+                            
+                            jsonFile?.let { file ->
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF3F4F6))
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text("results.json Kaydedildi", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF10B981))
+                                        }
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text("Konum: ${file.absolutePath}", fontSize = 10.sp, color = Color(0xFF4B5563))
+                                        
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Button(
+                                            onClick = {
+                                                val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                                                val shareIntent = Intent().apply {
+                                                    action = Intent.ACTION_SEND
+                                                    type = "application/json"
+                                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                                }
+                                                context.startActivity(Intent.createChooser(shareIntent, "JSON Sonucunu Paylaş"))
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4338CA)),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Icon(Icons.Default.Share, contentDescription = null, tint = Color.White)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("Sonucu Paylaş")
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
