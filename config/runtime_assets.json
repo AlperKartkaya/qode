@@ -27,10 +27,15 @@
       "id": "main_detector",
       "role": "main object detector",
       "filename": "yolo11x.pt",
+      "sha256": "7bc158aa95c0ebfdd87f70f01653c1131b93e92522dbe15c228bcd742e773a24",
       "source": "https://github.com/ultralytics/assets/releases",
+      "license": "AGPL-3.0",
+      "model_version": "11x",
       "description": "YOLO11x object detector.",
       "class_mapping_source": "builtin",
+      "expected_classes": ["person", "car", "motorcycle", "bus", "truck"],
       "class_inspection": "none",
+      "availability": "public",
       "fallback_allowed": false
     },
     {
