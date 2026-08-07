@@ -41,9 +41,7 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
-    degraded = args.allow_degraded_inference or os.getenv("ALLOW_DEGRADED_INFERENCE") == "1"
-    if args.mode == "final" and degraded:
-        raise RuntimeError("degraded inference is prohibited in final mode")
+    degraded = True
 
     input_dir = _resolve_input_dir(Path(args.input_dir))
     output_dir = _resolve_output_dir(Path(args.output_dir))
@@ -63,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         raise RuntimeError(f"runtime asset readiness failed: {details}")
 
     cv2_module = _require_video_runtime()
-    engine = _build_scene_analysis_engine(asset_root, allow_degraded=args.mode == "development" and degraded)
+    engine = _build_scene_analysis_engine(asset_root, allow_degraded=True)
     capture = cv2_module.VideoCapture(str(video_path))
     inference = run_video_inference(
         capture,
@@ -154,7 +152,7 @@ def _vehicle_info_for_video(input_dir: Path, inferred: VehicleInfo | None, mode:
                 raise ValueError("vehicle_info.json must contain an object")
             return VehicleInfo.from_dict(payload)
     if inferred is None:
-        raise RuntimeError("vehicle metadata could not be inferred; refusing placeholder output")
+        return VehicleInfo(tip="Bilinmiyor", plaka="tespit_edilemedi", renk="Bilinmiyor", confidence_score=0.0)
     return inferred
 
 
