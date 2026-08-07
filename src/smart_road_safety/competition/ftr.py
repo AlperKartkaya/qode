@@ -120,9 +120,7 @@ def normalize_plate(plate: str) -> str:
     if cleaned == "TESPIT_EDILEMEDI":
         return "tespit_edilemedi"
     if not PLATE_PATTERN.fullmatch(cleaned):
-        raise ValueError(
-            "plaka must match the FTR Turkish plate regex after normalization."
-        )
+        print(f"[QoDe] WARNING: Plate text '{cleaned}' does not match Turkish regex. Keeping raw text for debug.")
     return cleaned
 
 
