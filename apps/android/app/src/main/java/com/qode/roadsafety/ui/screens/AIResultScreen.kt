@@ -25,6 +25,7 @@ import com.qode.roadsafety.data.api.ApiClient
 import com.qode.roadsafety.data.model.AiResultResponse
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import java.io.File
 import android.content.Intent
 
