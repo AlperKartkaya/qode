@@ -67,7 +67,7 @@ fun AIResultScreen(
                 // Local demo simulation progress
                 if (status == "PROCESSING") {
                     if (progress < 0.9f) {
-                        progress += 0.25f
+                        progress = (progress + 0.25f).coerceAtMost(0.9f)
                         stepMessage = when {
                             progress < 0.3f -> "Loading YOLO11x detection model..."
                             progress < 0.6f -> "Running EasyOCR plate text recognition..."
@@ -78,6 +78,18 @@ fun AIResultScreen(
                         status = "DONE"
                         progress = 1.0f
                         stepMessage = "Analysis Complete!"
+                        aiResultResponse = AiResultResponse(
+                            status = "DONE",
+                            progress = 1.0f,
+                            message = "Analysis Complete!",
+                            result = com.qode.roadsafety.data.model.FtrResult(
+                                aracBilgisi = com.qode.roadsafety.data.model.VehicleInfo("SEDAN", "34 TOGG 2026", "OLTU", 0.98),
+                                tespitler = listOf(
+                                    com.qode.roadsafety.data.model.DetectionItem(2.5, "surucu_durumu", "telefonla_konusma", 0.92),
+                                    com.qode.roadsafety.data.model.DetectionItem(5.1, "yaya", "yaya_gecidi_ihlali", 0.88)
+                                )
+                            )
+                        )
                     }
                 }
                 if (isManual) Toast.makeText(context, "Fetching results...", Toast.LENGTH_SHORT).show()
