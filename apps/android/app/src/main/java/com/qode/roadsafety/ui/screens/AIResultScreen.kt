@@ -121,12 +121,14 @@ fun AIResultScreen(
         if (result != null) {
             val gson = GsonBuilder().create()
             val resultStr = gson.toJson(result)
-            val file = File(context.cacheDir, "results.json")
+            val dir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+            val qodeDir = File(dir, "QoDe").apply { mkdirs() }
+            val file = File(qodeDir, "results.json")
             file.writeText(resultStr)
             
             val md = java.security.MessageDigest.getInstance("MD5")
             val hashStr = md.digest(resultStr.toByteArray()).joinToString("") { "%02x".format(it) }
-            val md5File = File(context.cacheDir, "results.json.md5")
+            val md5File = File(qodeDir, "results.json.md5")
             md5File.writeText(hashStr)
             
             jsonFile = file

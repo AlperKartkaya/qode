@@ -92,7 +92,8 @@ fun HomeScreen(
     // Ensure we have a valid video File ready for upload
     fun getOrCreateVideoFile(): File {
         recordedFile?.let { if (it.exists() && it.length() > 0) return it }
-        val outputDir = File(context.cacheDir, "recordings").apply { mkdirs() }
+        val dir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+        val outputDir = File(dir, "QoDe/recordings").apply { mkdirs() }
         val sampleFile = File(outputDir, "video.mp4")
         if (!sampleFile.exists() || sampleFile.length() == 0L) {
             FileOutputStream(sampleFile).use { fos ->

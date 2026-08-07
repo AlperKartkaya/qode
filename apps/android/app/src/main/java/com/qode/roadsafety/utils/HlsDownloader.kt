@@ -18,7 +18,8 @@ object HlsDownloader {
         isHighQuality: Boolean = false,
         onProgress: (Float, String) -> Unit
     ): File = withContext(Dispatchers.IO) {
-        val outputDir = File(context.cacheDir, "recordings").apply { mkdirs() }
+        val dir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+        val outputDir = File(dir, "QoDe/recordings").apply { mkdirs() }
         val outputFile = File(outputDir, "recorded_stream_${System.currentTimeMillis()}.mp4")
 
         onProgress(0.05f, "Fetching HLS master playlist...")
