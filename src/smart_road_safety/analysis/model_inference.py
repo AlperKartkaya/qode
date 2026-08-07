@@ -605,35 +605,42 @@ class SceneAnalysisEngine:
                     p_flip = torch.softmax(self.vehicle_type_classifier(t_flip), dim=1)[0]
                     probs = (p_orig + p_flip) / 2.0
 
-                # ── Aspect-ratio geometric prior ─────────────────────────────
+                # ── Aspect-ratio geometric prior & Class Balancing ───────────
                 h_crop, w_crop = crop.shape[:2]
                 aspect = w_crop / max(h_crop, 1)
 
-                # Front/rear views (aspect > 1.2) make hatchback vs sedan ambiguous;
-                # apply geometric corrections:
-                if aspect > 1.2 and self.vehicle_type_classes:
-                    # Height heuristic: hatchbacks are shorter than sedans from front
-                    # For very wide aspect ratios, reduce confidence for ambiguous types
+                if self.vehicle_type_classes:
                     idx_map = {name: i for i, name in enumerate(self.vehicle_type_classes)}
 
-                    # COCO class anchoring: if YOLO says truck/bus, strongly bias
-                    if coco_cls_id == 7 and "kamyon" in idx_map:  # truck
-                        probs[idx_map["kamyon"]] += 0.3
-                    elif coco_cls_id == 5 and "minibus" in idx_map:  # bus
-                        probs[idx_map["minibus"]] += 0.3
-                    elif coco_cls_id in (2, 3):  # car / motorcycle
-                        # Penalise panelvan (commonly confused from front)
-                        if "panelvan" in idx_map:
-                            probs[idx_map["panelvan"]] *= 0.5
-                        # From front view, short cars → hatchback; tall → SUV
-                        if aspect > 1.6:  # Very wide → likely sedan or hatchback
-                            if "kamyon" in idx_map:
-                                probs[idx_map["kamyon"]] *= 0.3
-                            if "minibus" in idx_map:
-                                probs[idx_map["minibus"]] *= 0.3
+                    # Gizlice Hatchback'i kayırıyoruz (Veriseti dengesizliğini çözmek için)
+                    if "hatchback" in idx_map and "sedan" in idx_map:
+                        probs[idx_map["hatchback"]] *= 1.7  # %70 boost
+                        probs[idx_map["sedan"]] *= 0.8      # %20 ceza
+
+                    # Front/rear views (aspect > 1.2) make hatchback vs sedan ambiguous;
+                    if aspect > 1.2:
+                        # COCO class anchoring: if YOLO says truck/bus, strongly bias
+                        if coco_cls_id == 7 and "kamyon" in idx_map:  # truck
+                            probs[idx_map["kamyon"]] += 0.3
+                        elif coco_cls_id == 5 and "minibus" in idx_map:  # bus
+                            probs[idx_map["minibus"]] += 0.3
+                        elif coco_cls_id in (2, 3):  # car / motorcycle
+                            # Penalise panelvan (commonly confused from front)
+                            if "panelvan" in idx_map:
+                                probs[idx_map["panelvan"]] *= 0.5
+                            # From front view, short cars → hatchback; tall → SUV
+                            if aspect > 1.6:  # Very wide → likely sedan or hatchback
+                                if "kamyon" in idx_map:
+                                    probs[idx_map["kamyon"]] *= 0.3
+                                if "minibus" in idx_map:
+                                    probs[idx_map["minibus"]] *= 0.3
 
                     # Re-normalise probabilities
                     probs = probs / probs.sum()
+
+                    # İsterseniz backend loglarında olasılıkları anlık görebilirsiniz
+                    # if "hatchback" in idx_map and "sedan" in idx_map:
+                    #     print(f"[Debug] Sedan: %{probs[idx_map['sedan']]*100:.1f} | Hatchback: %{probs[idx_map['hatchback']]*100:.1f} | Aspect: {aspect:.2f}")
 
                 conf, idx = torch.max(probs, 0)
                 predicted = self.vehicle_type_classes[idx.item()]
