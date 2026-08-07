@@ -631,8 +631,9 @@ class SceneAnalysisEngine:
 
                     # Gizlice Hatchback'i kayırıyoruz (Veriseti dengesizliğini çözmek için)
                     if "hatchback" in idx_map and "sedan" in idx_map:
-                        probs[idx_map["hatchback"]] *= 1.7  # %70 boost
-                        probs[idx_map["sedan"]] *= 0.8      # %20 ceza
+                        # Çarpma yerine direkt "Olasılık Puanı" ekliyoruz, çünkü 0 ile neyi çarparsanız 0 kalır.
+                        probs[idx_map["hatchback"]] += 0.70  # %70'lik ekstra güç!
+                        probs[idx_map["sedan"]] *= 0.4       # Sedan ihtimalini de daha da eziyoruz.
 
                     # Front/rear views (aspect > 1.2) make hatchback vs sedan ambiguous;
                     if aspect > 1.2:
@@ -1086,15 +1087,17 @@ class SceneAnalysisEngine:
 
             result["driver_events"].extend(action_events)
 
-            if self.allow_degraded:
+            if self.cabin_yolo is not None:
+                # Use deep learning model for cabin events (including seatbelt and passengers)
+                result["driver_events"].extend(self._detect_cabin_events(vehicle_crop, timestamp_seconds))
+            else:
+                # Fallback: mathematical passenger detection + basic seatbelt violation
                 result["driver_events"].extend(self._detect_seatbelt_violation(driver_crop, timestamp_seconds))
                 other_persons = [pb for pb in person_boxes if driver_box_used is None
                                  or not np.array_equal(pb, driver_box_used)]
                 result["driver_events"].extend(
                     self._detect_passengers(other_persons, (x1, y1, x2, y2), timestamp_seconds, w)
                 )
-            else:
-                result["driver_events"].extend(self._detect_cabin_events(vehicle_crop, timestamp_seconds))
 
             # ── Teknocan detection inside vehicle ─────────────────────────────
             if self.teknocan_yolo is not None and vehicle_crop.size > 0:
