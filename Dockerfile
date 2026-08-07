@@ -17,17 +17,21 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HF_HUB_OFFLINE=1 \
     TRANSFORMERS_OFFLINE=1 \
     YOLO_OFFLINE=1 \
-    EASYOCR_MODULE_PATH=/app/weights/easyocr
+    EASYOCR_MODULE_PATH=/app/easyocr_weights
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip ffmpeg libsm6 libxext6 libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-RUN mkdir -p /app/data/input /app/data/output /app/weights
+RUN mkdir -p /app/data/input /app/data/output /app/weights /app/easyocr_weights
 
 COPY requirements-runtime.txt /app/requirements-runtime.txt
 RUN pip3 install --no-cache-dir -r /app/requirements-runtime.txt
+
+# Pre-download EasyOCR weights to the image so they work in offline final mode
+RUN python3 -c "import easyocr; import os; easyocr.Reader(['tr', 'en'])"
+
 
 COPY src/ /app/src/
 COPY config/runtime_assets.json /app/config/runtime_assets.json
