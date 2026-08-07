@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         raise RuntimeError(f"runtime asset readiness failed: {details}")
 
     cv2_module = _require_video_runtime()
-    engine = _build_scene_analysis_engine(asset_root, allow_degraded=True)
+    engine = _build_scene_analysis_engine(asset_root, allow_degraded=args.allow_degraded_inference)
     capture = cv2_module.VideoCapture(str(video_path))
     inference = run_video_inference(
         capture,
