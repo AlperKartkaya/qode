@@ -656,8 +656,8 @@ class SceneAnalysisEngine:
                     probs = probs / probs.sum()
 
                     # İsterseniz backend loglarında olasılıkları anlık görebilirsiniz
-                    # if "hatchback" in idx_map and "sedan" in idx_map:
-                    #     print(f"[Debug] Sedan: %{probs[idx_map['sedan']]*100:.1f} | Hatchback: %{probs[idx_map['hatchback']]*100:.1f} | Aspect: {aspect:.2f}")
+                    if "hatchback" in idx_map and "sedan" in idx_map:
+                        print(f"[QoDe] [Araç Tipi] Sedan: %{probs[idx_map['sedan']]*100:.1f} | Hatchback: %{probs[idx_map['hatchback']]*100:.1f} | Aspect: {aspect:.2f}")
 
                 conf, idx = torch.max(probs, 0)
                 predicted = self.vehicle_type_classes[idx.item()]
@@ -883,7 +883,9 @@ class SceneAnalysisEngine:
             # Calculate relative area to infer depth (rear seat passengers appear smaller)
             person_area = (px2 - px1) * (py2 - py1)
             vehicle_area = vw * vh
-            is_rear_seat = (person_area / (vehicle_area + 1e-5)) < 0.12
+            ratio = person_area / (vehicle_area + 1e-5)
+            is_rear_seat = ratio < 0.12
+            print(f"[QoDe] [Yolcu Oranı] Kutu: {ratio:.3f}, Arka Koltuk Sayıldı: {is_rear_seat}")
 
             if not is_rear_seat:
                 if cx > centre_col_x2:
