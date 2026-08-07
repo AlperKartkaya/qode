@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     final_job_root: Path = Field(
         default=PROJECT_ROOT / "data" / "jobs", validation_alias="FINAL_JOB_ROOT"
     )
-    use_gpu: bool = Field(default=False, validation_alias="USE_GPU")
+    use_gpu: bool = Field(default=True, validation_alias="USE_GPU")
     container_timeout_seconds: int = Field(default=570, validation_alias="CONTAINER_TIMEOUT_SECONDS")
     max_upload_bytes: int = Field(default=1_500_000_000, validation_alias="MAX_UPLOAD_BYTES")
     max_job_disk_bytes: int = Field(default=10_000_000_000, validation_alias="MAX_JOB_DISK_BYTES")

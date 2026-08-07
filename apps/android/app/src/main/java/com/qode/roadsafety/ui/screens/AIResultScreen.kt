@@ -38,14 +38,15 @@ fun AIResultScreen(
     val scope = rememberCoroutineScope()
 
     var status by remember { mutableStateOf("PROCESSING") }
-    var progress by remember { mutableFloatStateOf(0.1f) }
+    var simulatedProgress by remember { mutableFloatStateOf(0.1f) }
+    var elapsedTimeSeconds by remember { mutableLongStateOf(0L) }
     var stepMessage by remember { mutableStateOf("Initializing AI Analysis...") }
     var aiResultResponse by remember { mutableStateOf<AiResultResponse?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
     var jsonFile by remember { mutableStateOf<File?>(null) }
 
     val animatedProgress by animateFloatAsState(
-        targetValue = progress,
+        targetValue = simulatedProgress,
         label = "ProgressAnimation"
     )
 
@@ -62,12 +63,8 @@ fun AIResultScreen(
                 if (res.isSuccessful && res.body() != null) {
                     val body = res.body()!!
                     status = body.status
-                    progress = when(status) {
-                        "QUEUED" -> 0.2f
-                        "PROCESSING" -> 0.5f
-                        "DONE" -> 1.0f
-                        "FAILED" -> 1.0f
-                        else -> 0.1f
+                    if (status == "DONE" || status == "FAILED") {
+                        simulatedProgress = 1.0f
                     }
                     stepMessage = "Job status: ${body.status}"
                     
@@ -102,12 +99,22 @@ fun AIResultScreen(
         }
     }
 
-    // Auto-polling loop every 1.5 seconds while status is PROCESSING/UPLOADED
+    // Auto-polling and Simulated Progress Loop
     LaunchedEffect(status) {
-        if (status != "DONE" && status != "FAILED") {
-            while (true) {
-                delay(1500)
-                fetchResult()
+        if (status == "PROCESSING" || status == "QUEUED" || status == "IDLE") {
+            val startTime = System.currentTimeMillis() - (elapsedTimeSeconds * 1000)
+            while (isActive) {
+                delay(1000)
+                elapsedTimeSeconds = (System.currentTimeMillis() - startTime) / 1000
+                // Asymptotic progress towards 0.99
+                val target = 1f - (1f / (1f + elapsedTimeSeconds * 0.05f))
+                if (target > simulatedProgress) {
+                    simulatedProgress = target.coerceAtMost(0.99f)
+                }
+                // Poll every ~1.5s (but we are in a 1s loop, so just poll every 2s)
+                if (elapsedTimeSeconds % 2 == 0L) {
+                    fetchResult()
+                }
             }
         }
     }
@@ -178,7 +185,12 @@ fun AIResultScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Analyzing Video Frames", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF111827))
+                                Column {
+                                    Text("Analyzing Video Frames", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFF111827))
+                                    val minutes = elapsedTimeSeconds / 60
+                                    val seconds = elapsedTimeSeconds % 60
+                                    Text(String.format("Elapsed: %02d:%02d", minutes, seconds), fontSize = 13.sp, color = Color(0xFF6B7280))
+                                }
                                 Text("${(animatedProgress * 100).toInt()}%", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF4338CA))
                             }
 
