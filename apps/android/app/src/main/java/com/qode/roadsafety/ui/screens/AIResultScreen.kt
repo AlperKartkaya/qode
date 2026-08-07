@@ -221,6 +221,8 @@ fun AIResultScreen(
                             Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(48.dp))
                             Spacer(modifier = Modifier.height(16.dp))
                             Text("Inference Failed", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEF4444))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(stepMessage, fontSize = 14.sp, color = Color.Gray, textAlign = TextAlign.Center)
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(
                                 onClick = { fetchResult(true) },
