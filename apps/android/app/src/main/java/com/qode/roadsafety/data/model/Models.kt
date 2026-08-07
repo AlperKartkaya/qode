@@ -30,9 +30,13 @@ data class QoDResponse(
     val correlator: String? = null
 )
 
-data class UploadResponse(
-    val message: String,
-    val filename: String
+data class JobStatusResponse(
+    val jobId: String,
+    val flowId: String,
+    val status: String,
+    val checksumSha256: String?,
+    val durationSeconds: Double?,
+    val failureCode: String?
 )
 
 data class AiRunResponse(

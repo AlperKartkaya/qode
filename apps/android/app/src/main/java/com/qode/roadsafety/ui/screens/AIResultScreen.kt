@@ -31,6 +31,7 @@ import android.content.Intent
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AIResultScreen(
+    jobId: String?,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -49,17 +50,45 @@ fun AIResultScreen(
     )
 
     fun fetchResult(isManual: Boolean = false) {
+        if (jobId == null) {
+            status = "FAILED"
+            stepMessage = "No Job ID provided."
+            return
+        }
         if (isManual) isRefreshing = true
         scope.launch {
             try {
-                val res = ApiClient.service.getAiResult()
+                val res = ApiClient.service.getJobStatus(jobId)
                 if (res.isSuccessful && res.body() != null) {
                     val body = res.body()!!
                     status = body.status
-                    progress = if (body.progress > 0f) body.progress else 0.5f
-                    stepMessage = body.message ?: "Analyzing video frames..."
-                    aiResultResponse = body
-                    if (isManual) Toast.makeText(context, "Results updated", Toast.LENGTH_SHORT).show()
+                    progress = when(status) {
+                        "QUEUED" -> 0.2f
+                        "PROCESSING" -> 0.5f
+                        "DONE" -> 1.0f
+                        "FAILED" -> 1.0f
+                        else -> 0.1f
+                    }
+                    stepMessage = "Job status: ${body.status}"
+                    
+                    if (status == "DONE") {
+                        val resultRes = ApiClient.service.getAiResult(jobId)
+                        if (resultRes.isSuccessful && resultRes.body() != null) {
+                            aiResultResponse = AiResultResponse(
+                                status = "DONE",
+                                progress = 1.0f,
+                                message = "Analysis complete",
+                                result = resultRes.body()!!
+                            )
+                        } else {
+                            status = "FAILED"
+                            stepMessage = "Result fetch failed"
+                        }
+                    } else if (status == "FAILED") {
+                        stepMessage = "Job failed: ${body.failureCode}"
+                    }
+                    
+                    if (isManual) Toast.makeText(context, "Status updated", Toast.LENGTH_SHORT).show()
                 } else {
                     status = "FAILED"
                     if (isManual) Toast.makeText(context, "Error: ${res.code()}", Toast.LENGTH_SHORT).show()

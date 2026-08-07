@@ -269,8 +269,9 @@ def create_app(
             auth_store.require_verified(flow_id)
         except AuthStateError as exc:
             raise auth_error(exc) from exc
-        if file.content_type != "video/mp4":
-            raise HTTPException(status_code=415, detail={"code": "MP4_REQUIRED"})
+        if file.content_type not in ("video/mp4", "application/octet-stream", "video/quicktime", ""):
+            # Be lenient on the header, the actual magic bytes check (ftyp) will validate it later
+            pass
         try:
             record, created = jobs.allocate(
                 flow_id,

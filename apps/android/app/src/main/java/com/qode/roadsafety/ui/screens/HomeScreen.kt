@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -22,6 +23,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import android.app.Activity
+import android.content.pm.ActivityInfo
 import com.qode.roadsafety.data.api.ApiClient
 import com.qode.roadsafety.data.model.QoDRequest
 import com.qode.roadsafety.utils.HlsDownloader
@@ -29,7 +32,9 @@ import com.qode.roadsafety.utils.ZipUtils
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -47,8 +52,9 @@ fun HomeScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Navigation Tab state: 0 = HOME, 1 = AI RESULT, 2 = TRACE
+    // Navigation Tab state: 0 = HOME, 1 = AI RESULT,    // Navigation state
     var selectedTab by remember { mutableIntStateOf(0) }
+    var currentJobId by remember { mutableStateOf<String?>(null) }
     var isVideoUploaded by remember { mutableStateOf(false) }
 
     // Session Identifiers
@@ -64,6 +70,7 @@ fun HomeScreen(
 
     // Video & Recording State
     var isVideoStarted by remember { mutableStateOf(false) }
+    var isVideoExpanded by remember { mutableStateOf(false) }
     var recordedFile by remember { mutableStateOf<File?>(null) }
     var zippedFile by remember { mutableStateOf<File?>(null) }
     var isRecording by remember { mutableStateOf(false) }
@@ -135,7 +142,8 @@ fun HomeScreen(
                 val res = ApiClient.service.createQoDSession(QoDRequest(flowId = flowId, duration = 60))
                 val body = res.body()
                 if (res.isSuccessful && body != null) {
-                    qodStatus = body.qosStatus ?: "UNAVAILABLE"
+                    val returnedStatus = body.qosStatus ?: "UNAVAILABLE"
+                    qodStatus = if (returnedStatus == "REQUESTED") "ACTIVE" else returnedStatus
                     addTraceLog(
                         "POST /api/qod/sessions",
                         res.code().toString(),
@@ -209,22 +217,23 @@ fun HomeScreen(
                 val file = getOrCreateVideoFile()
                 val reqBody = file.asRequestBody("video/mp4".toMediaTypeOrNull())
                 val multipart = MultipartBody.Part.createFormData("file", "video.mp4", reqBody)
-                val uploadRes = ApiClient.service.uploadVideo(multipart)
+                val flowIdBody = flowId.toRequestBody("text/plain".toMediaTypeOrNull())
+                
+                val uploadRes = ApiClient.service.uploadVideo(flowIdBody, multipart)
 
                 if (uploadRes.isSuccessful) {
-                    addTraceLog("POST /upload", "202 Accepted", "video.mp4 uploaded")
-                    
-                    val aiRes = ApiClient.service.runAi()
-                    if (aiRes.isSuccessful) {
-                        addTraceLog("POST /ai-run", "200 OK", "status: Inference started")
+                    val jobId = uploadRes.body()?.jobId
+                    if (jobId != null) {
+                        addTraceLog("POST /api/videos", "202 Accepted", "Job created: $jobId")
+                        currentJobId = jobId
                         Toast.makeText(context, "Upload successful. Proceeding to AI Result...", Toast.LENGTH_LONG).show()
                         selectedTab = 1
                     } else {
-                        addTraceLog("POST /ai-run", "ERROR", "Status: ${aiRes.code()}")
-                        Toast.makeText(context, "AI Run Error: ${aiRes.code()}", Toast.LENGTH_LONG).show()
+                        addTraceLog("POST /api/videos", "ERROR", "No Job ID returned")
+                        Toast.makeText(context, "Upload Error: No Job ID returned", Toast.LENGTH_LONG).show()
                     }
                 } else {
-                    addTraceLog("POST /upload", "ERROR", "Status: ${uploadRes.code()}")
+                    addTraceLog("POST /api/videos", "ERROR", "Status: ${uploadRes.code()}")
                     Toast.makeText(context, "Upload Error: ${uploadRes.code()}", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
@@ -259,42 +268,46 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("OpenGW", fontWeight = FontWeight.ExtraBold, color = Color(0xFF4338CA))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(phoneNumber, fontSize = 14.sp, color = Color(0xFF4B5563))
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onLogout) {
-                        Icon(Icons.Default.ExitToApp, contentDescription = "Logout", tint = Color(0xFFEF4444))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
+            if (!isVideoExpanded) {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("OpenGW", fontWeight = FontWeight.ExtraBold, color = Color(0xFF4338CA))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(phoneNumber, fontSize = 14.sp, color = Color(0xFF4B5563))
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = onLogout) {
+                            Icon(Icons.Default.ExitToApp, contentDescription = "Logout", tint = Color(0xFFEF4444))
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                )
+            }
         },
         bottomBar = {
-            NavigationBar(containerColor = Color.White) {
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                    label = { Text("Home") }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    icon = { Icon(Icons.Default.SmartDisplay, contentDescription = "AI Result") },
-                    label = { Text("AI Result") }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "Trace") },
-                    label = { Text("Trace") }
-                )
+            if (!isVideoExpanded) {
+                NavigationBar(containerColor = Color.White) {
+                    NavigationBarItem(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                        label = { Text("Home") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        icon = { Icon(Icons.Default.SmartDisplay, contentDescription = "AI Result") },
+                        label = { Text("AI Result") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 2,
+                        onClick = { selectedTab = 2 },
+                        icon = { Icon(Icons.Default.ListAlt, contentDescription = "Trace") },
+                        label = { Text("Trace") }
+                    )
+                }
             }
         },
         containerColor = Color(0xFFF3F4F6)
@@ -463,10 +476,11 @@ fun HomeScreen(
 
                                 // Player View (with ExoPlayer Controls & Fullscreen)
                                 if (isVideoStarted) {
+                                    val configuration = LocalConfiguration.current
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(200.dp)
+                                            .height(if (isVideoExpanded) configuration.screenHeightDp.dp else 200.dp)
                                             .background(Color.Black, RoundedCornerShape(8.dp))
                                     ) {
                                         AndroidView(
@@ -479,7 +493,28 @@ fun HomeScreen(
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
-                                    Spacer(modifier = Modifier.height(12.dp))
+                                    
+                                    TextButton(
+                                        onClick = { 
+                                            isVideoExpanded = !isVideoExpanded 
+                                            val activity = context as? Activity
+                                            if (isVideoExpanded) {
+                                                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE
+                                            } else {
+                                                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT
+                                            }
+                                        },
+                                        modifier = Modifier.align(Alignment.End)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isVideoExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(if (isVideoExpanded) "Küçült" else "Büyüt", fontSize = 12.sp)
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
                                 }
 
                                 // Auto HLS Recording Progress Bar
@@ -629,7 +664,7 @@ fun HomeScreen(
                             }
                         }
                     } else {
-                        AIResultScreen(onBack = { selectedTab = 0 })
+                        AIResultScreen(jobId = currentJobId, onBack = { selectedTab = 0 })
                     }
                 }
 

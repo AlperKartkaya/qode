@@ -8,6 +8,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import okhttp3.RequestBody
 import retrofit2.http.*
 import java.util.concurrent.TimeUnit
 
@@ -20,14 +21,17 @@ interface ApiService {
     suspend fun createQoDSession(@Body request: QoDRequest): Response<QoDResponse>
 
     @Multipart
-    @POST("upload")
-    suspend fun uploadVideo(@Part file: MultipartBody.Part): Response<UploadResponse>
+    @POST("api/videos")
+    suspend fun uploadVideo(
+        @Part("flow_id") flowId: RequestBody,
+        @Part file: MultipartBody.Part
+    ): Response<JobStatusResponse>
 
-    @POST("ai-run")
-    suspend fun runAi(): Response<AiRunResponse>
+    @GET("api/jobs/{job_id}")
+    suspend fun getJobStatus(@Path("job_id") jobId: String): Response<JobStatusResponse>
 
-    @GET("ai-result")
-    suspend fun getAiResult(): Response<AiResultResponse>
+    @GET("api/jobs/{job_id}/result")
+    suspend fun getAiResult(@Path("job_id") jobId: String): Response<FtrResult>
 }
 
 object ApiClient {
