@@ -2,15 +2,27 @@ package com.qode.roadsafety.utils
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 object HlsDownloader {
 
-    private val client = OkHttpClient.Builder().build()
+    private val client = OkHttpClient.Builder()
+        .connectionPool(ConnectionPool(8, 30, TimeUnit.SECONDS))
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .build()
+
+    private const val PARALLEL_DOWNLOADS = 8
 
     suspend fun downloadHlsToMp4(
         context: Context,
@@ -67,23 +79,23 @@ object HlsDownloader {
                 val subPlaylistText = client.newCall(mediaReq).execute().use { res ->
                     res.body?.string() ?: throw Exception("Empty media playlist")
                 }
-                parseAndDownloadSegments(subPlaylistText, baseUrl, outputFile, onProgress)
+                downloadSegmentsParallel(subPlaylistText, baseUrl, outputFile, onProgress)
             } else {
-                parseAndDownloadSegments(playlistText, baseUrl, outputFile, onProgress)
+                downloadSegmentsParallel(playlistText, baseUrl, outputFile, onProgress)
             }
         } else {
-            parseAndDownloadSegments(playlistText, baseUrl, outputFile, onProgress)
+            downloadSegmentsParallel(playlistText, baseUrl, outputFile, onProgress)
         }
 
         outputFile
     }
 
-    private fun parseAndDownloadSegments(
+    private suspend fun downloadSegmentsParallel(
         playlistText: String,
         baseUrl: String,
         outputFile: File,
         onProgress: (Float, String) -> Unit
-    ) {
+    ) = coroutineScope {
         val segmentUrls = mutableListOf<String>()
         val lines = playlistText.lines()
         for (line in lines) {
@@ -99,23 +111,49 @@ object HlsDownloader {
         }
 
         val total = segmentUrls.size
-        FileOutputStream(outputFile).use { fos ->
-            segmentUrls.forEachIndexed { index, segmentUrl ->
-                val progress = 0.15f + (0.80f * (index + 1) / total)
-                onProgress(progress, "Downloading segment ${index + 1}/$total...")
+        val completedCount = AtomicInteger(0)
+        val tempDir = outputFile.parentFile?.let { File(it, "segments_${System.currentTimeMillis()}") }
+            ?: throw Exception("Cannot create temp directory")
+        tempDir.mkdirs()
 
-                val req = Request.Builder().url(segmentUrl).build()
-                client.newCall(req).execute().use { resp ->
-                    if (!resp.isSuccessful) throw Exception("Segment download failed: ${resp.code}")
-                    val bytes = resp.body?.bytes() ?: byteArrayOf()
-                    fos.write(bytes)
+        try {
+            // Download all segments in parallel batches
+            onProgress(0.15f, "Downloading $total segments (parallel)...")
+
+            val segmentFiles = segmentUrls.mapIndexed { index, segmentUrl ->
+                async(Dispatchers.IO) {
+                    val segmentFile = File(tempDir, "seg_${String.format("%05d", index)}.ts")
+                    val req = Request.Builder().url(segmentUrl).build()
+                    client.newCall(req).execute().use { resp ->
+                        if (!resp.isSuccessful) throw Exception("Segment download failed: ${resp.code}")
+                        val bytes = resp.body?.bytes() ?: byteArrayOf()
+                        segmentFile.writeBytes(bytes)
+                    }
+                    val done = completedCount.incrementAndGet()
+                    val progress = 0.15f + (0.75f * done / total)
+                    onProgress(progress, "Downloaded $done/$total segments...")
+                    segmentFile
                 }
                 
                 // Add a small delay to prevent starving ExoPlayer's network requests
                 Thread.sleep(100)
             }
-        }
 
-        onProgress(1.0f, "HLS video recorded successfully: ${outputFile.name} (${outputFile.length() / 1024 / 1024} MB)")
+            // Wait for all downloads to complete
+            val downloadedFiles = segmentFiles.awaitAll()
+
+            // Merge segments in order into the final file
+            onProgress(0.92f, "Merging $total segments...")
+            FileOutputStream(outputFile).use { fos ->
+                for (segFile in downloadedFiles.sortedBy { it.name }) {
+                    fos.write(segFile.readBytes())
+                }
+            }
+
+            onProgress(1.0f, "HLS video recorded successfully: ${outputFile.name} (${outputFile.length() / 1024 / 1024} MB)")
+        } finally {
+            // Clean up temp segment files
+            tempDir.deleteRecursively()
+        }
     }
 }

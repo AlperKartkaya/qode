@@ -52,6 +52,28 @@ def mask_phone_number(phone_number: str | None) -> str | None:
     return phone_number[:3] + "*" * (len(phone_number) - 5) + phone_number[-2:]
 
 
+def remux_to_mp4(source: Path) -> None:
+    """Remux an MPEG-TS file to MP4 in-place using ffmpeg (copy, no re-encode)."""
+    tmp_mp4 = source.with_suffix(".remux.mp4")
+    process = subprocess.run(
+        [
+            "ffmpeg", "-y",
+            "-i", str(source),
+            "-c", "copy",
+            "-movflags", "+faststart",
+            str(tmp_mp4),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if process.returncode != 0:
+        tmp_mp4.unlink(missing_ok=True)
+        raise ValueError(f"ffmpeg remux failed: {process.stderr[:300]}")
+    os.replace(tmp_mp4, source)
+
+
 def probe_video_duration(path: Path) -> float:
     process = subprocess.run(
         [
@@ -303,11 +325,13 @@ def create_app(
                     output.write(chunk)
                 output.flush()
                 os.fsync(output.fileno())
-            is_mp4 = (len(header) >= 12 and header[4:8] == b"ftyp")
-            is_ts = (len(header) >= 1 and header[0] == 0x47)
-            if not (is_mp4 or is_ts):
+            is_mp4 = len(header) >= 12 and header[4:8] == b"ftyp"
+            is_mpegts = len(header) >= 1 and header[0:1] == b"\x47"
+            if not (is_mp4 or is_mpegts):
                 raise HTTPException(status_code=415, detail={"code": "INVALID_VIDEO_SIGNATURE"})
             os.replace(temporary, target)
+            if is_mpegts and not is_mp4:
+                remux_to_mp4(target)
             duration = probe_video_duration(target)
         except HTTPException:
             temporary.unlink(missing_ok=True)
