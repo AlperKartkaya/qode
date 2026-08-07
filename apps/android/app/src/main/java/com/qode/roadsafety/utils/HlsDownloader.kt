@@ -121,7 +121,7 @@ object HlsDownloader {
             onProgress(0.15f, "Downloading $total segments (parallel)...")
 
             val segmentFiles = segmentUrls.mapIndexed { index, segmentUrl ->
-                async(Dispatchers.IO) {
+                val deferred = async(Dispatchers.IO) {
                     val segmentFile = File(tempDir, "seg_${String.format("%05d", index)}.ts")
                     val req = Request.Builder().url(segmentUrl).build()
                     client.newCall(req).execute().use { resp ->
@@ -136,7 +136,8 @@ object HlsDownloader {
                 }
                 
                 // Add a small delay to prevent starving ExoPlayer's network requests
-                Thread.sleep(100)
+                Thread.sleep(50)
+                deferred
             }
 
             // Wait for all downloads to complete
