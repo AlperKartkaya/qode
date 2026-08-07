@@ -50,23 +50,29 @@ class ContainerInferenceRunner:
             )
             result = container.wait(timeout=self.timeout_seconds)
             exit_code = int(result.get("StatusCode", 1))
-            if exit_code != 0:
-                print(f"Container failed with exit code {exit_code}. Logs:")
-                logs_text = ""
-                try:
-                    logs_text = container.logs().decode('utf-8', errors='replace')
-                    print(logs_text)
-                    log_file = output_dir / "container_error.log"
-                    log_file.write_text(logs_text, encoding="utf-8")
-                except Exception as log_exc:
-                    print(f"Failed to fetch logs: {log_exc}")
+            
+            # Always fetch logs for debugging
+            logs_text = ""
+            try:
+                logs_text = container.logs().decode('utf-8', errors='replace')
+                log_file = output_dir / "container.log"
+                log_file.write_text(logs_text, encoding="utf-8")
                 
+                # Print debug lines to uvicorn stdout so user can see them
+                for line in logs_text.splitlines():
+                    if "[QoDe]" in line:
+                        print(line)
+            except Exception as log_exc:
+                print(f"Failed to fetch logs: {log_exc}")
+
+            if exit_code != 0:
+                print(f"Container failed with exit code {exit_code}.")
                 error_msg = "NONZERO_EXIT"
                 if logs_text:
                     last_lines = " | ".join(logs_text.strip().splitlines()[-3:])
                     error_msg = f"Crash: {last_lines}"[:250]
-                
                 return RunnerResult(exit_code, error_msg)
+            
             return RunnerResult(0, "COMPLETED")
         except Exception as exc:
             return RunnerResult(1, f"CONTAINER_ERROR_{type(exc).__name__.upper()}")
