@@ -43,6 +43,7 @@ class TemporalEventAggregator:
     def __init__(self) -> None:
         self._active: dict[tuple[str, str], dict[str, Any]] = {}
         self._output: list[dict[str, Any]] = []
+        self._emitted_keys: set[tuple[str, str]] = set()
 
     def observe(self, timestamp: float, candidates: list[Mapping[str, Any]]) -> None:
         visible: set[tuple[str, str]] = set()
@@ -59,15 +60,18 @@ class TemporalEventAggregator:
             state["last"] = timestamp
             state["count"] += 1
             state["max"] = max(state["max"], float(candidate["confidence_score"]))
+            
             if state["record"] is None and state["count"] >= policy.minimum_samples:
-                record = {
-                    "zaman_saniye": round(float(state["first"]), 3),
-                    "kategori": category,
-                    "etiket": label,
-                    "confidence_score": round(float(state["max"]), 4),
-                }
-                state["record"] = record
-                self._output.append(record)
+                if key not in self._emitted_keys:
+                    record = {
+                        "zaman_saniye": round(float(state["first"]), 3),
+                        "kategori": category,
+                        "etiket": label,
+                        "confidence_score": round(float(state["max"]), 4),
+                    }
+                    state["record"] = record
+                    self._output.append(record)
+                    self._emitted_keys.add(key)
             elif state["record"] is not None:
                 state["record"]["confidence_score"] = round(float(state["max"]), 4)
 
