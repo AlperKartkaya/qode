@@ -143,7 +143,7 @@ ASSUMPTIONS: tuple[AssumptionRecord, ...] = (
     _record(
         "DS-013",
         "telecom integration",
-        "Official API root, OIDC, NV, and QoD contracts are available and non-empty credential/callback values are provisioned in an ignored root .env. P5 now keeps tokens backend-only with TTL state and typed outcomes. The Android legacy mock-token and network-failure success path was removed; mobile sign-in now uses the backend OIDC redirect and app callback. Live callback, final SIM NV, and QoD behavior still require target-environment proof.",
+        "Official API root, OIDC, NV, and QoD contracts are available and non-empty credential/callback values are provisioned in an ignored root .env. P5 now keeps tokens backend-only with TTL state and typed outcomes. The Android legacy mock-token and network-failure success path was removed; mobile sign-in now uses the backend OIDC redirect and app callback. Physical-device builds resolve an explicit backend URL or derive it from the ignored callback setting instead of silently using emulator-only 10.0.2.2; release builds fail when neither is present. Live callback, final SIM NV, and QoD behavior still require target-environment proof.",
         "Verified from organizer contracts, environment key inventory, backend tests, Android source audit, and debug APK build on 7 August 2026; secret values were not printed.",
         "mobile/auth integration",
         "backend",

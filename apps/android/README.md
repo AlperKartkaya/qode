@@ -45,6 +45,8 @@ Open the project in Android Studio or build via Gradle:
 QODE_API_BASE_URL="http://<BACKEND_HOST>:8000/" ./gradlew testDebugUnitTest assembleDebug
 ```
 
-`QODE_API_BASE_URL` is compiled into the APK. A physical phone cannot use the
-emulator-only default `http://10.0.2.2:8000/`; build a new APK with the reachable
-VM/backend address whenever the target changes.
+`QODE_API_BASE_URL` is compiled into the APK. Resolution order is Gradle property,
+environment variable, then the API base derived from `OPENGW_REDIRECT_URI` or
+`BACKEND_CALLBACK_URL` in the ignored root `.env`. Only a debug build without any
+of these settings falls back to emulator-only `http://10.0.2.2:8000/`; release
+builds fail instead. Rebuild and reinstall the APK whenever the target changes.

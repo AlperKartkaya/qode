@@ -1,16 +1,48 @@
+import java.net.URI
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
 
+fun envFileValue(name: String): String? {
+    val envFile = rootProject.projectDir.resolve("../../.env").canonicalFile
+    if (!envFile.isFile) return null
+    return envFile.useLines { lines ->
+        lines.map(String::trim)
+            .filter { it.isNotEmpty() && !it.startsWith("#") }
+            .mapNotNull { line ->
+                val separator = line.indexOf('=')
+                if (separator <= 0 || line.substring(0, separator).trim() != name) null
+                else line.substring(separator + 1).trim().removeSurrounding("\"").removeSurrounding("'")
+            }
+            .firstOrNull()
+    }
+}
+
+fun callbackToApiBase(callback: String?): String? {
+    if (callback.isNullOrBlank()) return null
+    val uri = URI(callback)
+    require(uri.scheme == "http" || uri.scheme == "https") {
+        "Backend callback must use http or https"
+    }
+    require(!uri.host.isNullOrBlank()) { "Backend callback must contain a host" }
+    val authority = if (uri.port == -1) uri.host else "${uri.host}:${uri.port}"
+    return "${uri.scheme}://$authority/"
+}
+
+val callbackDerivedApiBaseUrl = callbackToApiBase(
+    envFileValue("OPENGW_REDIRECT_URI") ?: envFileValue("BACKEND_CALLBACK_URL")
+)
 val configuredQodeApiBaseUrl = providers.gradleProperty("QODE_API_BASE_URL")
     .orElse(providers.environmentVariable("QODE_API_BASE_URL"))
     .orNull
 val releaseRequested = gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }
-require(!releaseRequested || configuredQodeApiBaseUrl != null) {
-    "QODE_API_BASE_URL must be set explicitly for release builds; 10.0.2.2 is emulator-only"
+val resolvedQodeApiBaseUrl = configuredQodeApiBaseUrl ?: callbackDerivedApiBaseUrl
+require(!releaseRequested || resolvedQodeApiBaseUrl != null) {
+    "Release backend URL is missing: set QODE_API_BASE_URL or root .env callback; 10.0.2.2 is emulator-only"
 }
-val qodeApiBaseUrl = configuredQodeApiBaseUrl ?: "http://10.0.2.2:8000/"
+val qodeApiBaseUrl = resolvedQodeApiBaseUrl ?: "http://10.0.2.2:8000/"
 require(qodeApiBaseUrl.endsWith("/")) { "QODE_API_BASE_URL must end with /" }
 
 android {
