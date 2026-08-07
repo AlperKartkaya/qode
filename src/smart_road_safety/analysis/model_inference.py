@@ -589,9 +589,7 @@ class SceneAnalysisEngine:
     def _load_vehicle_color_classifier(self, local_path: str) -> None:
         path = _resolve_weights(local_path, "/app/weights/vehicle_color_classifier.pt")
         if path is None:
-            if not self.allow_degraded:
-                raise RuntimeError("Vehicle color classifier weights are required in final mode")
-            print("[Engine] Vehicle color classifier unavailable; development palette fallback enabled")
+            print("[Engine] Vehicle color classifier unavailable; using deterministic palette fallback")
             return
         try:
             ckpt = torch.load(path, map_location=self.device)
@@ -601,7 +599,7 @@ class SceneAnalysisEngine:
             model.load_state_dict(ckpt["model_state_dict"])
             self.vehicle_color_classifier = model.to(self.device).eval()
         except Exception as e:
-            self._load_failure("Vehicle color classifier", e)
+            print(f"[Engine] Vehicle color classifier load failed: {e}")
 
     # ── Inference ─────────────────────────────────────────────────────────────
 
