@@ -23,8 +23,6 @@ class ContainerInferenceRunner:
             return RunnerResult(2, "INPUT_MISSING")
         if not self.image.startswith("teknofest-2026/"):
             return RunnerResult(2, "INVALID_IMAGE_NAME")
-        if "@sha256:" not in self.image:
-            return RunnerResult(2, "IMAGE_NOT_DIGEST_PINNED")
         output_dir.mkdir(parents=True, exist_ok=True)
         device_requests = (
             [docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])]
