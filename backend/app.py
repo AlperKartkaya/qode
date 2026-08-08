@@ -228,10 +228,10 @@ def create_app(
 
     @app.get("/api/auth/callback")
     async def auth_callback(
-        state: Optional[str] = None, 
-        code: Optional[str] = None, 
-        error: Optional[str] = None,
-        error_description: Optional[str] = None
+        state: str | None = None, 
+        code: str | None = None, 
+        error: str | None = None,
+        error_description: str | None = None
     ) -> Response:
         if error:
             print(f"[QoDe Auth] OAuth Error from Gateway: {error} - {error_description}")
