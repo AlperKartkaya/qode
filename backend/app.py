@@ -226,8 +226,20 @@ def create_app(
             status_code=302,
         )
 
+    from typing import Optional
     @app.get("/api/auth/callback")
-    async def auth_callback(code: str, state: str) -> Response:
+    async def auth_callback(
+        state: Optional[str] = None, 
+        code: Optional[str] = None, 
+        error: Optional[str] = None,
+        error_description: Optional[str] = None
+    ) -> Response:
+        if error:
+            print(f"[QoDe Auth] OAuth Error from Gateway: {error} - {error_description}")
+            raise HTTPException(status_code=400, detail=f"OAuth Error: {error} - {error_description}")
+        if not code or not state:
+            raise HTTPException(status_code=400, detail="Missing code or state from gateway")
+            
         try:
             flow_id = auth_store.consume_state(state)
         except AuthStateError as exc:
