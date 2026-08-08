@@ -5,7 +5,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from fastapi import (
@@ -226,7 +226,6 @@ def create_app(
             status_code=302,
         )
 
-    from typing import Optional
     @app.get("/api/auth/callback")
     async def auth_callback(
         state: Optional[str] = None, 
